@@ -117,10 +117,17 @@
     .hud-dot { width: 8px; height: 8px; background: var(--emerald); border-radius: 50%; box-shadow: 0 0 6px var(--emerald); }
 
     #tracking-hud-drawer {
-      position: fixed; bottom: 0; left: 0; right: 0; z-index: 1000;
-      background: rgba(11, 15, 25, 0.96); backdrop-filter: blur(14px);
-      border-top: 1px solid rgba(99, 102, 241, 0.35); padding: 0.85rem 2rem;
-      display: none; align-items: center; justify-content: space-between; font-size: 0.84rem;
+    /* Responsive Media Queries */
+    @media (max-width: 860px) {
+      header { padding: 0.75rem 1.25rem; }
+      .checkout-grid { grid-template-columns: 1fr; gap: 1.75rem; }
+      .container { margin: 1.75rem auto; padding: 0 1rem 4rem; }
+    }
+    @media (max-width: 600px) {
+      header { flex-wrap: wrap; gap: 0.75rem; justify-content: space-between; }
+      .nav-links { gap: 1rem; }
+      .card { padding: 1.25rem; }
+      #tracking-hud-drawer { flex-direction: column; gap: 0.65rem; padding: 0.75rem 1rem; text-align: center; }
     }
   </style>
 </head>
