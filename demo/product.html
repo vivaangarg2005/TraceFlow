@@ -3,75 +3,59 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Aura Store | Monochrome Runner V2 Details</title>
-  <meta name="description" content="Product details for Monochrome Runner V2. Tracked by TraceFlow Analytics.">
+  <title>Aura Store — Product Details</title>
+  <meta name="description" content="View product specifications, materials, and sizing.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
   <style>
     :root {
       --bg: #090d16;
-      --card-bg: rgba(22, 29, 47, 0.75);
+      --card-bg: rgba(22, 29, 47, 0.7);
       --card-border: rgba(255, 255, 255, 0.08);
       --text: #f1f5f9;
       --text-muted: #94a3b8;
       --accent: #6366f1;
       --accent-hover: #4f46e5;
       --accent-glow: rgba(99, 102, 241, 0.25);
-      --success: #10b981;
+      --emerald: #10b981;
+      --font-sans: 'Plus Jakarta Sans', sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
     }
 
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
-      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-family: var(--font-sans);
       background: var(--bg);
       color: var(--text);
       min-height: 100vh;
-      padding-bottom: 90px;
+      line-height: 1.5;
     }
 
     header {
       backdrop-filter: blur(16px);
       background: rgba(9, 13, 22, 0.85);
       border-bottom: 1px solid var(--card-border);
-      padding: 1rem 2rem;
+      padding: 0.85rem 2rem;
       display: flex;
       justify-content: space-between;
       align-items: center;
     }
-
-    .brand {
-      display: flex;
-      align-items: center;
-      gap: 0.75rem;
-      text-decoration: none;
-      color: #fff;
-      font-weight: 800;
-    }
-
-    .nav-links { display: flex; gap: 1.5rem; list-style: none; }
-    .nav-links a { color: var(--text-muted); text-decoration: none; font-size: 0.92rem; font-weight: 500; }
+    .brand { display: flex; align-items: center; gap: 0.75rem; text-decoration: none; color: #fff; font-weight: 800; }
+    .brand-logo { width: 34px; height: 34px; background: linear-gradient(135deg, #6366f1, #8b5cf6); border-radius: 9px; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 1.05rem; }
+    .nav-links { display: flex; gap: 1.75rem; list-style: none; }
+    .nav-links a { color: var(--text-muted); text-decoration: none; font-size: 0.9rem; font-weight: 500; }
     .nav-links a:hover, .nav-links a.active { color: #fff; }
 
-    .container {
-      max-width: 1100px;
-      margin: 3rem auto;
-      padding: 0 1.5rem;
-    }
+    .container { max-width: 1100px; margin: 2.5rem auto; padding: 0 1.5rem; }
 
-    .breadcrumb {
-      display: flex;
-      gap: 0.5rem;
-      font-size: 0.85rem;
-      color: var(--text-muted);
-      margin-bottom: 2rem;
-    }
+    .breadcrumb { display: flex; gap: 0.5rem; font-size: 0.85rem; color: var(--text-muted); margin-bottom: 2rem; }
     .breadcrumb a { color: var(--text-muted); text-decoration: none; }
     .breadcrumb a:hover { color: #fff; }
 
     .product-layout {
       display: grid;
-      grid-template-columns: 1fr 1.2fr;
+      grid-template-columns: 1fr 1.25fr;
       gap: 3rem;
       align-items: start;
     }
@@ -80,11 +64,14 @@
       background: var(--card-bg);
       border: 1px solid var(--card-border);
       border-radius: 20px;
-      padding: 4rem 2rem;
+      padding: 3.5rem 2rem;
       text-align: center;
-      font-size: 8rem;
-      box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.4);
     }
+    .product-hero-vector { width: 180px; height: 180px; filter: drop-shadow(0 15px 30px rgba(0,0,0,0.6)); }
 
     .badge-pill {
       display: inline-block;
@@ -95,115 +82,59 @@
       border-radius: 9999px;
       font-size: 0.78rem;
       font-weight: 600;
-      margin-bottom: 1rem;
+      margin-bottom: 0.85rem;
     }
 
-    h1 { font-size: 2.5rem; font-weight: 800; margin-bottom: 0.75rem; letter-spacing: -0.02em; }
-    .price-tag { font-size: 2rem; font-weight: 800; color: #38bdf8; margin-bottom: 1.5rem; }
-    .rating { display: flex; align-items: center; gap: 0.5rem; margin-bottom: 1.5rem; color: #facc15; font-size: 0.9rem; }
+    h1 { font-size: 2.25rem; font-weight: 800; margin-bottom: 0.5rem; letter-spacing: -0.02em; }
+    .price-tag { font-size: 1.85rem; font-weight: 800; color: #38bdf8; margin-bottom: 1.25rem; }
+    .rating { display: flex; align-items: center; gap: 0.5rem; margin-bottom: 1.5rem; color: #facc15; font-size: 0.88rem; }
     .rating span { color: var(--text-muted); }
 
-    p.description {
-      color: var(--text-muted);
-      line-height: 1.6;
-      font-size: 1rem;
-      margin-bottom: 2rem;
-    }
+    p.description { color: var(--text-muted); line-height: 1.6; font-size: 0.98rem; margin-bottom: 2rem; }
 
-    .options-group {
-      margin-bottom: 2rem;
-    }
-    .options-title {
-      font-size: 0.9rem;
-      font-weight: 700;
-      margin-bottom: 0.75rem;
-    }
-    .size-selector {
-      display: flex;
-      gap: 0.6rem;
-    }
+    .options-group { margin-bottom: 2rem; }
+    .options-title { font-size: 0.88rem; font-weight: 700; margin-bottom: 0.75rem; }
+    .size-selector { display: flex; gap: 0.5rem; }
     .size-btn {
-      width: 44px;
-      height: 44px;
-      border-radius: 10px;
+      width: 44px; height: 44px; border-radius: 9px;
       border: 1px solid var(--card-border);
       background: rgba(255, 255, 255, 0.05);
-      color: #fff;
-      font-weight: 600;
-      cursor: pointer;
-      transition: all 0.2s;
+      color: #fff; font-weight: 600; cursor: pointer; transition: all 0.2s;
     }
-    .size-btn:hover, .size-btn.active {
-      background: var(--accent);
-      border-color: var(--accent);
-    }
+    .size-btn:hover, .size-btn.active { background: var(--accent); border-color: var(--accent); }
 
-    .action-row {
-      display: flex;
-      gap: 1rem;
-    }
-
+    .action-row { display: flex; gap: 1rem; }
     .btn {
-      padding: 0.95rem 2rem;
-      border-radius: 12px;
-      font-weight: 700;
-      cursor: pointer;
-      font-size: 1rem;
-      text-decoration: none;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      transition: all 0.2s;
-      border: none;
+      padding: 0.85rem 1.8rem; border-radius: 10px; font-weight: 700; cursor: pointer;
+      font-size: 0.95rem; text-decoration: none; display: inline-flex; align-items: center; justify-content: center;
+      transition: all 0.2s; border: none;
     }
-    .btn-primary { background: var(--accent); color: white; }
-    .btn-primary:hover { background: var(--accent-hover); transform: translateY(-2px); }
+    .btn-primary { background: var(--accent); color: white; box-shadow: 0 4px 14px var(--accent-glow); }
+    .btn-primary:hover { background: var(--accent-hover); transform: translateY(-1px); }
     .btn-secondary { background: rgba(255, 255, 255, 0.06); color: white; border: 1px solid var(--card-border); }
     .btn-secondary:hover { background: rgba(255, 255, 255, 0.12); }
 
-    /* Live Analytics HUD Dock */
-    #tracking-hud {
-      position: fixed;
-      bottom: 0;
-      left: 0;
-      right: 0;
-      z-index: 1000;
-      background: rgba(11, 15, 25, 0.94);
-      backdrop-filter: blur(12px);
-      border-top: 1px solid rgba(99, 102, 241, 0.3);
-      padding: 0.75rem 2rem;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      font-size: 0.85rem;
+    /* Floating trigger & HUD */
+    #hud-pill-trigger {
+      position: fixed; bottom: 20px; right: 20px; z-index: 999;
+      background: #111827; border: 1px solid rgba(99, 102, 241, 0.4);
+      border-radius: 9999px; padding: 0.45rem 1rem; display: flex; align-items: center; gap: 0.5rem;
+      cursor: pointer; font-size: 0.78rem; font-family: var(--font-mono); color: #c7d2fe;
     }
-    .hud-stat { color: var(--text-muted); }
-    .hud-stat strong { color: #fff; font-family: monospace; }
-    .hud-btn {
-      background: rgba(99, 102, 241, 0.2);
-      border: 1px solid rgba(99, 102, 241, 0.4);
-      color: #c7d2fe;
-      padding: 0.4rem 0.85rem;
-      border-radius: 8px;
-      font-size: 0.78rem;
-      font-weight: 600;
-      cursor: pointer;
-      text-decoration: none;
+    .hud-dot { width: 8px; height: 8px; background: var(--emerald); border-radius: 50%; box-shadow: 0 0 6px var(--emerald); }
+
+    #tracking-hud-drawer {
+      position: fixed; bottom: 0; left: 0; right: 0; z-index: 1000;
+      background: rgba(11, 15, 25, 0.96); backdrop-filter: blur(14px);
+      border-top: 1px solid rgba(99, 102, 241, 0.35); padding: 0.85rem 2rem;
+      display: none; align-items: center; justify-content: space-between; font-size: 0.84rem;
     }
-    .hud-btn:hover { background: var(--accent); color: white; }
 
     #toast {
-      position: fixed;
-      top: 20px;
-      right: 20px;
-      background: #1e293b;
-      border: 1px solid rgba(99, 102, 241, 0.4);
-      color: white;
-      padding: 0.85rem 1.25rem;
-      border-radius: 12px;
-      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
-      display: none;
-      z-index: 2000;
+      position: fixed; top: 24px; right: 24px; z-index: 2000;
+      background: #1e1b4b; border: 1px solid rgba(99, 102, 241, 0.5);
+      color: white; padding: 0.85rem 1.4rem; border-radius: 12px;
+      display: none; font-size: 0.9rem; font-weight: 500;
     }
   </style>
 </head>
@@ -211,42 +142,47 @@
 
   <header>
     <a href="index.html" class="brand" id="product-brand-link">
-      <span style="background: linear-gradient(135deg, #6366f1, #a855f7); width:32px; height:32px; border-radius:8px; display:inline-flex; align-items:center; justify-content:center;">A</span>
+      <div class="brand-logo">A</div>
       <span>Aura Store</span>
     </a>
     <ul class="nav-links">
       <li><a href="index.html" id="link-home">Home</a></li>
-      <li><a href="product.html" class="active" id="link-product">Products</a></li>
+      <li><a href="product.html?id=runner" class="active" id="link-product">Products</a></li>
       <li><a href="checkout.html" id="link-checkout">Checkout</a></li>
     </ul>
     <div>
-      <a href="checkout.html" class="btn btn-secondary" style="padding: 0.45rem 1rem; font-size: 0.85rem;" id="nav-cart-btn">🛒 Checkout</a>
+      <a href="checkout.html" class="btn btn-secondary" style="padding: 0.45rem 1rem; font-size: 0.85rem;" id="nav-cart-btn">
+        🛒 Cart (<span id="cart-counter">0</span>)
+      </a>
     </div>
   </header>
 
   <div class="container">
     <div class="breadcrumb">
       <a href="index.html" id="bc-home">Home</a> &gt; 
-      <a href="index.html" id="bc-footwear">Footwear</a> &gt; 
-      <span>Monochrome Runner V2</span>
+      <a href="index.html" id="bc-category"><span id="bc-cat-name">Footwear</span></a> &gt; 
+      <span id="bc-product-name">Monochrome Runner V2</span>
     </div>
 
     <div class="product-layout">
       <div class="gallery-box" id="product-gallery">
-        👟
+        <svg id="product-vector-svg" class="product-hero-vector" viewBox="0 0 100 100" fill="none">
+          <path d="M15 65C15 65 30 68 50 68C70 68 85 62 85 55C85 45 75 42 65 42L55 35L35 48L15 65Z" fill="#1e293b" stroke="#38bdf8" stroke-width="2.5"/>
+          <path d="M15 68H85V75H15V68Z" fill="#0f172a" stroke="#38bdf8" stroke-width="2"/>
+        </svg>
       </div>
 
       <div class="product-details">
-        <span class="badge-pill">Best Seller</span>
+        <span class="badge-pill" id="product-badge">Top Seller</span>
         <h1 id="product-heading">Monochrome Runner V2</h1>
         <div class="price-tag" id="product-price">$145.00</div>
         
         <div class="rating">
-          ★★★★★ <span>(4.9 / 5 from 182 verified reviews)</span>
+          ★★★★★ <span>(4.9 / 5 from 182 verified customers)</span>
         </div>
 
-        <p class="description">
-          Engineered for all-day comfort and street-ready aesthetics. Crafted from breathable recycled knit fabric, reinforced TPU heel support, and ultralight dual-density EVA foam.
+        <p class="description" id="product-description">
+          Engineered for all-day comfort and street-ready aesthetics. Crafted from breathable recycled knit fabric, reinforced TPU heel support, and ultralight dual-density EVA foam cushioning.
         </p>
 
         <div class="options-group">
@@ -262,29 +198,61 @@
 
         <div class="action-row">
           <button class="btn btn-primary" id="btn-add-to-cart" onclick="handleAddToCart()">🛒 Add to Cart</button>
-          <a href="checkout.html" class="btn btn-secondary" id="btn-buy-now">⚡ Buy Now</a>
+          <a href="checkout.html" class="btn btn-secondary" id="btn-buy-now">⚡ Proceed to Checkout</a>
         </div>
       </div>
     </div>
   </div>
 
-  <div id="tracking-hud">
+  <!-- Unobtrusive Floating Trigger -->
+  <div id="hud-pill-trigger" onclick="toggleHud(true)">
+    <div class="hud-dot"></div>
+    <span>TraceFlow Active</span>
+  </div>
+
+  <!-- Expandable Developer HUD Drawer -->
+  <div id="tracking-hud-drawer">
     <div style="display:flex; align-items:center; gap: 1.25rem;">
-      <div style="width:10px; height:10px; background:#10b981; border-radius:50%;" title="Active"></div>
-      <div class="hud-stat">Session: <strong id="hud-session-id">...</strong></div>
-      <div class="hud-stat">Page: <strong>/demo/product.html</strong></div>
+      <div class="hud-dot"></div>
+      <div style="color: var(--text-muted);">Session: <strong style="color: #fff; font-family: monospace;" id="hud-session-id">...</strong></div>
+      <div style="color: var(--text-muted);">Page: <strong style="color: #38bdf8; font-family: monospace;">/demo/product.html</strong></div>
     </div>
-    <div style="display:flex; gap: 0.75rem;">
-      <a href="index.html" class="hud-btn" id="hud-back-home">← Back to Store</a>
-      <a href="checkout.html" class="hud-btn" id="hud-to-checkout">Proceed to Checkout →</a>
-      <a href="http://localhost:5173" target="_blank" class="hud-btn" style="background:#4f46e5; color:white;" id="hud-open-dash">Dashboard ↗</a>
+    <div style="display:flex; align-items:center; gap: 0.75rem;">
+      <a href="index.html" class="btn btn-secondary" style="padding: 0.35rem 0.75rem; font-size: 0.8rem;">← Back to Store</a>
+      <a href="checkout.html" class="btn btn-secondary" style="padding: 0.35rem 0.75rem; font-size: 0.8rem;">Checkout →</a>
+      <a href="http://localhost:5173" target="_blank" class="btn btn-primary" style="padding: 0.35rem 0.75rem; font-size: 0.8rem;">Dashboard ↗</a>
+      <button onclick="toggleHud(false)" style="background:transparent; border:1px solid rgba(255,255,255,0.2); color:#94a3b8; border-radius:6px; padding:0.2rem 0.5rem; cursor:pointer;">✕ Minimize</button>
     </div>
   </div>
 
   <div id="toast"></div>
 
   <script>
+    var cartItems = parseInt(sessionStorage.getItem('aura_cart_count') || '0', 10);
+    document.getElementById('cart-counter').innerText = cartItems;
     var selectedSize = 9;
+
+    // Dynamic product loader based on URL query param
+    var params = new URLSearchParams(window.location.search);
+    var pid = params.get('id') || 'runner';
+
+    var PRODUCTS = {
+      runner: { name: 'Monochrome Runner V2', price: '$145.00', numPrice: 145, category: 'Footwear', badge: 'Top Seller', desc: 'Ultra-light breathable knit upper with dual-density ergonomic foam cushion.' },
+      tee: { name: 'Heavyweight Combed Tee', price: '$48.00', numPrice: 48, category: 'Apparel', badge: 'Organic Cotton', desc: '280 GSM organic combed cotton crafted in an architectural boxy drape.' },
+      pack: { name: 'Commuter Waterproof Pack', price: '$120.00', numPrice: 120, category: 'Accessories', badge: 'Weatherproof', desc: 'TPU matte-coated fabric with dedicated padded 16" laptop sleeve.' },
+      watch: { name: 'Titanium Minimalist Timepiece', price: '$185.00', numPrice: 185, category: 'Accessories', badge: 'Sapphire Crystal', desc: 'Sapphire crystal face with genuine vegetable-tanned leather strap.' },
+      overshirt: { name: 'Structured Overshirt', price: '$110.00', numPrice: 110, category: 'Apparel', badge: 'Wool Blend', desc: 'Heavyweight brushed wool blend designed for clean seasonal layering.' },
+      boot: { name: 'All-Terrain Chelsea Boot', price: '$195.00', numPrice: 195, category: 'Footwear', badge: 'Vibram Outsole', desc: 'Full-grain waterproof nubuck with reinforced lugged Vibram rubber outsole.' },
+    };
+
+    var currentProd = PRODUCTS[pid] || PRODUCTS.runner;
+    document.getElementById('product-heading').innerText = currentProd.name;
+    document.getElementById('bc-product-name').innerText = currentProd.name;
+    document.getElementById('bc-cat-name').innerText = currentProd.category;
+    document.getElementById('product-price').innerText = currentProd.price;
+    document.getElementById('product-badge').innerText = currentProd.badge;
+    document.getElementById('product-description').innerText = currentProd.desc;
+    document.title = 'Aura Store — ' + currentProd.name;
 
     function selectSize(sz, btn) {
       selectedSize = sz;
@@ -293,17 +261,25 @@
     }
 
     function handleAddToCart() {
+      cartItems++;
+      sessionStorage.setItem('aura_cart_count', cartItems);
+      document.getElementById('cart-counter').innerText = cartItems;
       var toast = document.getElementById('toast');
-      toast.innerHTML = '✅ Added <strong>Monochrome Runner V2 (Size ' + selectedSize + ')</strong> to cart!';
+      toast.innerHTML = '✅ Added <strong>' + currentProd.name + ' (Size ' + selectedSize + ')</strong> to cart';
       toast.style.display = 'block';
       setTimeout(function() { toast.style.display = 'none'; }, 2500);
+    }
+
+    function toggleHud(show) {
+      document.getElementById('tracking-hud-drawer').style.display = show ? 'flex' : 'none';
+      document.getElementById('hud-pill-trigger').style.display = show ? 'none' : 'flex';
     }
 
     window.addEventListener('DOMContentLoaded', function() {
       setTimeout(function() {
         if (window.TraceFlow) {
           var sid = window.TraceFlow.getSessionId();
-          document.getElementById('hud-session-id').innerText = sid.slice(0, 16) + '...';
+          document.getElementById('hud-session-id').innerText = sid.slice(0, 14) + '...';
         }
       }, 100);
     });

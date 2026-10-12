@@ -6,6 +6,20 @@
 const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
 /**
+ * Serialize query parameters safely
+ */
+function toQueryString(params = {}) {
+  const query = new URLSearchParams();
+  Object.entries(params).forEach(([key, val]) => {
+    if (val !== undefined && val !== null && val !== '') {
+      query.append(key, String(val));
+    }
+  });
+  const str = query.toString();
+  return str ? `?${str}` : '';
+}
+
+/**
  * Helper to handle HTTP responses safely
  */
 async function request(endpoint, options = {}) {
@@ -32,17 +46,19 @@ async function request(endpoint, options = {}) {
 }
 
 /**
- * Fetch high-level summary overview metrics
+ * Fetch high-level summary overview metrics with date & simulation filters
  */
-export async function getOverview() {
-  return request('/analytics/overview');
+export async function getOverview(params = {}) {
+  return request(`/analytics/overview${toQueryString(params)}`);
 }
 
 /**
- * Fetch list of tracked sessions with pagination
+ * Fetch list of tracked sessions with pagination, sorting, search, and filters
  */
-export async function getSessions(page = 1, limit = 50) {
-  return request(`/sessions?page=${page}&limit=${limit}`);
+export async function getSessions(params = {}) {
+  const defaults = { page: 1, limit: 50 };
+  const query = { ...defaults, ...params };
+  return request(`/sessions${toQueryString(query)}`);
 }
 
 /**
@@ -55,15 +71,19 @@ export async function getSessionEvents(sessionId) {
 /**
  * Fetch list of distinct tracked pages for Heatmap selector
  */
-export async function getTrackedPages() {
-  return request('/analytics/pages');
+export async function getTrackedPages(params = {}) {
+  return request(`/analytics/pages${toQueryString(params)}`);
 }
 
 /**
- * Fetch click coordinates for a given page URL
+ * Fetch click coordinates for a given page URL with device & time filtering
  */
-export async function getPageClicks(pageUrl) {
-  return request(`/analytics/clicks?url=${encodeURIComponent(pageUrl)}`);
+export async function getPageClicks(params = {}) {
+  // Can pass url directly or params object
+  if (typeof params === 'string') {
+    params = { url: params };
+  }
+  return request(`/analytics/clicks${toQueryString(params)}`);
 }
 
 /**

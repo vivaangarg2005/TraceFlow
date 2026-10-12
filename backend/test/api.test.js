@@ -205,3 +205,40 @@ test('10. Fetch overview metrics (GET /api/analytics/overview)', async () => {
   assert.strictEqual(data.data.totalPageViews, 2);
   assert.strictEqual(data.data.totalClicks, 3);
 });
+
+test('11. Privacy scrubbing: redacts sensitive card numbers and email patterns in elementText', async () => {
+  const payload = {
+    sessionId: 'test_session_privacy',
+    eventType: 'click',
+    url: 'http://localhost:3000/checkout.html',
+    x: 100,
+    y: 200,
+    elementTag: 'INPUT',
+    elementText: 'user@secretbank.com entered 4242-4242-4242-4242',
+  };
+
+  const res = await fetch(`${BASE_URL}/api/events`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  });
+
+  assert.strictEqual(res.status, 201);
+  const data = await res.json();
+  assert.strictEqual(data.success, true);
+  assert.match(data.data.elementText, /\[Email Redacted\]/);
+  assert.match(data.data.elementText, /\[Card Number Redacted\]/);
+});
+
+test('12. Query filtering supports timeRange and simulation isolation', async () => {
+  const res = await fetch(`${BASE_URL}/api/sessions?timeRange=today&includeSimulated=true`);
+  assert.strictEqual(res.status, 200);
+  const data = await res.json();
+  assert.strictEqual(data.success, true);
+  assert.ok(Array.isArray(data.data));
+  assert.ok(data.data.length >= 2);
+  // Ensure human-readable visitorLabel is provided
+  assert.ok(data.data[0].visitorLabel !== undefined);
+  assert.ok(data.data[0].entryPage !== undefined);
+});
+

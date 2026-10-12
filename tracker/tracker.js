@@ -5,14 +5,15 @@
  * Captures user interactions (page views and clicks with coordinates) and dispatches
  * them to the TraceFlow backend API.
  * 
- * Features:
- * - Persistent session management (localStorage with fallback to cookies)
- * - Automatic 30-minute session expiry / renewal
- * - Automatic page_view capture on load and SPA route changes (popstate/pushState)
- * - Click tracking with exact page coordinates (x, y) and viewport percentages (xPercent, yPercent)
- * - DOM element context capture (tag, id, text, classes) for heatmap breakdown
- * - Non-blocking dispatch via navigator.sendBeacon & fetch keepalive
- * - Configurable via <script data-endpoint="..."> or TraceFlow.init()
+ * Core Features & Privacy Guarantees:
+ * - Persistent session management (localStorage with fallback to cookies, 30-min window)
+ * - Automatic page_view capture on initial load and SPA route changes (popstate/pushState)
+ * - Strict Privacy-First DOM scraping: Form inputs, passwords, emails, and sensitive values
+ *   are NEVER collected or transmitted.
+ * - Accurate coordinate semantics: distinguishes document-relative (x, y) across full page
+ *   length from visible viewport-relative percentages (clientXPercent, clientYPercent).
+ * - Records scroll position (scrollX, scrollY), document dimensions, and device classification.
+ * - Resilient non-blocking transmission via navigator.sendBeacon with fetch keepalive fallback.
  */
 
 (function (window, document) {
@@ -68,6 +69,16 @@
   }
 
   /**
+   * Detect Device Type based on viewport width
+   */
+  function getDeviceType() {
+    var width = window.innerWidth || document.documentElement.clientWidth || 1024;
+    if (width <= 768) return 'mobile';
+    if (width <= 1024) return 'tablet';
+    return 'desktop';
+  }
+
+  /**
    * Generate a unique Session ID (UUID v4 format)
    */
   function generateUUID() {
@@ -120,24 +131,19 @@
     var sessionId = null;
     var expiry = null;
 
-    // Try localStorage
     try {
       sessionId = localStorage.getItem(config.sessionKey);
       expiry = parseInt(localStorage.getItem(config.sessionExpiryKey) || '0', 10);
     } catch (e) {
-      // Fallback to cookie
       sessionId = getCookie(config.sessionKey);
       expiry = parseInt(getCookie(config.sessionExpiryKey) || '0', 10);
     }
 
-    // Check if session exists and is still valid
     if (sessionId && expiry && now < expiry) {
-      // Extend session expiry
       refreshSessionExpiry();
       return sessionId;
     }
 
-    // Otherwise, generate a new session
     sessionId = generateUUID();
     log('Created new session:', sessionId);
 
@@ -165,6 +171,96 @@
   }
 
   /**
+   * Safe DOM Element Text Extraction with Strict Privacy Guarantees
+   * NEVER captures passwords, typed input values, credit cards, or private content.
+   */
+  function getSafeElementText(target) {
+    if (!target) return '';
+
+    var tag = target.tagName ? target.tagName.toUpperCase() : '';
+
+    // If element is an input, textarea, or select: NEVER read raw user input value!
+    if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') {
+      var type = (target.type || '').toLowerCase();
+      // Only read value if it's explicitly a button/submit label
+      if (type === 'button' || type === 'submit' || type === 'reset') {
+        return (target.value || '').trim().slice(0, 80);
+      }
+      // For text, password, email, number, credit card: mask it!
+      var placeholder = target.placeholder ? '[' + target.placeholder + ']' : '';
+      var ariaLabel = target.getAttribute('aria-label') ? '[' + target.getAttribute('aria-label') + ']' : '';
+      var name = target.name || target.id ? '(' + (target.name || target.id) + ')' : '';
+      return (ariaLabel || placeholder || name || '[Input Field]').slice(0, 80);
+    }
+
+    // Check for developer-defined privacy masking attribute
+    if (target.hasAttribute('data-tf-mask') || target.hasAttribute('data-private')) {
+      return '[Redacted Content]';
+    }
+
+    // Extract text content from button, link, heading, card, etc.
+    var text = target.innerText || target.textContent || target.alt || target.title || '';
+    var cleaned = text.trim().replace(/\s+/g, ' ');
+
+    // Security check: Redact if text accidentally looks like an email or credit card number
+    if (/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/.test(cleaned)) {
+      cleaned = '[Email Redacted]';
+    }
+    if (/\b(?:\d[ -]*?){13,16}\b/.test(cleaned)) {
+      cleaned = '[Card Number Redacted]';
+    }
+
+    return cleaned.slice(0, 100);
+  }
+
+  /**
+   * Determine the page section/landmark where an element resides
+   */
+  function getElementSection(target) {
+    if (!target || !target.closest) return 'main';
+
+    try {
+      if (target.closest('header, nav, #header, .header')) return 'header';
+      if (target.closest('#hero, .hero, .hero-section')) return 'hero';
+      if (target.closest('#cart, .cart-drawer, .cart-modal')) return 'cart';
+      if (target.closest('#checkout, .checkout-section, form#checkout-form')) return 'checkout';
+      if (target.closest('.product-grid, #products, .catalog')) return 'catalog';
+      if (target.closest('.product-details, .product-layout')) return 'product-details';
+      if (target.closest('footer, #footer, .footer')) return 'footer';
+      if (target.closest('aside, .sidebar')) return 'sidebar';
+    } catch (e) {}
+
+    return 'main';
+  }
+
+  /**
+   * Generate a concise CSS selector for debugging
+   */
+  function getElementSelector(target) {
+    if (!target) return '';
+    try {
+      var parts = [];
+      var curr = target;
+      while (curr && curr.nodeType === Node.ELEMENT_NODE && parts.length < 3) {
+        var part = curr.tagName.toLowerCase();
+        if (curr.id) {
+          part += '#' + curr.id;
+          parts.unshift(part);
+          break;
+        } else if (curr.className && typeof curr.className === 'string') {
+          var firstClass = curr.className.trim().split(/\s+/)[0];
+          if (firstClass) part += '.' + firstClass;
+        }
+        parts.unshift(part);
+        curr = curr.parentElement;
+      }
+      return parts.join(' > ');
+    } catch (e) {
+      return target.tagName ? target.tagName.toLowerCase() : '';
+    }
+  }
+
+  /**
    * Send queued events to the backend API
    */
   function flushQueue() {
@@ -176,7 +272,7 @@
     var jsonString = JSON.stringify(payload);
     log('Flushing events count:', payload.length, payload);
 
-    // 1. Try navigator.sendBeacon (ideal for async non-blocking delivery and page unloads)
+    // 1. Try navigator.sendBeacon
     var beaconSent = false;
     if (navigator.sendBeacon) {
       try {
@@ -187,7 +283,7 @@
       }
     }
 
-    // 2. Fallback to fetch with keepalive if beacon was not supported or returned false
+    // 2. Fallback to fetch with keepalive
     if (!beaconSent && window.fetch) {
       fetch(config.endpoint, {
         method: 'POST',
@@ -218,12 +314,10 @@
   function enqueueEvent(eventData) {
     eventQueue.push(eventData);
 
-    // Also dispatch a browser custom event for local UI updates or debugging
     try {
       window.dispatchEvent(new CustomEvent('traceflow:event', { detail: eventData }));
     } catch (e) {}
 
-    // Flush immediately if queue reaches 5 events or on timer
     if (eventQueue.length >= 5) {
       if (dispatchTimer) clearTimeout(dispatchTimer);
       flushQueue();
@@ -244,6 +338,17 @@
     var sessionId = getSessionId();
     var currentUrl = customUrl || window.location.href;
 
+    var docWidth = Math.max(
+      document.documentElement ? document.documentElement.scrollWidth : 0,
+      document.body ? document.body.scrollWidth : 0,
+      window.innerWidth || 1
+    );
+    var docHeight = Math.max(
+      document.documentElement ? document.documentElement.scrollHeight : 0,
+      document.body ? document.body.scrollHeight : 0,
+      window.innerHeight || 1
+    );
+
     var event = {
       sessionId: sessionId,
       eventType: 'page_view',
@@ -253,6 +358,12 @@
       timestamp: new Date().toISOString(),
       viewportWidth: window.innerWidth || document.documentElement.clientWidth || 0,
       viewportHeight: window.innerHeight || document.documentElement.clientHeight || 0,
+      documentWidth: Math.round(docWidth),
+      documentHeight: Math.round(docHeight),
+      scrollX: Math.round(window.scrollX || window.pageXOffset || 0),
+      scrollY: Math.round(window.scrollY || window.pageYOffset || 0),
+      deviceType: getDeviceType(),
+      isSimulated: false,
       metadata: {
         referrer: document.referrer || '',
         userAgent: navigator.userAgent || '',
@@ -266,35 +377,47 @@
   }
 
   /**
-   * Track a Click event
+   * Track a Click event with accurate document coordinates and privacy safeguards
    */
   function trackClick(e) {
     if (!e) return;
 
     var sessionId = getSessionId();
 
-    // Calculate document-relative coordinates (x, y)
+    // Document-relative coordinates (x, y)
     var pageX = typeof e.pageX === 'number' ? e.pageX : e.clientX + (window.scrollX || window.pageXOffset || 0);
     var pageY = typeof e.pageY === 'number' ? e.pageY : e.clientY + (window.scrollY || window.pageYOffset || 0);
 
-    // Calculate viewport dimensions
-    var viewportWidth = window.innerWidth || document.documentElement.clientWidth || 1;
-    var viewportHeight = window.innerHeight || document.documentElement.clientHeight || 1;
+    // Viewport dimensions
+    var vpWidth = window.innerWidth || document.documentElement.clientWidth || 1;
+    var vpHeight = window.innerHeight || document.documentElement.clientHeight || 1;
 
-    // Normalized percentage coordinates (0 - 100%) for responsive heatmap overlay
-    var xPercent = Math.min(100, Math.max(0, Number(((pageX / viewportWidth) * 100).toFixed(2))));
-    var yPercent = Math.min(100, Math.max(0, Number(((pageY / viewportHeight) * 100).toFixed(2))));
+    // Full document dimensions
+    var docWidth = Math.max(
+      document.documentElement ? document.documentElement.scrollWidth : 0,
+      document.body ? document.body.scrollWidth : 0,
+      vpWidth
+    );
+    var docHeight = Math.max(
+      document.documentElement ? document.documentElement.scrollHeight : 0,
+      document.body ? document.body.scrollHeight : 0,
+      vpHeight
+    );
 
-    // Extract target DOM element context
+    // Document-relative percentage (true spatial position across entire scrollable page)
+    var docXPercent = Math.min(100, Math.max(0, Number(((pageX / docWidth) * 100).toFixed(2))));
+    var docYPercent = Math.min(100, Math.max(0, Number(((pageY / docHeight) * 100).toFixed(2))));
+
+    // Viewport-relative percentage (position on visible screen at time of click)
+    var clientXPercent = Math.min(100, Math.max(0, Number(((e.clientX / vpWidth) * 100).toFixed(2))));
+    var clientYPercent = Math.min(100, Math.max(0, Number(((e.clientY / vpHeight) * 100).toFixed(2))));
+
     var target = e.target;
     var elementTag = target && target.tagName ? target.tagName.toUpperCase() : '';
     var elementId = target && target.id ? target.id : '';
-    var elementText = '';
-
-    if (target) {
-      var rawText = target.innerText || target.textContent || target.value || target.alt || '';
-      elementText = rawText.trim().replace(/\s+/g, ' ').slice(0, 100);
-    }
+    var elementText = getSafeElementText(target);
+    var elementSection = getElementSection(target);
+    var elementSelector = getElementSelector(target);
 
     var event = {
       sessionId: sessionId,
@@ -305,13 +428,23 @@
       timestamp: new Date().toISOString(),
       x: Math.round(pageX),
       y: Math.round(pageY),
-      xPercent: xPercent,
-      yPercent: yPercent,
-      viewportWidth: viewportWidth,
-      viewportHeight: viewportHeight,
+      xPercent: docXPercent,
+      yPercent: docYPercent,
+      clientXPercent: clientXPercent,
+      clientYPercent: clientYPercent,
+      viewportWidth: vpWidth,
+      viewportHeight: vpHeight,
+      documentWidth: Math.round(docWidth),
+      documentHeight: Math.round(docHeight),
+      scrollX: Math.round(window.scrollX || window.pageXOffset || 0),
+      scrollY: Math.round(window.scrollY || window.pageYOffset || 0),
       elementTag: elementTag,
       elementId: elementId,
       elementText: elementText,
+      elementSection: elementSection,
+      elementSelector: elementSelector,
+      deviceType: getDeviceType(),
+      isSimulated: false,
       metadata: {
         button: e.button,
         ctrlKey: e.ctrlKey,
@@ -319,7 +452,7 @@
       },
     };
 
-    log('Click captured:', event);
+    log('Click captured safely:', event);
     enqueueEvent(event);
   }
 
@@ -330,7 +463,7 @@
     // 1. Initial Page View
     trackPageView();
 
-    // 2. Global Click Capture (Capture phase to catch clicks on nested elements)
+    // 2. Global Click Capture (Capture phase)
     document.addEventListener('click', trackClick, true);
 
     // 3. SPA Route Change Listeners
@@ -338,7 +471,6 @@
       trackPageView();
     });
 
-    // Monkey-patch history.pushState and history.replaceState for SPA frameworks
     var originalPushState = window.history.pushState;
     if (typeof originalPushState === 'function') {
       window.history.pushState = function () {
@@ -359,7 +491,7 @@
       };
     }
 
-    // 4. Ensure remaining events flush when user closes tab or navigates away
+    // 4. Ensure remaining events flush on tab close/unload
     window.addEventListener('beforeunload', function () {
       flushQueue();
     });
@@ -368,12 +500,12 @@
       flushQueue();
     });
 
-    log('TraceFlow initialized successfully. Active Session:', getSessionId());
+    log('TraceFlow initialized safely. Active Session:', getSessionId());
   }
 
   // Public API exposed to window.TraceFlow
   window.TraceFlow = {
-    version: '1.0.0',
+    version: '2.0.0',
     init: function (opts) {
       if (opts) {
         if (opts.endpoint) config.endpoint = opts.endpoint;
@@ -391,7 +523,6 @@
     },
   };
 
-  // Start tracking when DOM is ready
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', initTracker);
   } else {

@@ -9,6 +9,12 @@ import './App.css';
 
 export default function App() {
   const [activeTab, setActiveTab] = useState('sessions'); // 'sessions' | 'heatmap'
+  const [userMode, setUserMode] = useState('owner'); // 'owner' | 'tech'
+  const [timeRange, setTimeRange] = useState('all'); // 'today' | '24h' | '7d' | '30d' | 'all'
+  const [includeSimulated, setIncludeSimulated] = useState(true);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [sortOrder, setSortOrder] = useState('lastSeen_desc');
+
   const [overview, setOverview] = useState(null);
   const [sessions, setSessions] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -20,21 +26,27 @@ export default function App() {
   const [sessionEvents, setSessionEvents] = useState([]);
   const [loadingJourney, setLoadingJourney] = useState(false);
 
-  // Show toast notification
   const showToast = useCallback((msg) => {
     setToastMessage(msg);
     setTimeout(() => {
       setToastMessage(null);
-    }, 3000);
+    }, 3200);
   }, []);
 
-  // Fetch all primary analytics data
+  // Fetch analytics metrics and sessions based on active filters
   const loadData = useCallback(async () => {
     try {
       setLoading(true);
+      const params = {
+        timeRange,
+        includeSimulated: includeSimulated ? 'true' : 'false',
+        sort: sortOrder,
+        search: searchQuery,
+      };
+
       const [overviewRes, sessionsRes] = await Promise.all([
-        getOverview(),
-        getSessions(1, 100),
+        getOverview(params),
+        getSessions({ ...params, page: 1, limit: 100 }),
       ]);
 
       if (overviewRes.success) setOverview(overviewRes.data);
@@ -45,11 +57,10 @@ export default function App() {
     } finally {
       setLoading(false);
     }
-  }, [showToast]);
+  }, [timeRange, includeSimulated, sortOrder, searchQuery, showToast]);
 
   useEffect(() => {
     loadData();
-    // Auto-refresh interval every 15 seconds
     const interval = setInterval(loadData, 15000);
     return () => clearInterval(interval);
   }, [loadData]);
@@ -71,7 +82,7 @@ export default function App() {
     }
   };
 
-  // Simulate realistic test user sessions
+  // Simulate realistic test user sessions with isSimulated flag and accurate document dimensions
   const handleGenerateDemo = async () => {
     try {
       setIsGenerating(true);
@@ -84,10 +95,16 @@ export default function App() {
           eventType: 'page_view',
           url: 'http://localhost:3000/index.html',
           path: '/index.html',
-          title: 'Aura Store | Premium Minimalist Essentials',
-          timestamp: new Date(now.getTime() - 4000).toISOString(),
+          title: 'Aura Store — Modern Minimalist Apparel & Essentials',
+          timestamp: new Date(now.getTime() - 8000).toISOString(),
           viewportWidth: 1440,
           viewportHeight: 900,
+          documentWidth: 1440,
+          documentHeight: 2100,
+          scrollX: 0,
+          scrollY: 0,
+          deviceType: 'desktop',
+          isSimulated: true,
         },
         {
           sessionId: newSessionId,
@@ -96,14 +113,22 @@ export default function App() {
           path: '/index.html',
           x: 280,
           y: 290,
-          xPercent: 19.4,
-          yPercent: 32.2,
+          xPercent: 19.44,
+          yPercent: 13.81,
           viewportWidth: 1440,
           viewportHeight: 900,
+          documentWidth: 1440,
+          documentHeight: 2100,
+          scrollX: 0,
+          scrollY: 0,
           elementTag: 'A',
           elementId: 'hero-cta-shop-now',
           elementText: 'Explore Collection',
-          timestamp: new Date(now.getTime() - 3200).toISOString(),
+          elementSection: 'hero',
+          elementSelector: 'section#hero-banner > div > a#hero-cta-shop-now',
+          deviceType: 'desktop',
+          isSimulated: true,
+          timestamp: new Date(now.getTime() - 6500).toISOString(),
         },
         {
           sessionId: newSessionId,
@@ -111,46 +136,84 @@ export default function App() {
           url: 'http://localhost:3000/index.html',
           path: '/index.html',
           x: 480,
-          y: 640,
-          xPercent: 33.3,
-          yPercent: 71.1,
+          y: 720,
+          xPercent: 33.33,
+          yPercent: 34.29,
           viewportWidth: 1440,
           viewportHeight: 900,
+          documentWidth: 1440,
+          documentHeight: 2100,
+          scrollX: 0,
+          scrollY: 300,
           elementTag: 'BUTTON',
           elementId: 'btn-cart-runner',
           elementText: 'Add to Cart',
-          timestamp: new Date(now.getTime() - 2100).toISOString(),
+          elementSection: 'catalog',
+          elementSelector: 'div.product-card > div.product-footer > button#btn-cart-runner',
+          deviceType: 'desktop',
+          isSimulated: true,
+          timestamp: new Date(now.getTime() - 4800).toISOString(),
         },
         {
           sessionId: newSessionId,
           eventType: 'page_view',
-          url: 'http://localhost:3000/product.html',
+          url: 'http://localhost:3000/product.html?id=runner',
           path: '/product.html',
-          title: 'Aura Store | Monochrome Runner V2 Details',
-          timestamp: new Date(now.getTime() - 1500).toISOString(),
+          title: 'Aura Store — Monochrome Runner V2',
+          timestamp: new Date(now.getTime() - 3200).toISOString(),
           viewportWidth: 1440,
           viewportHeight: 900,
+          documentWidth: 1440,
+          documentHeight: 1600,
+          scrollX: 0,
+          scrollY: 0,
+          deviceType: 'desktop',
+          isSimulated: true,
         },
         {
           sessionId: newSessionId,
           eventType: 'click',
-          url: 'http://localhost:3000/product.html',
+          url: 'http://localhost:3000/product.html?id=runner',
           path: '/product.html',
-          x: 720,
+          x: 620,
           y: 540,
-          xPercent: 50.0,
-          yPercent: 60.0,
+          xPercent: 43.06,
+          yPercent: 33.75,
           viewportWidth: 1440,
           viewportHeight: 900,
+          documentWidth: 1440,
+          documentHeight: 1600,
+          scrollX: 0,
+          scrollY: 0,
           elementTag: 'BUTTON',
           elementId: 'btn-add-to-cart',
           elementText: 'Add to Cart',
-          timestamp: new Date(now.getTime() - 500).toISOString(),
+          elementSection: 'product-details',
+          elementSelector: 'div.product-details > div.action-row > button#btn-add-to-cart',
+          deviceType: 'desktop',
+          isSimulated: true,
+          timestamp: new Date(now.getTime() - 1800).toISOString(),
+        },
+        {
+          sessionId: newSessionId,
+          eventType: 'page_view',
+          url: 'http://localhost:3000/checkout.html',
+          path: '/checkout.html',
+          title: 'Aura Store — Secure Checkout',
+          timestamp: new Date(now.getTime() - 800).toISOString(),
+          viewportWidth: 1440,
+          viewportHeight: 900,
+          documentWidth: 1440,
+          documentHeight: 1200,
+          scrollX: 0,
+          scrollY: 0,
+          deviceType: 'desktop',
+          isSimulated: true,
         },
       ];
 
       await trackEvents(sampleEvents);
-      showToast(`⚡ Generated sample session "${newSessionId}" with 5 events!`);
+      showToast(`⚡ Generated demo visit "${newSessionId}" with 6 simulated funnel steps!`);
       await loadData();
     } catch (err) {
       console.error('Simulation error:', err);
@@ -166,6 +229,12 @@ export default function App() {
       <Header
         activeTab={activeTab}
         setActiveTab={setActiveTab}
+        userMode={userMode}
+        setUserMode={setUserMode}
+        timeRange={timeRange}
+        setTimeRange={setTimeRange}
+        includeSimulated={includeSimulated}
+        setIncludeSimulated={setIncludeSimulated}
         onRefresh={loadData}
         loading={loading}
         onGenerateDemo={handleGenerateDemo}
@@ -175,18 +244,27 @@ export default function App() {
       {/* Main Dashboard Body */}
       <main className="app-container">
         {/* KPI Metrics Strip */}
-        <OverviewCards overview={overview} />
+        <OverviewCards overview={overview} userMode={userMode} />
 
         {/* View Switcher: Sessions vs Heatmap */}
         {activeTab === 'sessions' ? (
           <SessionsView
             sessions={sessions}
             loading={loading}
+            userMode={userMode}
             onSelectSession={handleSelectSession}
             onSimulate={handleGenerateDemo}
+            searchQuery={searchQuery}
+            setSearchQuery={setSearchQuery}
+            sortOrder={sortOrder}
+            setSortOrder={setSortOrder}
           />
         ) : (
-          <HeatmapView />
+          <HeatmapView
+            userMode={userMode}
+            timeRange={timeRange}
+            includeSimulated={includeSimulated}
+          />
         )}
       </main>
 
@@ -196,6 +274,7 @@ export default function App() {
           sessionData={selectedSession}
           events={sessionEvents}
           loading={loadingJourney}
+          userMode={userMode}
           onClose={() => {
             setSelectedSession(null);
             setSessionEvents([]);

@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 
-export default function UserJourneyModal({ sessionData, events, loading, onClose }) {
+export default function UserJourneyModal({ sessionData, events, loading, onClose, userMode }) {
   const [selectedRawEvent, setSelectedRawEvent] = useState(null);
+  const [modalMode, setModalMode] = useState(userMode || 'owner'); // 'owner' | 'tech'
 
   if (!sessionData) return null;
 
@@ -24,6 +25,38 @@ export default function UserJourneyModal({ sessionData, events, loading, onClose
     return `+${diff.toFixed(2)}s`;
   }
 
+  // Generate plain-English story description of an event
+  function getStoryText(evt) {
+    if (evt.eventType === 'page_view') {
+      const path = evt.path || evt.url;
+      if (path.includes('checkout')) return 'Navigated to Secure Checkout Page';
+      if (path.includes('product')) return 'Viewed Product Details Page';
+      return `Landed on Storefront (${evt.title || path})`;
+    }
+
+    if (evt.eventType === 'click') {
+      const tag = evt.elementTag || 'element';
+      const text = evt.elementText ? `"${evt.elementText}"` : '';
+      const id = evt.elementId ? `#${evt.elementId}` : '';
+
+      if (id.includes('cart') || text.toLowerCase().includes('cart')) {
+        return `Added item to cart: clicked ${text || 'Add to Cart'}`;
+      }
+      if (id.includes('checkout') || text.toLowerCase().includes('order')) {
+        return `Initiated checkout: clicked ${text || 'Complete Order'}`;
+      }
+      if (text.toLowerCase().includes('explore') || text.toLowerCase().includes('shop')) {
+        return `Engaged with hero call-to-action: clicked ${text}`;
+      }
+      if (id.includes('size')) {
+        return `Selected product sizing option ${text}`;
+      }
+      return `Clicked ${tag.toLowerCase()} ${text} in ${evt.elementSection || 'main'} section`;
+    }
+
+    return 'User action recorded';
+  }
+
   return (
     <div className="modal-backdrop" onClick={onClose}>
       <div className="modal-card glass-card" onClick={(e) => e.stopPropagation()}>
@@ -32,68 +65,95 @@ export default function UserJourneyModal({ sessionData, events, loading, onClose
           <div>
             <div className="modal-eyebrow">
               <span className="live-indicator-dot"></span>
-              USER JOURNEY AUDIT
+              {sessionData.isSimulated ? 'DEMO SIMULATION AUDIT' : 'GENUINE VISITOR JOURNEY'}
             </div>
             <h2 className="modal-title">
-              Session <span className="mono" style={{ color: '#a5b4fc' }}>{sessionData.sessionId}</span>
+              {modalMode === 'owner' ? (
+                <>
+                  Customer Journey: <strong>{sessionData.visitorLabel || 'Visitor'}</strong>
+                </>
+              ) : (
+                <>
+                  Session <span className="mono" style={{ color: '#a5b4fc', fontSize: '1.1rem' }}>{sessionData.sessionId}</span>
+                </>
+              )}
             </h2>
           </div>
 
-          <button className="modal-close-btn" onClick={onClose} title="Close Modal">
-            ✕
-          </button>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+            {/* Modal Local Mode Switcher */}
+            <div className="mode-toggle-pill">
+              <button
+                className={`mode-pill-btn ${modalMode === 'owner' ? 'active' : ''}`}
+                onClick={() => setModalMode('owner')}
+              >
+                Story View
+              </button>
+              <button
+                className={`mode-pill-btn ${modalMode === 'tech' ? 'active' : ''}`}
+                onClick={() => setModalMode('tech')}
+              >
+                Technical View
+              </button>
+            </div>
+
+            <button className="modal-close-btn" onClick={onClose} title="Close Inspection Modal">
+              ✕
+            </button>
+          </div>
         </div>
 
-        {/* Journey Metadata Strip */}
+        {/* Milestone Summary Strip */}
         <div className="journey-summary-strip">
           <div className="summary-metric">
-            <span className="summary-label">Total Events</span>
+            <span className="summary-label">Total Actions</span>
             <span className="summary-val">{events.length}</span>
           </div>
           <div className="summary-metric">
-            <span className="summary-label">Duration</span>
+            <span className="summary-label">Active Time</span>
             <span className="summary-val">{sessionData.durationSeconds || 0}s</span>
           </div>
           <div className="summary-metric">
-            <span className="summary-label">Page Views</span>
+            <span className="summary-label">Pages Explored</span>
             <span className="summary-val" style={{ color: '#38bdf8' }}>
-              {events.filter((e) => e.eventType === 'page_view').length}
+              {new Set(events.map((e) => e.path || e.url)).size}
             </span>
           </div>
           <div className="summary-metric">
-            <span className="summary-label">Interactions / Clicks</span>
-            <span className="summary-val" style={{ color: '#fbbf24' }}>
-              {events.filter((e) => e.eventType === 'click').length}
+            <span className="summary-label">Cart Engagement</span>
+            <span className="summary-val" style={{ color: events.some((e) => e.elementId?.includes('cart') || e.elementText?.toLowerCase().includes('cart')) ? '#34d399' : '#94a3b8' }}>
+              {events.some((e) => e.elementId?.includes('cart') || e.elementText?.toLowerCase().includes('cart')) ? 'Yes' : 'No'}
             </span>
           </div>
           <div className="summary-metric">
-            <span className="summary-label">Started At</span>
-            <span className="summary-val mono" style={{ fontSize: '0.85rem' }}>
-              {events[0] ? formatTime(events[0].timestamp) : 'N/A'}
+            <span className="summary-label">Device Type</span>
+            <span className="summary-val" style={{ textTransform: 'capitalize' }}>
+              {sessionData.deviceType || 'Desktop'}
             </span>
           </div>
         </div>
 
-        {/* Timeline Body */}
+        {/* Modal Scrollable Timeline Body */}
         <div className="modal-body">
           {loading ? (
             <div className="timeline-loading">
               <div className="spin-icon" style={{ fontSize: '2rem' }}>🔄</div>
-              <p>Replaying session event stream...</p>
+              <p>Replaying recorded event stream...</p>
             </div>
           ) : events.length === 0 ? (
             <div className="empty-state">
-              <p>No events recorded for this session.</p>
+              <p>No events found for this session.</p>
             </div>
           ) : (
             <div className="timeline-container">
               {events.map((evt, index) => {
                 const prevEvt = index > 0 ? events[index - 1] : null;
                 const isPageView = evt.eventType === 'page_view';
+                const delta = getDeltaSeconds(evt, prevEvt);
 
                 return (
                   <div key={evt._id || index} className="timeline-item">
-                    {/* Step number and connection line */}
+                    {/* Left Icon and Connector Line */}
                     <div className="timeline-left">
                       <div className={`timeline-badge ${isPageView ? 'badge-view' : 'badge-click'}`}>
                         {isPageView ? '👁️' : '🎯'}
@@ -101,98 +161,88 @@ export default function UserJourneyModal({ sessionData, events, loading, onClose
                       {index < events.length - 1 && <div className="timeline-connector"></div>}
                     </div>
 
-                    {/* Step card content */}
+                    {/* Timeline Event Card */}
                     <div className="timeline-content-card">
                       <div className="timeline-item-header">
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
                           <span className="step-tag">STEP #{index + 1}</span>
-                          <span
-                            className={`badge ${isPageView ? 'badge-pageview' : 'badge-click'}`}
-                          >
+                          <span className={`badge ${isPageView ? 'badge-pageview' : 'badge-click'}`}>
                             {evt.eventType.toUpperCase()}
                           </span>
-                          <span className="step-delta mono">
-                            {getDeltaSeconds(evt, prevEvt)}
-                          </span>
+                          <span className="step-delta mono">{delta}</span>
                         </div>
-                        <span className="step-timestamp mono">
-                          {formatTime(evt.timestamp)}
+                        <span className="step-timestamp mono">{formatTime(evt.timestamp)}</span>
+                      </div>
+
+                      {/* Store Owner Story Description */}
+                      <div className="timeline-story-title">
+                        {getStoryText(evt)}
+                      </div>
+
+                      {/* Page and Path */}
+                      <div className="detail-row" style={{ marginTop: '0.4rem' }}>
+                        <span className="detail-label">Page:</span>
+                        <span className="detail-url mono" title={evt.url}>
+                          {evt.path || evt.url}
                         </span>
                       </div>
 
-                      {/* Event details */}
-                      <div className="timeline-item-details">
-                        {/* URL info */}
-                        <div className="detail-row">
-                          <span className="detail-label">Page:</span>
-                          <span className="detail-url mono" title={evt.url}>
-                            {evt.path || evt.url}
-                          </span>
-                        </div>
-
-                        {/* If Click event, display coordinates and target element */}
-                        {!isPageView && (
-                          <div className="click-details-panel">
-                            <div className="click-coords-grid">
-                              <div className="coord-box">
-                                <span className="coord-label">COORDINATES</span>
-                                <span className="coord-val mono">
-                                  X: {evt.x}px • Y: {evt.y}px
-                                </span>
+                      {/* Technical Details (When in Technical Mode or Expanded) */}
+                      {modalMode === 'tech' && (
+                        <div className="click-details-panel animate-fade-in" style={{ marginTop: '0.6rem' }}>
+                          {!isPageView ? (
+                            <>
+                              <div className="click-coords-grid">
+                                <div className="coord-box">
+                                  <span className="coord-label">DOCUMENT COORD (X, Y)</span>
+                                  <span className="coord-val mono">
+                                    X: {evt.x}px • Y: {evt.y}px
+                                  </span>
+                                </div>
+                                <div className="coord-box">
+                                  <span className="coord-label">PAGE % (RESPONSIVE)</span>
+                                  <span className="coord-val mono">
+                                    {evt.xPercent}% W • {evt.yPercent}% H
+                                  </span>
+                                </div>
+                                <div className="coord-box">
+                                  <span className="coord-label">ELEMENT LANDMARK</span>
+                                  <span className="coord-val mono">
+                                    &lt;{evt.elementTag}&gt; in {evt.elementSection || 'main'}
+                                  </span>
+                                </div>
                               </div>
 
-                              <div className="coord-box">
-                                <span className="coord-label">VIEWPORT RATIO</span>
-                                <span className="coord-val mono">
-                                  {evt.xPercent !== null ? `${evt.xPercent}%` : 'N/A'} X •{' '}
-                                  {evt.yPercent !== null ? `${evt.yPercent}%` : 'N/A'} Y
-                                </span>
-                              </div>
-
-                              <div className="coord-box">
-                                <span className="coord-label">TARGET ELEMENT</span>
-                                <span className="coord-val mono">
-                                  {evt.elementTag ? `<${evt.elementTag}>` : 'Generic'}
-                                  {evt.elementId ? ` #${evt.elementId}` : ''}
-                                </span>
-                              </div>
+                              {evt.elementSelector && (
+                                <div style={{ fontSize: '0.75rem', color: '#94a3b8', marginTop: '0.35rem' }}>
+                                  Selector: <code className="mono" style={{ color: '#c7d2fe' }}>{evt.elementSelector}</code>
+                                </div>
+                              )}
+                            </>
+                          ) : (
+                            <div style={{ fontSize: '0.78rem', color: '#94a3b8' }}>
+                              Viewport: {evt.viewportWidth}×{evt.viewportHeight}px • Document: {evt.documentWidth}×{evt.documentHeight}px
                             </div>
+                          )}
 
-                            {evt.elementText && (
-                              <div className="clicked-text-row">
-                                <span className="text-label">Clicked Text:</span>
-                                <span className="clicked-text-quote">"{evt.elementText}"</span>
-                              </div>
+                          {/* Raw Payload Collapsible */}
+                          <div className="payload-toggle-row">
+                            <button
+                              className="btn-link"
+                              onClick={() =>
+                                setSelectedRawEvent(selectedRawEvent === evt._id ? null : evt._id)
+                              }
+                            >
+                              {selectedRawEvent === evt._id ? '▲ Hide Raw JSON' : '▼ Inspect Raw JSON'}
+                            </button>
+                            {selectedRawEvent === evt._id && (
+                              <pre className="raw-payload-box mono">
+                                {JSON.stringify(evt, null, 2)}
+                              </pre>
                             )}
                           </div>
-                        )}
-
-                        {/* If Pageview, display title or resolution */}
-                        {isPageView && evt.title && (
-                          <div className="detail-row" style={{ marginTop: '0.4rem' }}>
-                            <span className="detail-label">Page Title:</span>
-                            <span style={{ color: '#cbd5e1' }}>{evt.title}</span>
-                          </div>
-                        )}
-                      </div>
-
-                      {/* Toggle inspect raw payload */}
-                      <div className="payload-toggle-row">
-                        <button
-                          className="btn-link"
-                          onClick={() =>
-                            setSelectedRawEvent(selectedRawEvent === evt._id ? null : evt._id)
-                          }
-                        >
-                          {selectedRawEvent === evt._id ? '▲ Hide Raw Payload' : '▼ View Raw Payload'}
-                        </button>
-
-                        {selectedRawEvent === evt._id && (
-                          <pre className="raw-payload-box mono">
-                            {JSON.stringify(evt, null, 2)}
-                          </pre>
-                        )}
-                      </div>
+                        </div>
+                      )}
                     </div>
                   </div>
                 );
@@ -203,11 +253,11 @@ export default function UserJourneyModal({ sessionData, events, loading, onClose
 
         {/* Modal Footer */}
         <div className="modal-footer">
-          <span style={{ color: 'var(--text-muted)', fontSize: '0.82rem' }}>
-            Chronological User Journey reconstructed from MongoDB events stream
+          <span style={{ color: 'var(--text-muted)', fontSize: '0.8rem' }}>
+            ℹ️ <em>Chronological record of user interactions. Does not record raw mouse movements or video replay.</em>
           </span>
-          <button className="btn btn-secondary" onClick={onClose}>
-            Close Inspection
+          <button className="btn btn-secondary btn-sm" onClick={onClose}>
+            Close
           </button>
         </div>
       </div>

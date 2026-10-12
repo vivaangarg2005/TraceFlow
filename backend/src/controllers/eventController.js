@@ -1,6 +1,56 @@
 const Event = require('../models/Event');
 
 /**
+ * Helper to construct Date range filter from query parameters
+ */
+function buildDateFilter(query) {
+  const { startDate, endDate, timeRange } = query;
+  const now = new Date();
+  let filter = {};
+
+  if (startDate || endDate) {
+    filter.timestamp = {};
+    if (startDate) filter.timestamp.$gte = new Date(startDate);
+    if (endDate) filter.timestamp.$lte = new Date(endDate);
+  } else if (timeRange) {
+    filter.timestamp = {};
+    switch (timeRange) {
+      case 'today':
+        const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+        filter.timestamp.$gte = startOfToday;
+        break;
+      case '24h':
+        filter.timestamp.$gte = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+        break;
+      case '7d':
+        filter.timestamp.$gte = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+        break;
+      case '30d':
+        filter.timestamp.$gte = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+        break;
+      case 'all':
+      default:
+        delete filter.timestamp;
+        break;
+    }
+  }
+
+  return filter;
+}
+
+/**
+ * Sanitize incoming element text for strict privacy
+ */
+function sanitizeText(rawText) {
+  if (!rawText) return '';
+  let str = String(rawText).trim().slice(0, 120);
+  // Redact accidental emails or card numbers
+  str = str.replace(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g, '[Email Redacted]');
+  str = str.replace(/\b(?:\d[ -]*?){13,16}\b/g, '[Card Number Redacted]');
+  return str;
+}
+
+/**
  * @desc    Ingest one or multiple analytics events
  * @route   POST /api/events
  * @access  Public (called by tracking script)
@@ -13,14 +63,12 @@ exports.trackEvents = async (req, res, next) => {
       return res.status(400).json({ success: false, message: 'Payload is required' });
     }
 
-    // Support both single event object and array of events (batching)
     const eventsArray = Array.isArray(payload) ? payload : [payload];
 
     if (eventsArray.length === 0) {
       return res.status(400).json({ success: false, message: 'Event list cannot be empty' });
     }
 
-    // Process and sanitize each event
     const sanitizedEvents = eventsArray.map((evt) => {
       const {
         sessionId,
@@ -31,29 +79,46 @@ exports.trackEvents = async (req, res, next) => {
         y,
         viewportWidth,
         viewportHeight,
+        documentWidth,
+        documentHeight,
+        scrollX,
+        scrollY,
         elementTag,
         elementText,
         elementId,
+        elementSelector,
+        elementSection,
+        deviceType,
+        isSimulated,
         title,
         metadata,
       } = evt;
 
-      // Calculate percentage coordinates if viewport dimensions are provided
+      // Calculate percentages if not explicitly provided
       let xPercent = evt.xPercent;
       let yPercent = evt.yPercent;
+      let clientXPercent = evt.clientXPercent;
+      let clientYPercent = evt.clientYPercent;
 
-      if (
-        eventType === 'click' &&
-        typeof x === 'number' &&
-        typeof y === 'number' &&
-        viewportWidth > 0 &&
-        viewportHeight > 0
-      ) {
+      const docW = documentWidth || viewportWidth || 1;
+      const docH = documentHeight || viewportHeight || 1;
+      const vpW = viewportWidth || 1;
+      const vpH = viewportHeight || 1;
+
+      if (eventType === 'click' && typeof x === 'number' && typeof y === 'number') {
         if (xPercent === undefined || xPercent === null) {
-          xPercent = Math.min(100, Math.max(0, Number(((x / viewportWidth) * 100).toFixed(2))));
+          xPercent = Math.min(100, Math.max(0, Number(((x / docW) * 100).toFixed(2))));
         }
         if (yPercent === undefined || yPercent === null) {
-          yPercent = Math.min(100, Math.max(0, Number(((y / viewportHeight) * 100).toFixed(2))));
+          yPercent = Math.min(100, Math.max(0, Number(((y / docH) * 100).toFixed(2))));
+        }
+        if (clientXPercent === undefined || clientXPercent === null) {
+          const clientX = x - (scrollX || 0);
+          clientXPercent = Math.min(100, Math.max(0, Number(((clientX / vpW) * 100).toFixed(2))));
+        }
+        if (clientYPercent === undefined || clientYPercent === null) {
+          const clientY = y - (scrollY || 0);
+          clientYPercent = Math.min(100, Math.max(0, Number(((clientY / vpH) * 100).toFixed(2))));
         }
       }
 
@@ -67,11 +132,21 @@ exports.trackEvents = async (req, res, next) => {
         y: eventType === 'click' ? y : null,
         xPercent: eventType === 'click' ? xPercent : null,
         yPercent: eventType === 'click' ? yPercent : null,
+        clientXPercent: eventType === 'click' ? clientXPercent : null,
+        clientYPercent: eventType === 'click' ? clientYPercent : null,
         viewportWidth: viewportWidth || null,
         viewportHeight: viewportHeight || null,
+        documentWidth: documentWidth || null,
+        documentHeight: documentHeight || null,
+        scrollX: scrollX || 0,
+        scrollY: scrollY || 0,
         elementTag: elementTag || '',
-        elementText: elementText ? String(elementText).slice(0, 120) : '',
+        elementText: sanitizeText(elementText),
         elementId: elementId || '',
+        elementSelector: elementSelector || '',
+        elementSection: elementSection || 'main',
+        deviceType: ['mobile', 'tablet', 'desktop'].includes(deviceType) ? deviceType : 'desktop',
+        isSimulated: Boolean(isSimulated),
         metadata: metadata || {},
       };
     });
@@ -98,7 +173,6 @@ exports.trackEvents = async (req, res, next) => {
       }
     }
 
-    // High performance bulk insertion
     const createdEvents = await Event.insertMany(sanitizedEvents);
 
     return res.status(201).json({
@@ -113,7 +187,7 @@ exports.trackEvents = async (req, res, next) => {
 };
 
 /**
- * @desc    Fetch list of sessions with event counts and timing metrics
+ * @desc    Fetch list of sessions with human-readable summaries, entry pages, and filters
  * @route   GET /api/sessions
  * @access  Public (for dashboard)
  */
@@ -122,9 +196,20 @@ exports.getSessions = async (req, res, next) => {
     const page = parseInt(req.query.page, 10) || 1;
     const limit = parseInt(req.query.limit, 10) || 50;
     const skip = (page - 1) * limit;
+    const { includeSimulated, search, sort } = req.query;
 
-    // MongoDB Aggregation Pipeline for fast, memory-efficient grouping
+    // Date range filter
+    const matchFilter = buildDateFilter(req.query);
+
+    // Optional filter to exclude simulated activity
+    if (includeSimulated === 'false') {
+      matchFilter.isSimulated = false;
+    }
+
+    // Aggregation pipeline: sort first to guarantee $first gets entry page
     const pipeline = [
+      { $match: matchFilter },
+      { $sort: { timestamp: 1 } },
       {
         $group: {
           _id: '$sessionId',
@@ -135,11 +220,15 @@ exports.getSessions = async (req, res, next) => {
           clicks: {
             $sum: { $cond: [{ $eq: ['$eventType', 'click'] }, 1, 0] },
           },
-          firstSeen: { $min: '$timestamp' },
-          lastSeen: { $max: '$timestamp' },
+          firstSeen: { $first: '$timestamp' },
+          lastSeen: { $last: '$timestamp' },
+          entryPage: { $first: '$path' },
+          exitPage: { $last: '$path' },
+          deviceType: { $first: '$deviceType' },
+          isSimulated: { $max: '$isSimulated' },
           urlsVisited: { $addToSet: '$url' },
           pathsVisited: { $addToSet: '$path' },
-          lastEvent: { $last: '$eventType' },
+          firstTitle: { $first: '$title' },
         },
       },
       {
@@ -151,6 +240,10 @@ exports.getSessions = async (req, res, next) => {
           clicks: 1,
           firstSeen: 1,
           lastSeen: 1,
+          entryPage: { $ifNull: ['$entryPage', '/'] },
+          exitPage: { $ifNull: ['$exitPage', '/'] },
+          deviceType: { $ifNull: ['$deviceType', 'desktop'] },
+          isSimulated: { $ifNull: ['$isSimulated', false] },
           durationSeconds: {
             $round: [
               {
@@ -164,18 +257,59 @@ exports.getSessions = async (req, res, next) => {
           pathsVisited: '$pathsVisited',
         },
       },
-      { $sort: { lastSeen: -1 } }, // most recently active sessions first
-      {
-        $facet: {
-          metadata: [{ $count: 'total' }],
-          sessions: [{ $skip: skip }, { $limit: limit }],
-        },
-      },
     ];
+
+    // Optional text search filter on session, entryPage, or visited paths
+    if (search && search.trim()) {
+      const regex = new RegExp(search.trim(), 'i');
+      pipeline.push({
+        $match: {
+          $or: [
+            { sessionId: regex },
+            { entryPage: regex },
+            { exitPage: regex },
+            { pathsVisited: regex },
+          ],
+        },
+      });
+    }
+
+    // Sort order
+    let sortStage = { lastSeen: -1 };
+    if (sort === 'events_desc') sortStage = { totalEvents: -1 };
+    if (sort === 'duration_desc') sortStage = { durationSeconds: -1 };
+    if (sort === 'firstSeen_asc') sortStage = { firstSeen: 1 };
+    pipeline.push({ $sort: sortStage });
+
+    // Pagination facet
+    pipeline.push({
+      $facet: {
+        metadata: [{ $count: 'total' }],
+        sessions: [{ $skip: skip }, { $limit: limit }],
+      },
+    });
 
     const result = await Event.aggregate(pipeline);
     const totalSessions = result[0]?.metadata[0]?.total || 0;
-    const sessions = result[0]?.sessions || [];
+    const rawSessions = result[0]?.sessions || [];
+
+    // Augment each session with human-readable intent/journey summary
+    const sessions = rawSessions.map((s, idx) => {
+      let shopperSummary = 'Visitor';
+      if (s.totalEvents >= 5 && s.uniquePagesCount > 1) {
+        shopperSummary = 'Engaged Shopper';
+      } else if (s.totalEvents === 1 && s.pageViews === 1) {
+        shopperSummary = 'Single-Page Bounce';
+      } else if (s.clicks >= 3) {
+        shopperSummary = 'Active Product Browser';
+      }
+
+      return {
+        ...s,
+        visitorLabel: `Visitor #${totalSessions - skip - idx}`,
+        shopperSummary,
+      };
+    });
 
     return res.status(200).json({
       success: true,
@@ -203,7 +337,6 @@ exports.getSessionEvents = async (req, res, next) => {
       return res.status(400).json({ success: false, message: 'sessionId is required' });
     }
 
-    // Query using the compound index { sessionId: 1, timestamp: 1 }
     const events = await Event.find({ sessionId }).sort({ timestamp: 1 });
 
     if (events.length === 0) {
@@ -213,7 +346,6 @@ exports.getSessionEvents = async (req, res, next) => {
       });
     }
 
-    // Compute session summary metadata
     const firstEvent = events[0];
     const lastEvent = events[events.length - 1];
     const durationSeconds = ((lastEvent.timestamp - firstEvent.timestamp) / 1000).toFixed(1);
@@ -221,9 +353,24 @@ exports.getSessionEvents = async (req, res, next) => {
     const pageViews = events.filter((e) => e.eventType === 'page_view').length;
     const clicks = events.filter((e) => e.eventType === 'click').length;
 
+    // Detect milestones
+    const visitedPages = [...new Set(events.map((e) => e.path || e.url))];
+    const hasCartInteraction = events.some(
+      (e) =>
+        e.eventType === 'click' &&
+        (e.elementId?.includes('cart') || e.elementText?.toLowerCase().includes('cart'))
+    );
+    const hasCheckoutInteraction = events.some(
+      (e) =>
+        e.path?.includes('checkout') ||
+        e.elementId?.includes('checkout') ||
+        e.elementText?.toLowerCase().includes('order')
+    );
+
     return res.status(200).json({
       success: true,
       sessionId,
+      isSimulated: events.some((e) => e.isSimulated),
       summary: {
         totalEvents: events.length,
         pageViews,
@@ -231,6 +378,12 @@ exports.getSessionEvents = async (req, res, next) => {
         startTime: firstEvent.timestamp,
         endTime: lastEvent.timestamp,
         durationSeconds: Number(durationSeconds),
+        entryPage: firstEvent.path || firstEvent.url,
+        exitPage: lastEvent.path || lastEvent.url,
+        pagesCount: visitedPages.length,
+        deviceType: firstEvent.deviceType || 'desktop',
+        hasCartInteraction,
+        hasCheckoutInteraction,
       },
       data: events,
     });
@@ -240,13 +393,13 @@ exports.getSessionEvents = async (req, res, next) => {
 };
 
 /**
- * @desc    Fetch click data for a specific page URL (for Heatmap visualization)
+ * @desc    Fetch click data for a specific page URL with heat statistics and section breakdown
  * @route   GET /api/analytics/clicks
  * @access  Public (for dashboard)
  */
 exports.getPageClicks = async (req, res, next) => {
   try {
-    const { url, path } = req.query;
+    const { url, path, deviceType, includeSimulated } = req.query;
 
     if (!url && !path) {
       return res.status(400).json({
@@ -256,7 +409,15 @@ exports.getPageClicks = async (req, res, next) => {
     }
 
     // Match either full URL or normalized pathname
-    const filter = { eventType: 'click' };
+    const filter = { eventType: 'click', ...buildDateFilter(req.query) };
+
+    if (includeSimulated === 'false') {
+      filter.isSimulated = false;
+    }
+    if (deviceType && ['desktop', 'tablet', 'mobile'].includes(deviceType)) {
+      filter.deviceType = deviceType;
+    }
+
     if (url) {
       filter.$or = [{ url: url }, { path: url }];
     } else if (path) {
@@ -264,17 +425,44 @@ exports.getPageClicks = async (req, res, next) => {
     }
 
     const clicks = await Event.find(filter)
-      .select('x y xPercent yPercent viewportWidth viewportHeight elementTag elementText elementId timestamp sessionId url path')
+      .select(
+        'x y xPercent yPercent clientXPercent clientYPercent viewportWidth viewportHeight documentWidth documentHeight scrollX scrollY elementTag elementText elementId elementSection elementSelector deviceType isSimulated timestamp sessionId url path'
+      )
       .sort({ timestamp: -1 });
 
-    // Distinct sessions that contributed clicks
     const uniqueSessionIds = new Set(clicks.map((c) => c.sessionId));
+
+    // Section breakdown
+    const sectionCounts = {};
+    clicks.forEach((c) => {
+      const sec = c.elementSection || 'main';
+      sectionCounts[sec] = (sectionCounts[sec] || 0) + 1;
+    });
+
+    // Detect potential user frustration: rapid clicks on the exact same element (<2.5s apart)
+    let rapidClicksCount = 0;
+    const sortedByTime = [...clicks].sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+    for (let i = 1; i < sortedByTime.length; i++) {
+      const prev = sortedByTime[i - 1];
+      const curr = sortedByTime[i];
+      if (
+        prev.sessionId === curr.sessionId &&
+        prev.elementTag === curr.elementTag &&
+        prev.elementText === curr.elementText &&
+        prev.elementText !== '' &&
+        new Date(curr.timestamp) - new Date(prev.timestamp) < 2500
+      ) {
+        rapidClicksCount++;
+      }
+    }
 
     return res.status(200).json({
       success: true,
-      query: { url: url || null, path: path || null },
+      query: { url: url || null, path: path || null, deviceType: deviceType || 'all' },
       totalClicks: clicks.length,
       uniqueSessions: uniqueSessionIds.size,
+      sectionBreakdown: sectionCounts,
+      rapidClicksCount,
       data: clicks,
     });
   } catch (error) {
@@ -289,8 +477,13 @@ exports.getPageClicks = async (req, res, next) => {
  */
 exports.getTrackedPages = async (req, res, next) => {
   try {
-    // Aggregate distinct pages with both page_view and click counts
-    const pages = await Event.aggregate([
+    const matchFilter = buildDateFilter(req.query);
+    if (req.query.includeSimulated === 'false') {
+      matchFilter.isSimulated = false;
+    }
+
+    const pipeline = [
+      { $match: matchFilter },
       {
         $group: {
           _id: '$url',
@@ -301,6 +494,7 @@ exports.getTrackedPages = async (req, res, next) => {
           totalClicks: {
             $sum: { $cond: [{ $eq: ['$eventType', 'click'] }, 1, 0] },
           },
+          uniqueSessions: { $addToSet: '$sessionId' },
           lastInteraction: { $max: '$timestamp' },
         },
       },
@@ -312,11 +506,14 @@ exports.getTrackedPages = async (req, res, next) => {
           totalViews: 1,
           totalClicks: 1,
           totalInteractions: { $add: ['$totalViews', '$totalClicks'] },
+          uniqueSessionsCount: { $size: '$uniqueSessions' },
           lastInteraction: 1,
         },
       },
       { $sort: { totalClicks: -1, totalViews: -1 } },
-    ]);
+    ];
+
+    const pages = await Event.aggregate(pipeline);
 
     return res.status(200).json({
       success: true,
@@ -329,41 +526,98 @@ exports.getTrackedPages = async (req, res, next) => {
 };
 
 /**
- * @desc    Fetch high-level overview metrics (total sessions, total events, etc.)
+ * @desc    Fetch high-level overview metrics with date filtering & genuine vs simulated stats
  * @route   GET /api/analytics/overview
  * @access  Public (for dashboard metrics cards)
  */
 exports.getOverview = async (req, res, next) => {
   try {
-    const totalEvents = await Event.countDocuments();
-    const totalPageViews = await Event.countDocuments({ eventType: 'page_view' });
-    const totalClicks = await Event.countDocuments({ eventType: 'click' });
-    
-    // Distinct sessions count
-    const distinctSessions = await Event.distinct('sessionId');
+    const matchFilter = buildDateFilter(req.query);
+    const { includeSimulated } = req.query;
+
+    if (includeSimulated === 'false') {
+      matchFilter.isSimulated = false;
+    }
+
+    const totalEvents = await Event.countDocuments(matchFilter);
+    const totalPageViews = await Event.countDocuments({ ...matchFilter, eventType: 'page_view' });
+    const totalClicks = await Event.countDocuments({ ...matchFilter, eventType: 'click' });
+
+    // Distinct sessions matching the filter
+    const distinctSessions = await Event.distinct('sessionId', matchFilter);
     const totalSessions = distinctSessions.length;
+
+    // Device breakdown
+    const deviceStats = await Event.aggregate([
+      { $match: matchFilter },
+      { $group: { _id: '$deviceType', count: { $sum: 1 } } },
+    ]);
+    const deviceBreakdown = { desktop: 0, mobile: 0, tablet: 0 };
+    deviceStats.forEach((d) => {
+      if (d._id && deviceBreakdown[d._id] !== undefined) {
+        deviceBreakdown[d._id] = d.count;
+      }
+    });
+
+    // Simulated vs genuine counts
+    const simulatedEvents = await Event.countDocuments({ ...matchFilter, isSimulated: true });
+    const genuineEvents = totalEvents - simulatedEvents;
 
     // Top clicked elements
     const topElements = await Event.aggregate([
-      { $match: { eventType: 'click', elementTag: { $ne: '' } } },
+      { $match: { ...matchFilter, eventType: 'click', elementTag: { $ne: '' } } },
       {
         $group: {
-          _id: { tag: '$elementTag', text: '$elementText' },
+          _id: { tag: '$elementTag', text: '$elementText', section: '$elementSection' },
           count: { $sum: 1 },
         },
       },
       { $sort: { count: -1 } },
-      { $limit: 5 },
+      { $limit: 6 },
       {
         $project: {
           element: {
             $concat: ['<', '$_id.tag', '> "', '$_id.text', '"'],
           },
+          tag: '$_id.tag',
+          text: '$_id.text',
+          section: '$_id.section',
           count: 1,
           _id: 0,
         },
       },
     ]);
+
+    // Average session duration across matching sessions
+    const durationAggregation = await Event.aggregate([
+      { $match: matchFilter },
+      {
+        $group: {
+          _id: '$sessionId',
+          first: { $min: '$timestamp' },
+          last: { $max: '$timestamp' },
+        },
+      },
+      {
+        $project: {
+          durationSeconds: {
+            $divide: [{ $subtract: ['$last', '$first'] }, 1000],
+          },
+        },
+      },
+      {
+        $group: {
+          _id: null,
+          avgDuration: { $avg: '$durationSeconds' },
+          singlePageBounces: {
+            $sum: { $cond: [{ $eq: ['$durationSeconds', 0] }, 1, 0] },
+          },
+        },
+      },
+    ]);
+
+    const avgDuration = durationAggregation[0]?.avgDuration || 0;
+    const singlePageBounces = durationAggregation[0]?.singlePageBounces || 0;
 
     return res.status(200).json({
       success: true,
@@ -373,6 +627,12 @@ exports.getOverview = async (req, res, next) => {
         totalPageViews,
         totalClicks,
         avgEventsPerSession: totalSessions ? Number((totalEvents / totalSessions).toFixed(1)) : 0,
+        avgDurationSeconds: Number(avgDuration.toFixed(1)),
+        bounceSessionsCount: singlePageBounces,
+        bounceRate: totalSessions ? Number(((singlePageBounces / totalSessions) * 100).toFixed(1)) : 0,
+        deviceBreakdown,
+        simulatedEventsCount: simulatedEvents,
+        genuineEventsCount: genuineEvents,
         topElements,
       },
     });

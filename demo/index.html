@@ -3,53 +3,50 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Aura Store | Premium Minimalist Essentials</title>
-  <meta name="description" content="Shop modern minimalist essentials with premium craftsmanship. Tracked in real-time by TraceFlow Analytics.">
+  <title>Aura Store — Modern Minimalist Apparel & Essentials</title>
+  <meta name="description" content="Shop modern minimalist essentials with premium craftsmanship. Designed for thoughtful everyday living.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
   <style>
     :root {
       --bg: #090d16;
-      --card-bg: rgba(22, 29, 47, 0.75);
+      --surface: #0f172a;
+      --card-bg: rgba(22, 29, 47, 0.7);
       --card-border: rgba(255, 255, 255, 0.08);
+      --card-hover-border: rgba(99, 102, 241, 0.4);
       --text: #f1f5f9;
       --text-muted: #94a3b8;
+      --text-subtle: #64748b;
       --accent: #6366f1;
       --accent-hover: #4f46e5;
       --accent-glow: rgba(99, 102, 241, 0.25);
-      --success: #10b981;
-      --badge-bg: rgba(99, 102, 241, 0.12);
+      --emerald: #10b981;
+      --amber: #f59e0b;
+      --font-sans: 'Plus Jakarta Sans', -apple-system, sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
     }
 
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-    }
-
+    * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
-      font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+      font-family: var(--font-sans);
       background: var(--bg);
       background-image: 
-        radial-gradient(at 10% 10%, rgba(99, 102, 241, 0.15) 0px, transparent 50%),
-        radial-gradient(at 90% 90%, rgba(16, 185, 129, 0.1) 0px, transparent 50%);
+        radial-gradient(at 10% 10%, rgba(99, 102, 241, 0.12) 0px, transparent 40%),
+        radial-gradient(at 90% 90%, rgba(16, 185, 129, 0.08) 0px, transparent 40%);
       color: var(--text);
       min-height: 100vh;
-      overflow-x: hidden;
-      padding-bottom: 90px; /* Space for sticky HUD */
+      line-height: 1.5;
     }
 
-    /* Header & Navigation */
     header {
       position: sticky;
       top: 0;
-      z-index: 100;
+      z-index: 50;
       backdrop-filter: blur(16px);
-      -webkit-backdrop-filter: blur(16px);
       background: rgba(9, 13, 22, 0.85);
       border-bottom: 1px solid var(--card-border);
-      padding: 1rem 2rem;
+      padding: 0.85rem 2rem;
       display: flex;
       justify-content: space-between;
       align-items: center;
@@ -62,70 +59,47 @@
       text-decoration: none;
       color: #fff;
     }
-
     .brand-logo {
-      width: 36px;
-      height: 36px;
-      background: linear-gradient(135deg, #6366f1, #a855f7);
-      border-radius: 10px;
+      width: 34px;
+      height: 34px;
+      background: linear-gradient(135deg, #6366f1, #8b5cf6);
+      border-radius: 9px;
       display: flex;
       align-items: center;
       justify-content: center;
       font-weight: 800;
-      font-size: 1.1rem;
-      box-shadow: 0 4px 14px var(--accent-glow);
+      font-size: 1.05rem;
+      box-shadow: 0 4px 12px var(--accent-glow);
     }
+    .brand-name { font-weight: 800; font-size: 1.15rem; letter-spacing: -0.02em; }
 
-    .brand-name {
-      font-weight: 800;
-      font-size: 1.25rem;
-      letter-spacing: -0.02em;
-    }
-
-    .nav-links {
-      display: flex;
-      gap: 1.5rem;
-      list-style: none;
-    }
-
+    .nav-links { display: flex; gap: 1.75rem; list-style: none; }
     .nav-links a {
       color: var(--text-muted);
       text-decoration: none;
-      font-size: 0.92rem;
+      font-size: 0.9rem;
       font-weight: 500;
       transition: color 0.2s;
     }
+    .nav-links a:hover, .nav-links a.active { color: #fff; }
 
-    .nav-links a:hover, .nav-links a.active {
-      color: #fff;
-    }
-
-    .header-actions {
-      display: flex;
-      align-items: center;
-      gap: 1rem;
-    }
+    .header-actions { display: flex; align-items: center; gap: 0.85rem; }
 
     .cart-btn {
       background: rgba(255, 255, 255, 0.05);
       border: 1px solid var(--card-border);
       color: #fff;
-      padding: 0.55rem 1rem;
+      padding: 0.5rem 1rem;
       border-radius: 9999px;
       cursor: pointer;
       display: flex;
       align-items: center;
       gap: 0.5rem;
-      font-size: 0.9rem;
+      font-size: 0.88rem;
       font-weight: 600;
       transition: all 0.2s;
     }
-
-    .cart-btn:hover {
-      background: rgba(255, 255, 255, 0.1);
-      border-color: rgba(255, 255, 255, 0.2);
-    }
-
+    .cart-btn:hover { background: rgba(255, 255, 255, 0.1); border-color: rgba(255, 255, 255, 0.2); }
     .cart-count {
       background: var(--accent);
       color: white;
@@ -134,398 +108,263 @@
       border-radius: 10px;
     }
 
-    /* Main Container */
-    .container {
-      max-width: 1240px;
-      margin: 0 auto;
-      padding: 2.5rem 1.5rem;
-    }
+    .container { max-width: 1240px; margin: 0 auto; padding: 2rem 1.5rem 5rem; }
 
-    /* Hero Section */
+    /* Hero section */
     .hero {
-      background: linear-gradient(180deg, rgba(30, 41, 67, 0.6) 0%, rgba(15, 23, 42, 0.4) 100%);
+      background: linear-gradient(180deg, rgba(30, 41, 67, 0.5) 0%, rgba(15, 23, 42, 0.3) 100%);
       border: 1px solid var(--card-border);
-      border-radius: 24px;
-      padding: 3.5rem 3rem;
-      margin-bottom: 3rem;
+      border-radius: 20px;
+      padding: 3rem;
+      margin-bottom: 2.75rem;
       display: grid;
-      grid-template-columns: 1.2fr 0.8fr;
+      grid-template-columns: 1.25fr 0.75fr;
       gap: 2.5rem;
       align-items: center;
-      position: relative;
-      overflow: hidden;
     }
-
     .hero-badge {
       display: inline-flex;
       align-items: center;
-      gap: 0.5rem;
-      background: var(--badge-bg);
+      gap: 0.4rem;
+      background: rgba(99, 102, 241, 0.12);
       border: 1px solid rgba(99, 102, 241, 0.3);
       color: #a5b4fc;
-      font-size: 0.8rem;
+      font-size: 0.78rem;
       font-weight: 600;
-      padding: 0.4rem 0.85rem;
+      padding: 0.35rem 0.85rem;
       border-radius: 9999px;
       margin-bottom: 1.25rem;
     }
-
     .hero h1 {
-      font-size: 2.75rem;
+      font-size: 2.5rem;
       font-weight: 800;
-      line-height: 1.15;
+      line-height: 1.18;
       letter-spacing: -0.03em;
-      margin-bottom: 1.25rem;
+      margin-bottom: 1rem;
     }
-
     .hero h1 span {
       background: linear-gradient(135deg, #818cf8, #c084fc);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
     }
-
-    .hero p {
-      color: var(--text-muted);
-      font-size: 1.1rem;
-      line-height: 1.6;
-      margin-bottom: 2rem;
-      max-width: 520px;
-    }
-
-    .hero-buttons {
-      display: flex;
-      gap: 1rem;
-      flex-wrap: wrap;
-    }
+    .hero p { color: var(--text-muted); font-size: 1.05rem; line-height: 1.6; margin-bottom: 1.75rem; max-width: 520px; }
+    .hero-buttons { display: flex; gap: 0.85rem; flex-wrap: wrap; }
 
     .btn {
       display: inline-flex;
       align-items: center;
       justify-content: center;
       gap: 0.5rem;
-      padding: 0.85rem 1.75rem;
-      border-radius: 12px;
-      font-size: 0.95rem;
+      padding: 0.75rem 1.6rem;
+      border-radius: 10px;
+      font-size: 0.92rem;
       font-weight: 600;
       cursor: pointer;
       text-decoration: none;
       transition: all 0.2s ease;
       border: none;
     }
+    .btn-primary { background: var(--accent); color: white; box-shadow: 0 4px 16px var(--accent-glow); }
+    .btn-primary:hover { background: var(--accent-hover); transform: translateY(-1px); }
+    .btn-outline { background: rgba(255, 255, 255, 0.05); color: white; border: 1px solid var(--card-border); }
+    .btn-outline:hover { background: rgba(255, 255, 255, 0.1); border-color: rgba(255, 255, 255, 0.2); }
+    .btn-sm { padding: 0.42rem 0.9rem; font-size: 0.82rem; border-radius: 7px; }
 
-    .btn-primary {
-      background: var(--accent);
-      color: white;
-      box-shadow: 0 4px 20px var(--accent-glow);
-    }
-
-    .btn-primary:hover {
-      background: var(--accent-hover);
-      transform: translateY(-2px);
-    }
-
-    .btn-outline {
-      background: rgba(255, 255, 255, 0.05);
-      color: white;
-      border: 1px solid var(--card-border);
-    }
-
-    .btn-outline:hover {
-      background: rgba(255, 255, 255, 0.1);
-      border-color: rgba(255, 255, 255, 0.2);
-    }
-
-    .hero-visual {
-      background: linear-gradient(135deg, #1e1b4b, #312e81);
-      border-radius: 20px;
+    .hero-featured-card {
+      background: linear-gradient(135deg, #1e1b4b, #2e1065);
+      border-radius: 16px;
       border: 1px solid rgba(255, 255, 255, 0.1);
-      padding: 2.5rem;
+      padding: 2rem;
       text-align: center;
-      position: relative;
+    }
+    .hero-featured-visual {
+      height: 140px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 1rem;
+    }
+    .product-vector {
+      width: 110px;
+      height: 110px;
+      filter: drop-shadow(0 10px 20px rgba(0,0,0,0.5));
     }
 
-    .hero-visual .preview-tag {
-      font-size: 0.75rem;
-      text-transform: uppercase;
-      letter-spacing: 0.1em;
-      color: #a5b4fc;
-      margin-bottom: 0.5rem;
-    }
-
-    .hero-visual .product-title {
-      font-size: 1.5rem;
-      font-weight: 700;
-      margin-bottom: 0.5rem;
-    }
-
-    .hero-visual .product-price {
-      font-size: 1.75rem;
-      font-weight: 800;
-      color: #38bdf8;
-      margin-bottom: 1.5rem;
-    }
-
-    /* Filter Tabs */
-    .catalog-header {
+    /* Catalog controls */
+    .catalog-bar {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-bottom: 2rem;
+      margin-bottom: 1.75rem;
       flex-wrap: wrap;
       gap: 1rem;
     }
-
-    .catalog-title {
-      font-size: 1.75rem;
-      font-weight: 800;
-      letter-spacing: -0.02em;
-    }
-
+    .catalog-title { font-size: 1.6rem; font-weight: 800; letter-spacing: -0.02em; }
     .filter-tabs {
       display: flex;
       background: rgba(255, 255, 255, 0.03);
-      padding: 4px;
-      border-radius: 12px;
+      padding: 3px;
+      border-radius: 10px;
       border: 1px solid var(--card-border);
     }
-
     .tab-btn {
       background: transparent;
       border: none;
       color: var(--text-muted);
-      padding: 0.5rem 1rem;
-      border-radius: 8px;
-      font-size: 0.88rem;
+      padding: 0.45rem 1rem;
+      border-radius: 7px;
+      font-size: 0.85rem;
       font-weight: 600;
       cursor: pointer;
       transition: all 0.2s;
     }
-
-    .tab-btn.active, .tab-btn:hover {
-      background: rgba(255, 255, 255, 0.08);
-      color: #fff;
-    }
+    .tab-btn.active, .tab-btn:hover { background: rgba(255, 255, 255, 0.08); color: #fff; }
 
     /* Product Grid */
     .product-grid {
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(270px, 1fr));
-      gap: 1.75rem;
-      margin-bottom: 4rem;
+      gap: 1.5rem;
+      margin-bottom: 3.5rem;
     }
-
     .product-card {
       background: var(--card-bg);
       border: 1px solid var(--card-border);
-      border-radius: 18px;
+      border-radius: 16px;
       padding: 1.25rem;
       display: flex;
       flex-direction: column;
-      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-      position: relative;
+      transition: all 0.25s ease;
     }
-
     .product-card:hover {
-      transform: translateY(-4px);
-      border-color: rgba(99, 102, 241, 0.4);
-      box-shadow: 0 12px 30px rgba(0, 0, 0, 0.3);
+      transform: translateY(-3px);
+      border-color: var(--card-hover-border);
+      box-shadow: 0 12px 28px rgba(0, 0, 0, 0.35);
     }
 
-    .product-img-box {
+    .product-preview {
       width: 100%;
       height: 180px;
-      background: linear-gradient(135deg, #1e293b, #0f172a);
+      background: linear-gradient(135deg, #161e2e, #0f172a);
       border-radius: 12px;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 3.5rem;
-      margin-bottom: 1.2rem;
+      margin-bottom: 1rem;
       border: 1px solid rgba(255, 255, 255, 0.05);
+      position: relative;
     }
-
-    .product-category {
-      font-size: 0.75rem;
+    .category-tag {
+      font-size: 0.72rem;
       text-transform: uppercase;
-      letter-spacing: 0.05em;
-      color: var(--text-muted);
+      letter-spacing: 0.06em;
+      color: var(--text-subtle);
+      font-weight: 600;
       margin-bottom: 0.25rem;
     }
-
-    .product-name {
-      font-size: 1.1rem;
-      font-weight: 700;
-      margin-bottom: 0.5rem;
-    }
-
-    .product-desc {
-      font-size: 0.85rem;
-      color: var(--text-muted);
-      line-height: 1.4;
-      margin-bottom: 1rem;
-      flex-grow: 1;
-    }
-
+    .product-name { font-size: 1.05rem; font-weight: 700; margin-bottom: 0.4rem; }
+    .product-desc { font-size: 0.84rem; color: var(--text-muted); line-height: 1.45; margin-bottom: 1.25rem; flex-grow: 1; }
+    
     .product-footer {
       display: flex;
       align-items: center;
       justify-content: space-between;
       margin-top: auto;
-      padding-top: 1rem;
+      padding-top: 0.85rem;
       border-top: 1px solid rgba(255, 255, 255, 0.06);
     }
+    .product-price { font-size: 1.2rem; font-weight: 800; color: #fff; }
+    .card-actions { display: flex; gap: 0.45rem; }
 
-    .price {
-      font-size: 1.25rem;
-      font-weight: 800;
-      color: #fff;
-    }
-
-    .card-actions {
-      display: flex;
-      gap: 0.5rem;
-    }
-
-    .btn-sm {
-      padding: 0.45rem 0.9rem;
-      font-size: 0.82rem;
-      border-radius: 8px;
-    }
-
-    /* Promo Banner */
-    .promo-banner {
-      background: linear-gradient(90deg, #312e81, #1e1b4b);
+    /* Promo Newsletter */
+    .promo-section {
+      background: linear-gradient(90deg, #1e1b4b, #172554);
       border: 1px solid rgba(99, 102, 241, 0.3);
-      border-radius: 18px;
-      padding: 2.5rem;
+      border-radius: 16px;
+      padding: 2.25rem 2.5rem;
       display: flex;
       justify-content: space-between;
       align-items: center;
       flex-wrap: wrap;
       gap: 1.5rem;
-      margin-bottom: 3rem;
     }
-
-    .promo-content h3 {
-      font-size: 1.5rem;
-      font-weight: 800;
-      margin-bottom: 0.5rem;
-    }
-
-    .promo-content p {
-      color: #c7d2fe;
-      font-size: 0.95rem;
-    }
-
-    .promo-input-group {
-      display: flex;
-      gap: 0.5rem;
-    }
-
+    .promo-input-group { display: flex; gap: 0.5rem; }
     .promo-input {
       background: rgba(0, 0, 0, 0.4);
       border: 1px solid rgba(255, 255, 255, 0.15);
-      border-radius: 10px;
-      padding: 0.75rem 1.25rem;
+      border-radius: 9px;
+      padding: 0.7rem 1.15rem;
       color: white;
-      font-size: 0.9rem;
-      min-width: 240px;
+      font-size: 0.88rem;
+      min-width: 250px;
     }
+    .promo-input:focus { outline: none; border-color: var(--accent); }
 
-    .promo-input:focus {
-      outline: none;
-      border-color: var(--accent);
+    /* Collapsible Developer HUD */
+    #hud-pill-trigger {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      z-index: 999;
+      background: #111827;
+      border: 1px solid rgba(99, 102, 241, 0.4);
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6);
+      border-radius: 9999px;
+      padding: 0.45rem 1rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      cursor: pointer;
+      font-size: 0.78rem;
+      font-family: var(--font-mono);
+      color: #c7d2fe;
+      transition: all 0.2s ease;
     }
+    #hud-pill-trigger:hover { background: #1f2937; border-color: var(--accent); }
+    .hud-dot { width: 8px; height: 8px; background: var(--emerald); border-radius: 50%; box-shadow: 0 0 6px var(--emerald); }
 
-    /* Live Analytics HUD Dock */
-    #tracking-hud {
+    #tracking-hud-drawer {
       position: fixed;
       bottom: 0;
       left: 0;
       right: 0;
       z-index: 1000;
-      background: rgba(11, 15, 25, 0.94);
-      backdrop-filter: blur(12px);
-      -webkit-backdrop-filter: blur(12px);
-      border-top: 1px solid rgba(99, 102, 241, 0.3);
-      padding: 0.75rem 2rem;
-      display: flex;
+      background: rgba(11, 15, 25, 0.96);
+      backdrop-filter: blur(14px);
+      border-top: 1px solid rgba(99, 102, 241, 0.35);
+      padding: 0.85rem 2rem;
+      display: none;
       align-items: center;
       justify-content: space-between;
-      box-shadow: 0 -10px 25px rgba(0, 0, 0, 0.5);
-      font-size: 0.85rem;
+      font-size: 0.84rem;
+      box-shadow: 0 -10px 30px rgba(0, 0, 0, 0.7);
     }
-
-    .hud-left {
-      display: flex;
-      align-items: center;
-      gap: 1.25rem;
-    }
-
-    .hud-pulse {
-      width: 10px;
-      height: 10px;
-      background: var(--success);
-      border-radius: 50%;
-      box-shadow: 0 0 10px var(--success);
-      animation: pulse 1.5s infinite;
-    }
-
-    @keyframes pulse {
-      0% { transform: scale(0.95); opacity: 0.7; }
-      50% { transform: scale(1.2); opacity: 1; }
-      100% { transform: scale(0.95); opacity: 0.7; }
-    }
-
-    .hud-stat {
+    .hud-close-btn {
+      background: transparent;
+      border: 1px solid rgba(255, 255, 255, 0.2);
       color: var(--text-muted);
-    }
-
-    .hud-stat strong {
-      color: #fff;
-      font-family: monospace;
-    }
-
-    .hud-right {
-      display: flex;
-      align-items: center;
-      gap: 1rem;
-    }
-
-    .hud-btn {
-      background: rgba(99, 102, 241, 0.2);
-      border: 1px solid rgba(99, 102, 241, 0.4);
-      color: #c7d2fe;
-      padding: 0.4rem 0.85rem;
-      border-radius: 8px;
-      font-size: 0.78rem;
-      font-weight: 600;
+      border-radius: 6px;
+      padding: 0.2rem 0.5rem;
       cursor: pointer;
-      text-decoration: none;
-      transition: all 0.2s;
+      font-size: 0.75rem;
     }
+    .hud-close-btn:hover { color: #fff; border-color: #fff; }
 
-    .hud-btn:hover {
-      background: var(--accent);
-      color: white;
-    }
-
-    /* Toast Notification */
+    /* Toast */
     #toast {
       position: fixed;
-      top: 20px;
-      right: 20px;
-      background: #1e293b;
-      border: 1px solid rgba(99, 102, 241, 0.4);
-      color: white;
-      padding: 0.85rem 1.25rem;
-      border-radius: 12px;
-      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
-      display: none;
+      top: 24px;
+      right: 24px;
       z-index: 2000;
+      background: #1e1b4b;
+      border: 1px solid rgba(99, 102, 241, 0.5);
+      color: white;
+      padding: 0.85rem 1.4rem;
+      border-radius: 12px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
+      display: none;
       font-size: 0.9rem;
-      align-items: center;
-      gap: 0.75rem;
+      font-weight: 500;
     }
   </style>
 </head>
@@ -540,49 +379,58 @@
 
     <ul class="nav-links">
       <li><a href="index.html" class="active" id="nav-home">Home</a></li>
-      <li><a href="product.html" id="nav-catalog">Products</a></li>
+      <li><a href="product.html?id=runner" id="nav-catalog">Products</a></li>
       <li><a href="checkout.html" id="nav-checkout">Checkout</a></li>
     </ul>
 
     <div class="header-actions">
       <button class="cart-btn" id="header-cart-btn" onclick="openCart()">
-        🛒 Cart <span class="cart-count" id="cart-counter">0</span>
+        <span>🛒 Cart</span>
+        <span class="cart-count" id="cart-counter">0</span>
       </button>
       <a href="http://localhost:5173" target="_blank" class="btn btn-outline btn-sm" id="nav-open-dashboard">
-        📊 Open Analytics
+        📊 Open Analytics ↗
       </a>
     </div>
   </header>
 
-  <!-- Container -->
+  <!-- Main Container -->
   <div class="container">
     
     <!-- Hero Section -->
     <section class="hero" id="hero-banner">
       <div class="hero-content">
         <div class="hero-badge">✨ Spring/Summer 2026 Collection</div>
-        <h1>Elevate Your Everyday <span>Aesthetics</span></h1>
-        <p>Curated minimal apparel, footwear, and accessories designed for deliberate living. Built with precision and sustainability.</p>
+        <h1>Thoughtful Apparel for <span>Deliberate Living</span></h1>
+        <p>Curated minimal menswear, footwear, and accessories crafted from recycled performance textiles. Built for form, longevity, and ease.</p>
         <div class="hero-buttons">
-          <a href="product.html" class="btn btn-primary" id="hero-cta-shop-now">Explore Collection</a>
+          <a href="product.html?id=runner" class="btn btn-primary" id="hero-cta-shop-now">Explore Collection</a>
           <button class="btn btn-outline" id="hero-cta-quick-buy" onclick="addToCart('Aura Core Hoodie', 89)">⚡ Quick Add Hoodie ($89)</button>
         </div>
       </div>
 
-      <div class="hero-visual">
-        <div class="preview-tag">Featured Essential</div>
-        <div style="font-size: 5rem; margin: 1rem 0;">🧥</div>
-        <div class="product-title">Merino Minimalist Coat</div>
-        <div class="product-price">$249</div>
+      <div class="hero-featured-card">
+        <div style="font-size: 0.72rem; text-transform: uppercase; color: #a5b4fc; letter-spacing: 0.08em; margin-bottom: 0.5rem;">Signature Spotlight</div>
+        <div class="hero-featured-visual">
+          <!-- Vector Illustration of Outerwear Coat -->
+          <svg class="product-vector" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <rect x="25" y="20" width="50" height="65" rx="10" fill="#312e81" stroke="#818cf8" stroke-width="2.5"/>
+            <path d="M25 35L50 50L75 35" stroke="#a5b4fc" stroke-width="2"/>
+            <path d="M50 50V85" stroke="#a5b4fc" stroke-width="2" stroke-dasharray="3 3"/>
+            <circle cx="50" cy="18" r="8" fill="#4338ca"/>
+          </svg>
+        </div>
+        <div style="font-size: 1.2rem; font-weight: 700; margin-bottom: 0.35rem;">Merino Minimalist Coat</div>
+        <div style="font-size: 1.4rem; font-weight: 800; color: #38bdf8; margin-bottom: 1rem;">$249.00</div>
         <button class="btn btn-primary btn-sm" id="hero-featured-btn" onclick="addToCart('Merino Minimalist Coat', 249)">Add to Cart</button>
       </div>
     </section>
 
-    <!-- Catalog Header & Filter Tabs -->
-    <div class="catalog-header">
+    <!-- Catalog Bar -->
+    <div class="catalog-bar">
       <h2 class="catalog-title">Trending Essentials</h2>
       <div class="filter-tabs">
-        <button class="tab-btn active" id="tab-all" onclick="filterCategory('all', this)">All</button>
+        <button class="tab-btn active" id="tab-all" onclick="filterCategory('all', this)">All Items</button>
         <button class="tab-btn" id="tab-apparel" onclick="filterCategory('apparel', this)">Apparel</button>
         <button class="tab-btn" id="tab-footwear" onclick="filterCategory('footwear', this)">Footwear</button>
         <button class="tab-btn" id="tab-accessories" onclick="filterCategory('accessories', this)">Accessories</button>
@@ -594,14 +442,22 @@
       
       <!-- Card 1 -->
       <div class="product-card" data-category="footwear">
-        <div class="product-img-box">👟</div>
-        <span class="product-category">Footwear</span>
+        <div class="product-preview">
+          <!-- Sneaker Vector -->
+          <svg class="product-vector" viewBox="0 0 100 100" fill="none">
+            <path d="M15 65C15 65 30 68 50 68C70 68 85 62 85 55C85 45 75 42 65 42L55 35L35 48L15 65Z" fill="#1e293b" stroke="#38bdf8" stroke-width="2.5"/>
+            <path d="M15 68H85V75H15V68Z" fill="#0f172a" stroke="#38bdf8" stroke-width="2"/>
+            <circle cx="45" cy="46" r="3" fill="#38bdf8"/>
+            <circle cx="55" cy="42" r="3" fill="#38bdf8"/>
+          </svg>
+        </div>
+        <span class="category-tag">Footwear</span>
         <h3 class="product-name">Monochrome Runner V2</h3>
-        <p class="product-desc">Ultra-light breathable knit with ergonomic memory foam cushion.</p>
+        <p class="product-desc">Ultra-light breathable knit upper with dual-density ergonomic foam cushion.</p>
         <div class="product-footer">
-          <div class="price">$145</div>
+          <span class="product-price">$145</span>
           <div class="card-actions">
-            <a href="product.html" class="btn btn-outline btn-sm" id="btn-view-runner">View Details</a>
+            <a href="product.html?id=runner" class="btn btn-outline btn-sm" id="btn-view-runner">Details</a>
             <button class="btn btn-primary btn-sm" id="btn-cart-runner" onclick="addToCart('Monochrome Runner V2', 145)">Add to Cart</button>
           </div>
         </div>
@@ -609,59 +465,85 @@
 
       <!-- Card 2 -->
       <div class="product-card" data-category="apparel">
-        <div class="product-img-box">👕</div>
-        <span class="product-category">Apparel</span>
-        <h3 class="product-name">Heavyweight Cotton Tee</h3>
-        <p class="product-desc">280 GSM organic combed cotton with structured boxy silhouette.</p>
+        <div class="product-preview">
+          <!-- T-Shirt Vector -->
+          <svg class="product-vector" viewBox="0 0 100 100" fill="none">
+            <path d="M30 25L15 40L25 50L35 45V75H65V45L75 50L85 40L70 25C65 30 35 30 30 25Z" fill="#1e293b" stroke="#818cf8" stroke-width="2.5"/>
+          </svg>
+        </div>
+        <span class="category-tag">Apparel</span>
+        <h3 class="product-name">Heavyweight Combed Tee</h3>
+        <p class="product-desc">280 GSM organic combed cotton crafted in an architectural boxy drape.</p>
         <div class="product-footer">
-          <div class="price">$48</div>
+          <span class="product-price">$48</span>
           <div class="card-actions">
-            <a href="product.html" class="btn btn-outline btn-sm" id="btn-view-tee">View Details</a>
-            <button class="btn btn-primary btn-sm" id="btn-cart-tee" onclick="addToCart('Heavyweight Cotton Tee', 48)">Add to Cart</button>
+            <a href="product.html?id=tee" class="btn btn-outline btn-sm" id="btn-view-tee">Details</a>
+            <button class="btn btn-primary btn-sm" id="btn-cart-tee" onclick="addToCart('Heavyweight Combed Tee', 48)">Add to Cart</button>
           </div>
         </div>
       </div>
 
       <!-- Card 3 -->
       <div class="product-card" data-category="accessories">
-        <div class="product-img-box">🎒</div>
-        <span class="product-category">Accessories</span>
-        <h3 class="product-name">Commuter Waterproof Bag</h3>
-        <p class="product-desc">Weatherproof TPU coated fabric with dedicated 16" laptop sleeve.</p>
+        <div class="product-preview">
+          <!-- Backpack Vector -->
+          <svg class="product-vector" viewBox="0 0 100 100" fill="none">
+            <rect x="30" y="30" width="40" height="50" rx="10" fill="#1e293b" stroke="#10b981" stroke-width="2.5"/>
+            <path d="M40 30V22C40 18 60 18 60 22V30" stroke="#10b981" stroke-width="2.5"/>
+            <rect x="36" y="55" width="28" height="18" rx="4" fill="#0f172a" stroke="#10b981" stroke-width="1.5"/>
+          </svg>
+        </div>
+        <span class="category-tag">Accessories</span>
+        <h3 class="product-name">Commuter Waterproof Pack</h3>
+        <p class="product-desc">TPU matte-coated fabric with dedicated padded 16" laptop sleeve and quick magnetic latch.</p>
         <div class="product-footer">
-          <div class="price">$120</div>
+          <span class="product-price">$120</span>
           <div class="card-actions">
-            <a href="product.html" class="btn btn-outline btn-sm" id="btn-view-bag">View Details</a>
-            <button class="btn btn-primary btn-sm" id="btn-cart-bag" onclick="addToCart('Commuter Waterproof Bag', 120)">Add to Cart</button>
+            <a href="product.html?id=pack" class="btn btn-outline btn-sm" id="btn-view-bag">Details</a>
+            <button class="btn btn-primary btn-sm" id="btn-cart-bag" onclick="addToCart('Commuter Waterproof Pack', 120)">Add to Cart</button>
           </div>
         </div>
       </div>
 
       <!-- Card 4 -->
       <div class="product-card" data-category="accessories">
-        <div class="product-img-box">⌚</div>
-        <span class="product-category">Accessories</span>
-        <h3 class="product-name">Titanium Minimalist Watch</h3>
-        <p class="product-desc">Sapphire crystal glass with genuine Italian leather strap.</p>
+        <div class="product-preview">
+          <!-- Watch Vector -->
+          <svg class="product-vector" viewBox="0 0 100 100" fill="none">
+            <rect x="42" y="15" width="16" height="70" rx="3" fill="#334155" stroke="#f59e0b" stroke-width="1.5"/>
+            <circle cx="50" cy="50" r="22" fill="#0f172a" stroke="#f59e0b" stroke-width="2.5"/>
+            <line x1="50" y1="50" x2="50" y2="36" stroke="#f59e0b" stroke-width="2"/>
+            <line x1="50" y1="50" x2="60" y2="50" stroke="#f59e0b" stroke-width="2"/>
+          </svg>
+        </div>
+        <span class="category-tag">Accessories</span>
+        <h3 class="product-name">Titanium Minimalist Timepiece</h3>
+        <p class="product-desc">Sapphire crystal face with genuine vegetable-tanned leather strap.</p>
         <div class="product-footer">
-          <div class="price">$185</div>
+          <span class="product-price">$185</span>
           <div class="card-actions">
-            <a href="product.html" class="btn btn-outline btn-sm" id="btn-view-watch">View Details</a>
-            <button class="btn btn-primary btn-sm" id="btn-cart-watch" onclick="addToCart('Titanium Minimalist Watch', 185)">Add to Cart</button>
+            <a href="product.html?id=watch" class="btn btn-outline btn-sm" id="btn-view-watch">Details</a>
+            <button class="btn btn-primary btn-sm" id="btn-cart-watch" onclick="addToCart('Titanium Minimalist Timepiece', 185)">Add to Cart</button>
           </div>
         </div>
       </div>
 
       <!-- Card 5 -->
       <div class="product-card" data-category="apparel">
-        <div class="product-img-box">🧥</div>
-        <span class="product-category">Apparel</span>
+        <div class="product-preview">
+          <!-- Overshirt Vector -->
+          <svg class="product-vector" viewBox="0 0 100 100" fill="none">
+            <path d="M28 25L15 42L25 50L35 45V75H65V45L75 50L85 42L72 25C65 30 35 30 28 25Z" fill="#1e293b" stroke="#c084fc" stroke-width="2.5"/>
+            <line x1="50" y1="30" x2="50" y2="75" stroke="#c084fc" stroke-width="1.5" stroke-dasharray="3 3"/>
+          </svg>
+        </div>
+        <span class="category-tag">Apparel</span>
         <h3 class="product-name">Structured Overshirt</h3>
-        <p class="product-desc">Wool-blend textured overshirt for effortless seasonal layering.</p>
+        <p class="product-desc">Heavyweight brushed wool blend designed for clean seasonal layering.</p>
         <div class="product-footer">
-          <div class="price">$110</div>
+          <span class="product-price">$110</span>
           <div class="card-actions">
-            <a href="product.html" class="btn btn-outline btn-sm" id="btn-view-overshirt">View Details</a>
+            <a href="product.html?id=overshirt" class="btn btn-outline btn-sm" id="btn-view-overshirt">Details</a>
             <button class="btn btn-primary btn-sm" id="btn-cart-overshirt" onclick="addToCart('Structured Overshirt', 110)">Add to Cart</button>
           </div>
         </div>
@@ -669,14 +551,20 @@
 
       <!-- Card 6 -->
       <div class="product-card" data-category="footwear">
-        <div class="product-img-box">🥾</div>
-        <span class="product-category">Footwear</span>
+        <div class="product-preview">
+          <!-- Chelsea Boot Vector -->
+          <svg class="product-vector" viewBox="0 0 100 100" fill="none">
+            <path d="M35 25V55L15 65C15 65 30 70 50 70C70 70 85 65 85 55L65 25H35Z" fill="#1e293b" stroke="#f43f5e" stroke-width="2.5"/>
+            <path d="M45 35H55V50H45V35Z" fill="#334155"/>
+          </svg>
+        </div>
+        <span class="category-tag">Footwear</span>
         <h3 class="product-name">All-Terrain Chelsea Boot</h3>
-        <p class="product-desc">Water-resistant full grain leather with lugged Vibram outsole.</p>
+        <p class="product-desc">Full-grain waterproof nubuck with reinforced lugged Vibram rubber outsole.</p>
         <div class="product-footer">
-          <div class="price">$195</div>
+          <span class="product-price">$195</span>
           <div class="card-actions">
-            <a href="product.html" class="btn btn-outline btn-sm" id="btn-view-boot">View Details</a>
+            <a href="product.html?id=boot" class="btn btn-outline btn-sm" id="btn-view-boot">Details</a>
             <button class="btn btn-primary btn-sm" id="btn-cart-boot" onclick="addToCart('All-Terrain Chelsea Boot', 195)">Add to Cart</button>
           </div>
         </div>
@@ -684,62 +572,69 @@
 
     </div>
 
-    <!-- Promo Banner -->
-    <div class="promo-banner" id="promo-section">
-      <div class="promo-content">
-        <h3>Join Aura Insiders Club</h3>
-        <p>Get 15% off your first order plus early access to limited seasonal drops.</p>
+    <!-- Promo Newsletter -->
+    <div class="promo-section" id="promo-section">
+      <div>
+        <h3 style="font-size: 1.45rem; font-weight: 800; margin-bottom: 0.35rem;">Join the Aura Circle</h3>
+        <p style="color: #cbd5e1; font-size: 0.92rem;">Receive 15% off your first purchase plus early access to limited edition drops.</p>
       </div>
       <form class="promo-input-group" id="newsletter-form" onsubmit="handleSubscribe(event)">
-        <input type="email" id="newsletter-email" class="promo-input" placeholder="Enter your email" required>
+        <input type="email" id="newsletter-email" class="promo-input" placeholder="Your email address" required>
         <button type="submit" class="btn btn-primary" id="btn-newsletter-subscribe">Subscribe</button>
       </form>
     </div>
 
   </div>
 
-  <!-- Live Analytics HUD Dock -->
-  <div id="tracking-hud">
-    <div class="hud-left">
-      <div class="hud-pulse" title="TraceFlow Tracker Active"></div>
-      <div class="hud-stat">Session: <strong id="hud-session-id">Detecting...</strong></div>
-      <div class="hud-stat">Events Logged: <strong id="hud-event-count">1</strong></div>
-      <div class="hud-stat">Last Event: <strong id="hud-last-event">page_view</strong></div>
+  <!-- Unobtrusive Floating Trigger (Default Closed) -->
+  <div id="hud-pill-trigger" onclick="toggleHud(true)" title="Open TraceFlow Developer Telemetry HUD">
+    <div class="hud-dot"></div>
+    <span>TraceFlow Active</span>
+    <span style="opacity: 0.7;" id="pill-event-counter">• 1 event</span>
+  </div>
+
+  <!-- Expandable Developer HUD Drawer -->
+  <div id="tracking-hud-drawer">
+    <div style="display:flex; align-items:center; gap: 1.25rem;">
+      <div class="hud-dot"></div>
+      <div style="color: var(--text-muted);">Session: <strong style="color: #fff; font-family: monospace;" id="hud-session-id">...</strong></div>
+      <div style="color: var(--text-muted);">Events: <strong style="color: #fff; font-family: monospace;" id="hud-event-count">1</strong></div>
+      <div style="color: var(--text-muted);">Last Event: <strong style="color: #38bdf8; font-family: monospace;" id="hud-last-event">page_view</strong></div>
     </div>
-    <div class="hud-right">
-      <button class="hud-btn" id="hud-new-session" onclick="resetSession()">🔄 New Session</button>
-      <a href="product.html" class="hud-btn" id="hud-nav-product">Next Page →</a>
-      <a href="checkout.html" class="hud-btn" id="hud-nav-checkout">Checkout →</a>
-      <a href="http://localhost:5173" target="_blank" class="hud-btn" style="background: #4f46e5; color: white;" id="hud-view-dashboard">View Dashboard ↗</a>
+    <div style="display:flex; align-items:center; gap: 0.75rem;">
+      <button class="btn btn-outline btn-sm" onclick="resetSession()">🔄 New Session</button>
+      <a href="product.html?id=runner" class="btn btn-outline btn-sm">Product Page →</a>
+      <a href="checkout.html" class="btn btn-outline btn-sm">Checkout →</a>
+      <a href="http://localhost:5173" target="_blank" class="btn btn-primary btn-sm">Dashboard ↗</a>
+      <button class="hud-close-btn" onclick="toggleHud(false)">✕ Minimize</button>
     </div>
   </div>
 
-  <!-- Toast Element -->
   <div id="toast"></div>
 
-  <!-- Client-side Logic for Demo Web Store -->
   <script>
-    var cartItems = 0;
+    var cartItems = parseInt(sessionStorage.getItem('aura_cart_count') || '0', 10);
     var eventCounter = 1;
+
+    document.getElementById('cart-counter').innerText = cartItems;
 
     function showToast(msg) {
       var toast = document.getElementById('toast');
       toast.innerHTML = msg;
-      toast.style.display = 'flex';
-      setTimeout(function() {
-        toast.style.display = 'none';
-      }, 2500);
+      toast.style.display = 'block';
+      setTimeout(function() { toast.style.display = 'none'; }, 2500);
     }
 
     function addToCart(productName, price) {
       cartItems++;
+      sessionStorage.setItem('aura_cart_count', cartItems);
       document.getElementById('cart-counter').innerText = cartItems;
-      showToast('🛒 Added <strong>' + productName + '</strong> ($' + price + ') to Cart!');
+      showToast('🛒 Added <strong>' + productName + '</strong> ($' + price + ') to your cart');
     }
 
     function openCart() {
       if (cartItems === 0) {
-        showToast('Your cart is empty! Click "Add to Cart" on any product.');
+        showToast('Your shopping cart is empty. Click "Add to Cart" on any product.');
       } else {
         window.location.href = 'checkout.html';
       }
@@ -756,13 +651,11 @@
           card.style.display = 'none';
         }
       });
-      showToast('Filtered by category: ' + category);
     }
 
     function handleSubscribe(e) {
       e.preventDefault();
-      var email = document.getElementById('newsletter-email').value;
-      showToast('🎉 Welcome aboard! Code <strong>AURA15</strong> applied for ' + email);
+      showToast('🎉 Thank you for subscribing! Code <strong>AURA15</strong> is active.');
       document.getElementById('newsletter-email').value = '';
     }
 
@@ -772,30 +665,33 @@
       location.reload();
     }
 
-    // Listen to TraceFlow Custom Events for HUD live feedback
+    function toggleHud(show) {
+      document.getElementById('tracking-hud-drawer').style.display = show ? 'flex' : 'none';
+      document.getElementById('hud-pill-trigger').style.display = show ? 'none' : 'flex';
+    }
+
     window.addEventListener('traceflow:event', function(e) {
-      var evt = e.detail;
       eventCounter++;
       document.getElementById('hud-event-count').innerText = eventCounter;
-      var lastText = evt.eventType;
-      if (evt.eventType === 'click') {
-        lastText += ' (' + (evt.elementTag || 'ELEMENT') + ' @ ' + evt.x + ',' + evt.y + ')';
+      document.getElementById('pill-event-counter').innerText = '• ' + eventCounter + ' events';
+      var last = e.detail.eventType;
+      if (e.detail.eventType === 'click') {
+        last += ' (' + (e.detail.elementTag || 'CLICK') + ')';
       }
-      document.getElementById('hud-last-event').innerText = lastText;
+      document.getElementById('hud-last-event').innerText = last;
     });
 
-    // Update HUD with active session ID once tracker is loaded
     window.addEventListener('DOMContentLoaded', function() {
       setTimeout(function() {
         if (window.TraceFlow) {
           var sid = window.TraceFlow.getSessionId();
-          document.getElementById('hud-session-id').innerText = sid.slice(0, 16) + '...';
+          document.getElementById('hud-session-id').innerText = sid.slice(0, 14) + '...';
         }
       }, 100);
     });
   </script>
 
-  <!-- Load TraceFlow Analytics Tracking Script -->
+  <!-- Load TraceFlow Client Tracker -->
   <script 
     src="../tracker/tracker.js" 
     data-endpoint="http://localhost:5000/api/events"

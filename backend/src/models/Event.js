@@ -45,7 +45,7 @@ const EventSchema = new mongoose.Schema(
       default: Date.now,
       index: true,
     },
-    // Click coordinates (required if eventType is 'click')
+    // Document-relative click coordinates (required if eventType is 'click')
     x: {
       type: Number,
       required: function () {
@@ -60,7 +60,7 @@ const EventSchema = new mongoose.Schema(
       },
       default: null,
     },
-    // Normalized percentage coordinates (0-100%) for responsive heatmap rendering
+    // Document-relative percentage coordinates (0-100% of full page height/width)
     xPercent: {
       type: Number,
       min: 0,
@@ -73,7 +73,20 @@ const EventSchema = new mongoose.Schema(
       max: 100,
       default: null,
     },
-    // Viewport dimensions at the time of interaction
+    // Viewport-relative percentage coordinates (0-100% of visible viewport at moment of click)
+    clientXPercent: {
+      type: Number,
+      min: 0,
+      max: 100,
+      default: null,
+    },
+    clientYPercent: {
+      type: Number,
+      min: 0,
+      max: 100,
+      default: null,
+    },
+    // Viewport & document dimensions at the time of interaction
     viewportWidth: {
       type: Number,
       default: null,
@@ -81,6 +94,22 @@ const EventSchema = new mongoose.Schema(
     viewportHeight: {
       type: Number,
       default: null,
+    },
+    documentWidth: {
+      type: Number,
+      default: null,
+    },
+    documentHeight: {
+      type: Number,
+      default: null,
+    },
+    scrollX: {
+      type: Number,
+      default: 0,
+    },
+    scrollY: {
+      type: Number,
+      default: 0,
     },
     // Contextual DOM element details for click events
     elementTag: {
@@ -99,6 +128,28 @@ const EventSchema = new mongoose.Schema(
       trim: true,
       default: '',
     },
+    elementSelector: {
+      type: String,
+      trim: true,
+      default: '',
+    },
+    elementSection: {
+      type: String,
+      trim: true,
+      default: 'main', // header, hero, catalog, product-details, checkout, footer, etc.
+    },
+    deviceType: {
+      type: String,
+      enum: ['desktop', 'tablet', 'mobile'],
+      default: 'desktop',
+      index: true,
+    },
+    // Distinguishes simulated test activity from genuine customer interactions
+    isSimulated: {
+      type: Boolean,
+      default: false,
+      index: true,
+    },
     // Additional flexible metadata (referrer, user-agent, etc.)
     metadata: {
       type: mongoose.Schema.Types.Mixed,
@@ -106,7 +157,7 @@ const EventSchema = new mongoose.Schema(
     },
   },
   {
-    timestamps: true, // adds createdAt and updatedAt automatically
+    timestamps: true,
     versionKey: false,
   }
 );
@@ -117,13 +168,13 @@ const EventSchema = new mongoose.Schema(
 // 1. Session journey query: fetch all events for a given session sorted chronologically
 EventSchema.index({ sessionId: 1, timestamp: 1 });
 
-// 2. Heatmap query: fetch all click events for a specific URL
-EventSchema.index({ url: 1, eventType: 1 });
+// 2. Heatmap query: fetch all click events for a specific URL with device/date filtering
+EventSchema.index({ url: 1, eventType: 1, timestamp: -1 });
 
 // 3. Page pathname heatmap query: fetch all click events for a specific path
-EventSchema.index({ path: 1, eventType: 1 });
+EventSchema.index({ path: 1, eventType: 1, timestamp: -1 });
 
-// 4. Session aggregation: fetch sessions sorted by most recent activity
-EventSchema.index({ timestamp: -1 });
+// 4. Time-range and simulation filtering index
+EventSchema.index({ timestamp: -1, isSimulated: 1 });
 
 module.exports = mongoose.model('Event', EventSchema);
