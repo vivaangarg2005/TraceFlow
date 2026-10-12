@@ -1,0 +1,9 @@
+{
+  "name": "traceflow-demo-store",
+  "version": "1.0.0",
+  "description": "Interactive demo e-commerce storefront for testing TraceFlow tracking script",
+  "scripts": {
+    "dev": "node server.js",
+    "start": "node server.js"
+  }
+}

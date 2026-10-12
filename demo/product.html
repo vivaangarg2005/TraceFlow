@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Aura Store | Monochrome Runner V2 Details</title>
+  <meta name="description" content="Product details for Monochrome Runner V2. Tracked by TraceFlow Analytics.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #090d16;
+      --card-bg: rgba(22, 29, 47, 0.75);
+      --card-border: rgba(255, 255, 255, 0.08);
+      --text: #f1f5f9;
+      --text-muted: #94a3b8;
+      --accent: #6366f1;
+      --accent-hover: #4f46e5;
+      --accent-glow: rgba(99, 102, 241, 0.25);
+      --success: #10b981;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      padding-bottom: 90px;
+    }
+
+    header {
+      backdrop-filter: blur(16px);
+      background: rgba(9, 13, 22, 0.85);
+      border-bottom: 1px solid var(--card-border);
+      padding: 1rem 2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      text-decoration: none;
+      color: #fff;
+      font-weight: 800;
+    }
+
+    .nav-links { display: flex; gap: 1.5rem; list-style: none; }
+    .nav-links a { color: var(--text-muted); text-decoration: none; font-size: 0.92rem; font-weight: 500; }
+    .nav-links a:hover, .nav-links a.active { color: #fff; }
+
+    .container {
+      max-width: 1100px;
+      margin: 3rem auto;
+      padding: 0 1.5rem;
+    }
+
+    .breadcrumb {
+      display: flex;
+      gap: 0.5rem;
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      margin-bottom: 2rem;
+    }
+    .breadcrumb a { color: var(--text-muted); text-decoration: none; }
+    .breadcrumb a:hover { color: #fff; }
+
+    .product-layout {
+      display: grid;
+      grid-template-columns: 1fr 1.2fr;
+      gap: 3rem;
+      align-items: start;
+    }
+
+    .gallery-box {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 20px;
+      padding: 4rem 2rem;
+      text-align: center;
+      font-size: 8rem;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+    }
+
+    .badge-pill {
+      display: inline-block;
+      background: rgba(99, 102, 241, 0.15);
+      border: 1px solid rgba(99, 102, 241, 0.3);
+      color: #a5b4fc;
+      padding: 0.3rem 0.8rem;
+      border-radius: 9999px;
+      font-size: 0.78rem;
+      font-weight: 600;
+      margin-bottom: 1rem;
+    }
+
+    h1 { font-size: 2.5rem; font-weight: 800; margin-bottom: 0.75rem; letter-spacing: -0.02em; }
+    .price-tag { font-size: 2rem; font-weight: 800; color: #38bdf8; margin-bottom: 1.5rem; }
+    .rating { display: flex; align-items: center; gap: 0.5rem; margin-bottom: 1.5rem; color: #facc15; font-size: 0.9rem; }
+    .rating span { color: var(--text-muted); }
+
+    p.description {
+      color: var(--text-muted);
+      line-height: 1.6;
+      font-size: 1rem;
+      margin-bottom: 2rem;
+    }
+
+    .options-group {
+      margin-bottom: 2rem;
+    }
+    .options-title {
+      font-size: 0.9rem;
+      font-weight: 700;
+      margin-bottom: 0.75rem;
+    }
+    .size-selector {
+      display: flex;
+      gap: 0.6rem;
+    }
+    .size-btn {
+      width: 44px;
+      height: 44px;
+      border-radius: 10px;
+      border: 1px solid var(--card-border);
+      background: rgba(255, 255, 255, 0.05);
+      color: #fff;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .size-btn:hover, .size-btn.active {
+      background: var(--accent);
+      border-color: var(--accent);
+    }
+
+    .action-row {
+      display: flex;
+      gap: 1rem;
+    }
+
+    .btn {
+      padding: 0.95rem 2rem;
+      border-radius: 12px;
+      font-weight: 700;
+      cursor: pointer;
+      font-size: 1rem;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s;
+      border: none;
+    }
+    .btn-primary { background: var(--accent); color: white; }
+    .btn-primary:hover { background: var(--accent-hover); transform: translateY(-2px); }
+    .btn-secondary { background: rgba(255, 255, 255, 0.06); color: white; border: 1px solid var(--card-border); }
+    .btn-secondary:hover { background: rgba(255, 255, 255, 0.12); }
+
+    /* Live Analytics HUD Dock */
+    #tracking-hud {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      z-index: 1000;
+      background: rgba(11, 15, 25, 0.94);
+      backdrop-filter: blur(12px);
+      border-top: 1px solid rgba(99, 102, 241, 0.3);
+      padding: 0.75rem 2rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 0.85rem;
+    }
+    .hud-stat { color: var(--text-muted); }
+    .hud-stat strong { color: #fff; font-family: monospace; }
+    .hud-btn {
+      background: rgba(99, 102, 241, 0.2);
+      border: 1px solid rgba(99, 102, 241, 0.4);
+      color: #c7d2fe;
+      padding: 0.4rem 0.85rem;
+      border-radius: 8px;
+      font-size: 0.78rem;
+      font-weight: 600;
+      cursor: pointer;
+      text-decoration: none;
+    }
+    .hud-btn:hover { background: var(--accent); color: white; }
+
+    #toast {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      background: #1e293b;
+      border: 1px solid rgba(99, 102, 241, 0.4);
+      color: white;
+      padding: 0.85rem 1.25rem;
+      border-radius: 12px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+      display: none;
+      z-index: 2000;
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <a href="index.html" class="brand" id="product-brand-link">
+      <span style="background: linear-gradient(135deg, #6366f1, #a855f7); width:32px; height:32px; border-radius:8px; display:inline-flex; align-items:center; justify-content:center;">A</span>
+      <span>Aura Store</span>
+    </a>
+    <ul class="nav-links">
+      <li><a href="index.html" id="link-home">Home</a></li>
+      <li><a href="product.html" class="active" id="link-product">Products</a></li>
+      <li><a href="checkout.html" id="link-checkout">Checkout</a></li>
+    </ul>
+    <div>
+      <a href="checkout.html" class="btn btn-secondary" style="padding: 0.45rem 1rem; font-size: 0.85rem;" id="nav-cart-btn">🛒 Checkout</a>
+    </div>
+  </header>
+
+  <div class="container">
+    <div class="breadcrumb">
+      <a href="index.html" id="bc-home">Home</a> &gt; 
+      <a href="index.html" id="bc-footwear">Footwear</a> &gt; 
+      <span>Monochrome Runner V2</span>
+    </div>
+
+    <div class="product-layout">
+      <div class="gallery-box" id="product-gallery">
+        👟
+      </div>
+
+      <div class="product-details">
+        <span class="badge-pill">Best Seller</span>
+        <h1 id="product-heading">Monochrome Runner V2</h1>
+        <div class="price-tag" id="product-price">$145.00</div>
+        
+        <div class="rating">
+          ★★★★★ <span>(4.9 / 5 from 182 verified reviews)</span>
+        </div>
+
+        <p class="description">
+          Engineered for all-day comfort and street-ready aesthetics. Crafted from breathable recycled knit fabric, reinforced TPU heel support, and ultralight dual-density EVA foam.
+        </p>
+
+        <div class="options-group">
+          <div class="options-title">Select US Size:</div>
+          <div class="size-selector">
+            <button class="size-btn" id="size-8" onclick="selectSize(8, this)">8</button>
+            <button class="size-btn active" id="size-9" onclick="selectSize(9, this)">9</button>
+            <button class="size-btn" id="size-10" onclick="selectSize(10, this)">10</button>
+            <button class="size-btn" id="size-11" onclick="selectSize(11, this)">11</button>
+            <button class="size-btn" id="size-12" onclick="selectSize(12, this)">12</button>
+          </div>
+        </div>
+
+        <div class="action-row">
+          <button class="btn btn-primary" id="btn-add-to-cart" onclick="handleAddToCart()">🛒 Add to Cart</button>
+          <a href="checkout.html" class="btn btn-secondary" id="btn-buy-now">⚡ Buy Now</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="tracking-hud">
+    <div style="display:flex; align-items:center; gap: 1.25rem;">
+      <div style="width:10px; height:10px; background:#10b981; border-radius:50%;" title="Active"></div>
+      <div class="hud-stat">Session: <strong id="hud-session-id">...</strong></div>
+      <div class="hud-stat">Page: <strong>/demo/product.html</strong></div>
+    </div>
+    <div style="display:flex; gap: 0.75rem;">
+      <a href="index.html" class="hud-btn" id="hud-back-home">← Back to Store</a>
+      <a href="checkout.html" class="hud-btn" id="hud-to-checkout">Proceed to Checkout →</a>
+      <a href="http://localhost:5173" target="_blank" class="hud-btn" style="background:#4f46e5; color:white;" id="hud-open-dash">Dashboard ↗</a>
+    </div>
+  </div>
+
+  <div id="toast"></div>
+
+  <script>
+    var selectedSize = 9;
+
+    function selectSize(sz, btn) {
+      selectedSize = sz;
+      document.querySelectorAll('.size-btn').forEach(function(b) { b.classList.remove('active'); });
+      btn.classList.add('active');
+    }
+
+    function handleAddToCart() {
+      var toast = document.getElementById('toast');
+      toast.innerHTML = '✅ Added <strong>Monochrome Runner V2 (Size ' + selectedSize + ')</strong> to cart!';
+      toast.style.display = 'block';
+      setTimeout(function() { toast.style.display = 'none'; }, 2500);
+    }
+
+    window.addEventListener('DOMContentLoaded', function() {
+      setTimeout(function() {
+        if (window.TraceFlow) {
+          var sid = window.TraceFlow.getSessionId();
+          document.getElementById('hud-session-id').innerText = sid.slice(0, 16) + '...';
+        }
+      }, 100);
+    });
+  </script>
+
+  <!-- Load TraceFlow Tracking Script -->
+  <script 
+    src="../tracker/tracker.js" 
+    data-endpoint="http://localhost:5000/api/events"
+    data-debug="true">
+  </script>
+</body>
+</html>

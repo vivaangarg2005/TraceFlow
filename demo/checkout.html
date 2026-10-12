@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Aura Store | Checkout & Order Confirmation</title>
+  <meta name="description" content="Checkout process for Aura Store. Tracked by TraceFlow Analytics.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #090d16;
+      --card-bg: rgba(22, 29, 47, 0.75);
+      --card-border: rgba(255, 255, 255, 0.08);
+      --text: #f1f5f9;
+      --text-muted: #94a3b8;
+      --accent: #6366f1;
+      --accent-hover: #4f46e5;
+      --success: #10b981;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      padding-bottom: 90px;
+    }
+
+    header {
+      backdrop-filter: blur(16px);
+      background: rgba(9, 13, 22, 0.85);
+      border-bottom: 1px solid var(--card-border);
+      padding: 1rem 2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .brand { display: flex; align-items: center; gap: 0.75rem; text-decoration: none; color: #fff; font-weight: 800; }
+    .nav-links { display: flex; gap: 1.5rem; list-style: none; }
+    .nav-links a { color: var(--text-muted); text-decoration: none; font-size: 0.92rem; font-weight: 500; }
+    .nav-links a:hover, .nav-links a.active { color: #fff; }
+
+    .container {
+      max-width: 960px;
+      margin: 3rem auto;
+      padding: 0 1.5rem;
+    }
+
+    .checkout-grid {
+      display: grid;
+      grid-template-columns: 1.2fr 0.8fr;
+      gap: 2.5rem;
+    }
+
+    .card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 18px;
+      padding: 2rem;
+    }
+
+    h2 { font-size: 1.5rem; font-weight: 800; margin-bottom: 1.5rem; }
+
+    .form-group {
+      margin-bottom: 1.25rem;
+    }
+    label { display: block; font-size: 0.82rem; font-weight: 600; color: var(--text-muted); margin-bottom: 0.4rem; }
+    input {
+      width: 100%;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--card-border);
+      padding: 0.75rem 1rem;
+      border-radius: 10px;
+      color: white;
+      font-size: 0.92rem;
+      outline: none;
+      transition: border 0.2s;
+    }
+    input:focus { border-color: var(--accent); }
+
+    .order-summary-item {
+      display: flex;
+      justify-content: space-between;
+      padding: 0.75rem 0;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+      font-size: 0.92rem;
+    }
+
+    .order-total {
+      display: flex;
+      justify-content: space-between;
+      padding-top: 1rem;
+      font-size: 1.25rem;
+      font-weight: 800;
+      color: #38bdf8;
+    }
+
+    .btn {
+      width: 100%;
+      padding: 0.95rem;
+      border-radius: 12px;
+      font-weight: 700;
+      font-size: 1rem;
+      cursor: pointer;
+      border: none;
+      margin-top: 1.5rem;
+      transition: all 0.2s;
+    }
+    .btn-primary { background: var(--accent); color: white; }
+    .btn-primary:hover { background: var(--accent-hover); transform: translateY(-2px); }
+
+    #confirmation-card {
+      display: none;
+      text-align: center;
+      padding: 3.5rem 2rem;
+    }
+    .success-icon { font-size: 4rem; margin-bottom: 1rem; }
+
+    #tracking-hud {
+      position: fixed;
+      bottom: 0; left: 0; right: 0;
+      background: rgba(11, 15, 25, 0.94);
+      backdrop-filter: blur(12px);
+      border-top: 1px solid rgba(99, 102, 241, 0.3);
+      padding: 0.75rem 2rem;
+      display: flex; justify-content: space-between; align-items: center;
+      font-size: 0.85rem;
+    }
+    .hud-stat { color: var(--text-muted); }
+    .hud-stat strong { color: #fff; font-family: monospace; }
+    .hud-btn {
+      background: rgba(99, 102, 241, 0.2);
+      border: 1px solid rgba(99, 102, 241, 0.4);
+      color: #c7d2fe;
+      padding: 0.4rem 0.85rem;
+      border-radius: 8px;
+      text-decoration: none;
+      font-size: 0.78rem;
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <a href="index.html" class="brand" id="checkout-brand-link">
+      <span style="background: linear-gradient(135deg, #6366f1, #a855f7); width:32px; height:32px; border-radius:8px; display:inline-flex; align-items:center; justify-content:center;">A</span>
+      <span>Aura Store</span>
+    </a>
+    <ul class="nav-links">
+      <li><a href="index.html" id="link-home">Home</a></li>
+      <li><a href="product.html" id="link-product">Products</a></li>
+      <li><a href="checkout.html" class="active" id="link-checkout">Checkout</a></li>
+    </ul>
+    <div>
+      <a href="http://localhost:5173" target="_blank" class="hud-btn" style="background:#4f46e5; color:white;" id="nav-dash-link">Analytics Dashboard ↗</a>
+    </div>
+  </header>
+
+  <div class="container">
+    
+    <div id="checkout-container" class="checkout-grid">
+      <!-- Shipping Form -->
+      <div class="card">
+        <h2>Shipping & Payment</h2>
+        <form id="checkout-form" onsubmit="handlePlaceOrder(event)">
+          <div class="form-group">
+            <label for="name-input">Full Name</label>
+            <input type="text" id="name-input" value="Alex Morgan" required>
+          </div>
+          <div class="form-group">
+            <label for="email-input">Email Address</label>
+            <input type="email" id="email-input" value="alex.morgan@example.com" required>
+          </div>
+          <div class="form-group">
+            <label for="address-input">Street Address</label>
+            <input type="text" id="address-input" value="742 Evergreen Terrace" required>
+          </div>
+          <div class="form-group">
+            <label for="card-input">Card Number (Demo Sandbox)</label>
+            <input type="text" id="card-input" value="•••• •••• •••• 4242" required>
+          </div>
+          <button type="submit" class="btn btn-primary" id="btn-place-order">Complete Order ($145.00)</button>
+        </form>
+      </div>
+
+      <!-- Order Summary -->
+      <div class="card">
+        <h2>Order Summary</h2>
+        <div class="order-summary-item">
+          <span>Monochrome Runner V2 (Size 9)</span>
+          <span>$145.00</span>
+        </div>
+        <div class="order-summary-item">
+          <span>Standard Express Shipping</span>
+          <span style="color:#10b981;">FREE</span>
+        </div>
+        <div class="order-summary-item">
+          <span>Estimated Sales Tax</span>
+          <span>$0.00</span>
+        </div>
+        <div class="order-total">
+          <span>Total</span>
+          <span>$145.00</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Success Confirmation -->
+    <div id="confirmation-card" class="card">
+      <div class="success-icon">🎉</div>
+      <h2 style="font-size:2rem; margin-bottom: 0.5rem;">Order Confirmed!</h2>
+      <p style="color:var(--text-muted); margin-bottom: 2rem;">Order #AUR-98241 has been logged. TraceFlow captured your full conversion journey.</p>
+      <div style="display:flex; justify-content:center; gap: 1rem;">
+        <a href="index.html" class="hud-btn" style="padding:0.8rem 1.5rem; font-size:0.9rem;" id="btn-return-store">Return to Store</a>
+        <a href="http://localhost:5173" target="_blank" class="hud-btn" style="background:#4f46e5; color:white; padding:0.8rem 1.5rem; font-size:0.9rem;" id="btn-view-journey">Inspect Journey in Dashboard ↗</a>
+      </div>
+    </div>
+
+  </div>
+
+  <div id="tracking-hud">
+    <div style="display:flex; align-items:center; gap: 1.25rem;">
+      <div style="width:10px; height:10px; background:#10b981; border-radius:50%;"></div>
+      <div class="hud-stat">Session: <strong id="hud-session-id">...</strong></div>
+      <div class="hud-stat">Page: <strong>/demo/checkout.html</strong></div>
+    </div>
+    <div style="display:flex; gap: 0.75rem;">
+      <a href="product.html" class="hud-btn" id="hud-back-product">← Back</a>
+      <a href="index.html" class="hud-btn" id="hud-home-btn">Store Home</a>
+      <a href="http://localhost:5173" target="_blank" class="hud-btn" style="background:#4f46e5; color:white;" id="hud-open-dash">Dashboard ↗</a>
+    </div>
+  </div>
+
+  <script>
+    function handlePlaceOrder(e) {
+      e.preventDefault();
+      document.getElementById('checkout-container').style.display = 'none';
+      document.getElementById('confirmation-card').style.display = 'block';
+    }
+
+    window.addEventListener('DOMContentLoaded', function() {
+      setTimeout(function() {
+        if (window.TraceFlow) {
+          var sid = window.TraceFlow.getSessionId();
+          document.getElementById('hud-session-id').innerText = sid.slice(0, 16) + '...';
+        }
+      }, 100);
+    });
+  </script>
+
+  <!-- Load TraceFlow Tracking Script -->
+  <script 
+    src="../tracker/tracker.js" 
+    data-endpoint="http://localhost:5000/api/events"
+    data-debug="true">
+  </script>
+</body>
+</html>

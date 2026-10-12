@@ -1,6 +1,7 @@
 const express = require('express');
 const cors = require('cors');
 const dotenv = require('dotenv');
+const path = require('path');
 const connectDB = require('./config/db');
 const eventRoutes = require('./routes/eventRoutes');
 const errorHandler = require('./middleware/errorHandler');
@@ -59,6 +60,12 @@ app.get('/api/health', (req, res) => {
     timestamp: new Date().toISOString(),
     service: 'TraceFlow Analytics Backend',
   });
+});
+
+// Serve client tracking script for external sites embedding
+app.get(['/tracker.js', '/tracker/tracker.js'], (req, res) => {
+  const trackerPath = path.resolve(__dirname, '../../tracker/tracker.js');
+  res.sendFile(trackerPath);
 });
 
 // Mount Analytics & Session Routes

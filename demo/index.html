@@ -1,0 +1,805 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Aura Store | Premium Minimalist Essentials</title>
+  <meta name="description" content="Shop modern minimalist essentials with premium craftsmanship. Tracked in real-time by TraceFlow Analytics.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #090d16;
+      --card-bg: rgba(22, 29, 47, 0.75);
+      --card-border: rgba(255, 255, 255, 0.08);
+      --text: #f1f5f9;
+      --text-muted: #94a3b8;
+      --accent: #6366f1;
+      --accent-hover: #4f46e5;
+      --accent-glow: rgba(99, 102, 241, 0.25);
+      --success: #10b981;
+      --badge-bg: rgba(99, 102, 241, 0.12);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: var(--bg);
+      background-image: 
+        radial-gradient(at 10% 10%, rgba(99, 102, 241, 0.15) 0px, transparent 50%),
+        radial-gradient(at 90% 90%, rgba(16, 185, 129, 0.1) 0px, transparent 50%);
+      color: var(--text);
+      min-height: 100vh;
+      overflow-x: hidden;
+      padding-bottom: 90px; /* Space for sticky HUD */
+    }
+
+    /* Header & Navigation */
+    header {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      background: rgba(9, 13, 22, 0.85);
+      border-bottom: 1px solid var(--card-border);
+      padding: 1rem 2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      text-decoration: none;
+      color: #fff;
+    }
+
+    .brand-logo {
+      width: 36px;
+      height: 36px;
+      background: linear-gradient(135deg, #6366f1, #a855f7);
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 800;
+      font-size: 1.1rem;
+      box-shadow: 0 4px 14px var(--accent-glow);
+    }
+
+    .brand-name {
+      font-weight: 800;
+      font-size: 1.25rem;
+      letter-spacing: -0.02em;
+    }
+
+    .nav-links {
+      display: flex;
+      gap: 1.5rem;
+      list-style: none;
+    }
+
+    .nav-links a {
+      color: var(--text-muted);
+      text-decoration: none;
+      font-size: 0.92rem;
+      font-weight: 500;
+      transition: color 0.2s;
+    }
+
+    .nav-links a:hover, .nav-links a.active {
+      color: #fff;
+    }
+
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .cart-btn {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--card-border);
+      color: #fff;
+      padding: 0.55rem 1rem;
+      border-radius: 9999px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.9rem;
+      font-weight: 600;
+      transition: all 0.2s;
+    }
+
+    .cart-btn:hover {
+      background: rgba(255, 255, 255, 0.1);
+      border-color: rgba(255, 255, 255, 0.2);
+    }
+
+    .cart-count {
+      background: var(--accent);
+      color: white;
+      font-size: 0.75rem;
+      padding: 2px 7px;
+      border-radius: 10px;
+    }
+
+    /* Main Container */
+    .container {
+      max-width: 1240px;
+      margin: 0 auto;
+      padding: 2.5rem 1.5rem;
+    }
+
+    /* Hero Section */
+    .hero {
+      background: linear-gradient(180deg, rgba(30, 41, 67, 0.6) 0%, rgba(15, 23, 42, 0.4) 100%);
+      border: 1px solid var(--card-border);
+      border-radius: 24px;
+      padding: 3.5rem 3rem;
+      margin-bottom: 3rem;
+      display: grid;
+      grid-template-columns: 1.2fr 0.8fr;
+      gap: 2.5rem;
+      align-items: center;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .hero-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      background: var(--badge-bg);
+      border: 1px solid rgba(99, 102, 241, 0.3);
+      color: #a5b4fc;
+      font-size: 0.8rem;
+      font-weight: 600;
+      padding: 0.4rem 0.85rem;
+      border-radius: 9999px;
+      margin-bottom: 1.25rem;
+    }
+
+    .hero h1 {
+      font-size: 2.75rem;
+      font-weight: 800;
+      line-height: 1.15;
+      letter-spacing: -0.03em;
+      margin-bottom: 1.25rem;
+    }
+
+    .hero h1 span {
+      background: linear-gradient(135deg, #818cf8, #c084fc);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .hero p {
+      color: var(--text-muted);
+      font-size: 1.1rem;
+      line-height: 1.6;
+      margin-bottom: 2rem;
+      max-width: 520px;
+    }
+
+    .hero-buttons {
+      display: flex;
+      gap: 1rem;
+      flex-wrap: wrap;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      padding: 0.85rem 1.75rem;
+      border-radius: 12px;
+      font-size: 0.95rem;
+      font-weight: 600;
+      cursor: pointer;
+      text-decoration: none;
+      transition: all 0.2s ease;
+      border: none;
+    }
+
+    .btn-primary {
+      background: var(--accent);
+      color: white;
+      box-shadow: 0 4px 20px var(--accent-glow);
+    }
+
+    .btn-primary:hover {
+      background: var(--accent-hover);
+      transform: translateY(-2px);
+    }
+
+    .btn-outline {
+      background: rgba(255, 255, 255, 0.05);
+      color: white;
+      border: 1px solid var(--card-border);
+    }
+
+    .btn-outline:hover {
+      background: rgba(255, 255, 255, 0.1);
+      border-color: rgba(255, 255, 255, 0.2);
+    }
+
+    .hero-visual {
+      background: linear-gradient(135deg, #1e1b4b, #312e81);
+      border-radius: 20px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      padding: 2.5rem;
+      text-align: center;
+      position: relative;
+    }
+
+    .hero-visual .preview-tag {
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: #a5b4fc;
+      margin-bottom: 0.5rem;
+    }
+
+    .hero-visual .product-title {
+      font-size: 1.5rem;
+      font-weight: 700;
+      margin-bottom: 0.5rem;
+    }
+
+    .hero-visual .product-price {
+      font-size: 1.75rem;
+      font-weight: 800;
+      color: #38bdf8;
+      margin-bottom: 1.5rem;
+    }
+
+    /* Filter Tabs */
+    .catalog-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 2rem;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+
+    .catalog-title {
+      font-size: 1.75rem;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+    }
+
+    .filter-tabs {
+      display: flex;
+      background: rgba(255, 255, 255, 0.03);
+      padding: 4px;
+      border-radius: 12px;
+      border: 1px solid var(--card-border);
+    }
+
+    .tab-btn {
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      padding: 0.5rem 1rem;
+      border-radius: 8px;
+      font-size: 0.88rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .tab-btn.active, .tab-btn:hover {
+      background: rgba(255, 255, 255, 0.08);
+      color: #fff;
+    }
+
+    /* Product Grid */
+    .product-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(270px, 1fr));
+      gap: 1.75rem;
+      margin-bottom: 4rem;
+    }
+
+    .product-card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 18px;
+      padding: 1.25rem;
+      display: flex;
+      flex-direction: column;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      position: relative;
+    }
+
+    .product-card:hover {
+      transform: translateY(-4px);
+      border-color: rgba(99, 102, 241, 0.4);
+      box-shadow: 0 12px 30px rgba(0, 0, 0, 0.3);
+    }
+
+    .product-img-box {
+      width: 100%;
+      height: 180px;
+      background: linear-gradient(135deg, #1e293b, #0f172a);
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 3.5rem;
+      margin-bottom: 1.2rem;
+      border: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    .product-category {
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-muted);
+      margin-bottom: 0.25rem;
+    }
+
+    .product-name {
+      font-size: 1.1rem;
+      font-weight: 700;
+      margin-bottom: 0.5rem;
+    }
+
+    .product-desc {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      line-height: 1.4;
+      margin-bottom: 1rem;
+      flex-grow: 1;
+    }
+
+    .product-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-top: auto;
+      padding-top: 1rem;
+      border-top: 1px solid rgba(255, 255, 255, 0.06);
+    }
+
+    .price {
+      font-size: 1.25rem;
+      font-weight: 800;
+      color: #fff;
+    }
+
+    .card-actions {
+      display: flex;
+      gap: 0.5rem;
+    }
+
+    .btn-sm {
+      padding: 0.45rem 0.9rem;
+      font-size: 0.82rem;
+      border-radius: 8px;
+    }
+
+    /* Promo Banner */
+    .promo-banner {
+      background: linear-gradient(90deg, #312e81, #1e1b4b);
+      border: 1px solid rgba(99, 102, 241, 0.3);
+      border-radius: 18px;
+      padding: 2.5rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 1.5rem;
+      margin-bottom: 3rem;
+    }
+
+    .promo-content h3 {
+      font-size: 1.5rem;
+      font-weight: 800;
+      margin-bottom: 0.5rem;
+    }
+
+    .promo-content p {
+      color: #c7d2fe;
+      font-size: 0.95rem;
+    }
+
+    .promo-input-group {
+      display: flex;
+      gap: 0.5rem;
+    }
+
+    .promo-input {
+      background: rgba(0, 0, 0, 0.4);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      border-radius: 10px;
+      padding: 0.75rem 1.25rem;
+      color: white;
+      font-size: 0.9rem;
+      min-width: 240px;
+    }
+
+    .promo-input:focus {
+      outline: none;
+      border-color: var(--accent);
+    }
+
+    /* Live Analytics HUD Dock */
+    #tracking-hud {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      z-index: 1000;
+      background: rgba(11, 15, 25, 0.94);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border-top: 1px solid rgba(99, 102, 241, 0.3);
+      padding: 0.75rem 2rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      box-shadow: 0 -10px 25px rgba(0, 0, 0, 0.5);
+      font-size: 0.85rem;
+    }
+
+    .hud-left {
+      display: flex;
+      align-items: center;
+      gap: 1.25rem;
+    }
+
+    .hud-pulse {
+      width: 10px;
+      height: 10px;
+      background: var(--success);
+      border-radius: 50%;
+      box-shadow: 0 0 10px var(--success);
+      animation: pulse 1.5s infinite;
+    }
+
+    @keyframes pulse {
+      0% { transform: scale(0.95); opacity: 0.7; }
+      50% { transform: scale(1.2); opacity: 1; }
+      100% { transform: scale(0.95); opacity: 0.7; }
+    }
+
+    .hud-stat {
+      color: var(--text-muted);
+    }
+
+    .hud-stat strong {
+      color: #fff;
+      font-family: monospace;
+    }
+
+    .hud-right {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .hud-btn {
+      background: rgba(99, 102, 241, 0.2);
+      border: 1px solid rgba(99, 102, 241, 0.4);
+      color: #c7d2fe;
+      padding: 0.4rem 0.85rem;
+      border-radius: 8px;
+      font-size: 0.78rem;
+      font-weight: 600;
+      cursor: pointer;
+      text-decoration: none;
+      transition: all 0.2s;
+    }
+
+    .hud-btn:hover {
+      background: var(--accent);
+      color: white;
+    }
+
+    /* Toast Notification */
+    #toast {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      background: #1e293b;
+      border: 1px solid rgba(99, 102, 241, 0.4);
+      color: white;
+      padding: 0.85rem 1.25rem;
+      border-radius: 12px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+      display: none;
+      z-index: 2000;
+      font-size: 0.9rem;
+      align-items: center;
+      gap: 0.75rem;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Header -->
+  <header>
+    <a href="index.html" class="brand" id="nav-brand">
+      <div class="brand-logo">A</div>
+      <div class="brand-name">Aura Store</div>
+    </a>
+
+    <ul class="nav-links">
+      <li><a href="index.html" class="active" id="nav-home">Home</a></li>
+      <li><a href="product.html" id="nav-catalog">Products</a></li>
+      <li><a href="checkout.html" id="nav-checkout">Checkout</a></li>
+    </ul>
+
+    <div class="header-actions">
+      <button class="cart-btn" id="header-cart-btn" onclick="openCart()">
+        🛒 Cart <span class="cart-count" id="cart-counter">0</span>
+      </button>
+      <a href="http://localhost:5173" target="_blank" class="btn btn-outline btn-sm" id="nav-open-dashboard">
+        📊 Open Analytics
+      </a>
+    </div>
+  </header>
+
+  <!-- Container -->
+  <div class="container">
+    
+    <!-- Hero Section -->
+    <section class="hero" id="hero-banner">
+      <div class="hero-content">
+        <div class="hero-badge">✨ Spring/Summer 2026 Collection</div>
+        <h1>Elevate Your Everyday <span>Aesthetics</span></h1>
+        <p>Curated minimal apparel, footwear, and accessories designed for deliberate living. Built with precision and sustainability.</p>
+        <div class="hero-buttons">
+          <a href="product.html" class="btn btn-primary" id="hero-cta-shop-now">Explore Collection</a>
+          <button class="btn btn-outline" id="hero-cta-quick-buy" onclick="addToCart('Aura Core Hoodie', 89)">⚡ Quick Add Hoodie ($89)</button>
+        </div>
+      </div>
+
+      <div class="hero-visual">
+        <div class="preview-tag">Featured Essential</div>
+        <div style="font-size: 5rem; margin: 1rem 0;">🧥</div>
+        <div class="product-title">Merino Minimalist Coat</div>
+        <div class="product-price">$249</div>
+        <button class="btn btn-primary btn-sm" id="hero-featured-btn" onclick="addToCart('Merino Minimalist Coat', 249)">Add to Cart</button>
+      </div>
+    </section>
+
+    <!-- Catalog Header & Filter Tabs -->
+    <div class="catalog-header">
+      <h2 class="catalog-title">Trending Essentials</h2>
+      <div class="filter-tabs">
+        <button class="tab-btn active" id="tab-all" onclick="filterCategory('all', this)">All</button>
+        <button class="tab-btn" id="tab-apparel" onclick="filterCategory('apparel', this)">Apparel</button>
+        <button class="tab-btn" id="tab-footwear" onclick="filterCategory('footwear', this)">Footwear</button>
+        <button class="tab-btn" id="tab-accessories" onclick="filterCategory('accessories', this)">Accessories</button>
+      </div>
+    </div>
+
+    <!-- Product Grid -->
+    <div class="product-grid" id="products-container">
+      
+      <!-- Card 1 -->
+      <div class="product-card" data-category="footwear">
+        <div class="product-img-box">👟</div>
+        <span class="product-category">Footwear</span>
+        <h3 class="product-name">Monochrome Runner V2</h3>
+        <p class="product-desc">Ultra-light breathable knit with ergonomic memory foam cushion.</p>
+        <div class="product-footer">
+          <div class="price">$145</div>
+          <div class="card-actions">
+            <a href="product.html" class="btn btn-outline btn-sm" id="btn-view-runner">View Details</a>
+            <button class="btn btn-primary btn-sm" id="btn-cart-runner" onclick="addToCart('Monochrome Runner V2', 145)">Add to Cart</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Card 2 -->
+      <div class="product-card" data-category="apparel">
+        <div class="product-img-box">👕</div>
+        <span class="product-category">Apparel</span>
+        <h3 class="product-name">Heavyweight Cotton Tee</h3>
+        <p class="product-desc">280 GSM organic combed cotton with structured boxy silhouette.</p>
+        <div class="product-footer">
+          <div class="price">$48</div>
+          <div class="card-actions">
+            <a href="product.html" class="btn btn-outline btn-sm" id="btn-view-tee">View Details</a>
+            <button class="btn btn-primary btn-sm" id="btn-cart-tee" onclick="addToCart('Heavyweight Cotton Tee', 48)">Add to Cart</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Card 3 -->
+      <div class="product-card" data-category="accessories">
+        <div class="product-img-box">🎒</div>
+        <span class="product-category">Accessories</span>
+        <h3 class="product-name">Commuter Waterproof Bag</h3>
+        <p class="product-desc">Weatherproof TPU coated fabric with dedicated 16" laptop sleeve.</p>
+        <div class="product-footer">
+          <div class="price">$120</div>
+          <div class="card-actions">
+            <a href="product.html" class="btn btn-outline btn-sm" id="btn-view-bag">View Details</a>
+            <button class="btn btn-primary btn-sm" id="btn-cart-bag" onclick="addToCart('Commuter Waterproof Bag', 120)">Add to Cart</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Card 4 -->
+      <div class="product-card" data-category="accessories">
+        <div class="product-img-box">⌚</div>
+        <span class="product-category">Accessories</span>
+        <h3 class="product-name">Titanium Minimalist Watch</h3>
+        <p class="product-desc">Sapphire crystal glass with genuine Italian leather strap.</p>
+        <div class="product-footer">
+          <div class="price">$185</div>
+          <div class="card-actions">
+            <a href="product.html" class="btn btn-outline btn-sm" id="btn-view-watch">View Details</a>
+            <button class="btn btn-primary btn-sm" id="btn-cart-watch" onclick="addToCart('Titanium Minimalist Watch', 185)">Add to Cart</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Card 5 -->
+      <div class="product-card" data-category="apparel">
+        <div class="product-img-box">🧥</div>
+        <span class="product-category">Apparel</span>
+        <h3 class="product-name">Structured Overshirt</h3>
+        <p class="product-desc">Wool-blend textured overshirt for effortless seasonal layering.</p>
+        <div class="product-footer">
+          <div class="price">$110</div>
+          <div class="card-actions">
+            <a href="product.html" class="btn btn-outline btn-sm" id="btn-view-overshirt">View Details</a>
+            <button class="btn btn-primary btn-sm" id="btn-cart-overshirt" onclick="addToCart('Structured Overshirt', 110)">Add to Cart</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Card 6 -->
+      <div class="product-card" data-category="footwear">
+        <div class="product-img-box">🥾</div>
+        <span class="product-category">Footwear</span>
+        <h3 class="product-name">All-Terrain Chelsea Boot</h3>
+        <p class="product-desc">Water-resistant full grain leather with lugged Vibram outsole.</p>
+        <div class="product-footer">
+          <div class="price">$195</div>
+          <div class="card-actions">
+            <a href="product.html" class="btn btn-outline btn-sm" id="btn-view-boot">View Details</a>
+            <button class="btn btn-primary btn-sm" id="btn-cart-boot" onclick="addToCart('All-Terrain Chelsea Boot', 195)">Add to Cart</button>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Promo Banner -->
+    <div class="promo-banner" id="promo-section">
+      <div class="promo-content">
+        <h3>Join Aura Insiders Club</h3>
+        <p>Get 15% off your first order plus early access to limited seasonal drops.</p>
+      </div>
+      <form class="promo-input-group" id="newsletter-form" onsubmit="handleSubscribe(event)">
+        <input type="email" id="newsletter-email" class="promo-input" placeholder="Enter your email" required>
+        <button type="submit" class="btn btn-primary" id="btn-newsletter-subscribe">Subscribe</button>
+      </form>
+    </div>
+
+  </div>
+
+  <!-- Live Analytics HUD Dock -->
+  <div id="tracking-hud">
+    <div class="hud-left">
+      <div class="hud-pulse" title="TraceFlow Tracker Active"></div>
+      <div class="hud-stat">Session: <strong id="hud-session-id">Detecting...</strong></div>
+      <div class="hud-stat">Events Logged: <strong id="hud-event-count">1</strong></div>
+      <div class="hud-stat">Last Event: <strong id="hud-last-event">page_view</strong></div>
+    </div>
+    <div class="hud-right">
+      <button class="hud-btn" id="hud-new-session" onclick="resetSession()">🔄 New Session</button>
+      <a href="product.html" class="hud-btn" id="hud-nav-product">Next Page →</a>
+      <a href="checkout.html" class="hud-btn" id="hud-nav-checkout">Checkout →</a>
+      <a href="http://localhost:5173" target="_blank" class="hud-btn" style="background: #4f46e5; color: white;" id="hud-view-dashboard">View Dashboard ↗</a>
+    </div>
+  </div>
+
+  <!-- Toast Element -->
+  <div id="toast"></div>
+
+  <!-- Client-side Logic for Demo Web Store -->
+  <script>
+    var cartItems = 0;
+    var eventCounter = 1;
+
+    function showToast(msg) {
+      var toast = document.getElementById('toast');
+      toast.innerHTML = msg;
+      toast.style.display = 'flex';
+      setTimeout(function() {
+        toast.style.display = 'none';
+      }, 2500);
+    }
+
+    function addToCart(productName, price) {
+      cartItems++;
+      document.getElementById('cart-counter').innerText = cartItems;
+      showToast('🛒 Added <strong>' + productName + '</strong> ($' + price + ') to Cart!');
+    }
+
+    function openCart() {
+      if (cartItems === 0) {
+        showToast('Your cart is empty! Click "Add to Cart" on any product.');
+      } else {
+        window.location.href = 'checkout.html';
+      }
+    }
+
+    function filterCategory(category, btn) {
+      document.querySelectorAll('.tab-btn').forEach(function(b) { b.classList.remove('active'); });
+      btn.classList.add('active');
+      var cards = document.querySelectorAll('.product-card');
+      cards.forEach(function(card) {
+        if (category === 'all' || card.getAttribute('data-category') === category) {
+          card.style.display = 'flex';
+        } else {
+          card.style.display = 'none';
+        }
+      });
+      showToast('Filtered by category: ' + category);
+    }
+
+    function handleSubscribe(e) {
+      e.preventDefault();
+      var email = document.getElementById('newsletter-email').value;
+      showToast('🎉 Welcome aboard! Code <strong>AURA15</strong> applied for ' + email);
+      document.getElementById('newsletter-email').value = '';
+    }
+
+    function resetSession() {
+      localStorage.removeItem('traceflow_session_id');
+      localStorage.removeItem('traceflow_session_expiry');
+      location.reload();
+    }
+
+    // Listen to TraceFlow Custom Events for HUD live feedback
+    window.addEventListener('traceflow:event', function(e) {
+      var evt = e.detail;
+      eventCounter++;
+      document.getElementById('hud-event-count').innerText = eventCounter;
+      var lastText = evt.eventType;
+      if (evt.eventType === 'click') {
+        lastText += ' (' + (evt.elementTag || 'ELEMENT') + ' @ ' + evt.x + ',' + evt.y + ')';
+      }
+      document.getElementById('hud-last-event').innerText = lastText;
+    });
+
+    // Update HUD with active session ID once tracker is loaded
+    window.addEventListener('DOMContentLoaded', function() {
+      setTimeout(function() {
+        if (window.TraceFlow) {
+          var sid = window.TraceFlow.getSessionId();
+          document.getElementById('hud-session-id').innerText = sid.slice(0, 16) + '...';
+        }
+      }, 100);
+    });
+  </script>
+
+  <!-- Load TraceFlow Analytics Tracking Script -->
+  <script 
+    src="../tracker/tracker.js" 
+    data-endpoint="http://localhost:5000/api/events"
+    data-debug="true">
+  </script>
+</body>
+</html>
