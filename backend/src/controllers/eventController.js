@@ -559,9 +559,10 @@ exports.getOverview = async (req, res, next) => {
       }
     });
 
-    // Simulated vs genuine counts
-    const simulatedEvents = await Event.countDocuments({ ...matchFilter, isSimulated: true });
-    const genuineEvents = totalEvents - simulatedEvents;
+    // Simulated vs genuine counts within the selected date scope
+    const dateOnlyFilter = buildDateFilter(req.query);
+    const simulatedEvents = await Event.countDocuments({ ...dateOnlyFilter, isSimulated: true });
+    const genuineEvents = await Event.countDocuments({ ...dateOnlyFilter, isSimulated: false });
 
     // Top clicked elements
     const topElements = await Event.aggregate([

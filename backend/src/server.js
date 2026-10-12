@@ -24,17 +24,21 @@ app.use(
   })
 );
 
-// Middleware: Parse JSON bodies (with beacon support for text/plain JSON strings)
-app.use(express.json({ limit: '1mb' }));
-app.use(express.urlencoded({ extended: true, limit: '1mb' }));
+// Middleware: Parse JSON & Beacon text/plain bodies
+app.use(express.json({ limit: '2mb' }));
+app.use(express.text({ type: '*/*', limit: '2mb' }));
+app.use(express.urlencoded({ extended: true, limit: '2mb' }));
 
-// Handle beacon text/plain payloads gracefully
+// Handle beacon text/plain JSON strings gracefully
 app.use((req, res, next) => {
-  if (req.is('text/plain') && typeof req.body === 'string') {
-    try {
-      req.body = JSON.parse(req.body);
-    } catch {
-      // not JSON string, proceed as-is
+  if (typeof req.body === 'string') {
+    const trimmed = req.body.trim();
+    if (trimmed.startsWith('{') || trimmed.startsWith('[')) {
+      try {
+        req.body = JSON.parse(trimmed);
+      } catch (e) {
+        console.error('Failed to parse beacon JSON string:', e.message);
+      }
     }
   }
   next();
