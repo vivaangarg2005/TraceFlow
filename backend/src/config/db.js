@@ -4,12 +4,10 @@ const mongoose = require('mongoose');
  * Connect to MongoDB with robust error handling and lifecycle listeners
  */
 const connectDB = async () => {
-  const uri = process.env.MONGODB_URI;
+  const uri = process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/traceflow';
 
-  if (!uri) {
-    console.error('❌ MONGODB_URI is not defined in environment variables.');
-    console.info('👉 Please copy backend/.env.example to backend/.env and provide your MongoDB Atlas connection string.');
-    process.exit(1);
+  if (!process.env.MONGODB_URI) {
+    console.info('ℹ️  MONGODB_URI not set in environment. Defaulting to local: mongodb://127.0.0.1:27017/traceflow');
   }
 
   try {

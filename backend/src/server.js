@@ -85,10 +85,14 @@ app.use(errorHandler);
 const PORT = process.env.PORT || 5000;
 
 const server = app.listen(PORT, () => {
-  console.log(`🚀 TraceFlow Backend running on port ${PORT} in ${process.env.NODE_ENV || 'development'} mode`);
-  console.log(`📍 Health check: http://localhost:${PORT}/api/health`);
-  console.log(`📊 Ingestion API: http://localhost:${PORT}/api/events`);
+  if (process.env.NODE_ENV !== 'test') {
+    console.log(`🚀 TraceFlow Backend running on port ${PORT} in ${process.env.NODE_ENV || 'development'} mode`);
+    console.log(`📍 Health check: http://localhost:${PORT}/api/health`);
+    console.log(`📊 Ingestion API: http://localhost:${PORT}/api/events`);
+  }
 });
+
+app.server = server;
 
 // Handle unhandled promise rejections
 process.on('unhandledRejection', (err) => {
