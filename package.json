@@ -1,0 +1,22 @@
+{
+  "name": "traceflow-analytics",
+  "version": "1.0.0",
+  "description": "Full-stack user interaction tracking and analytics application with session replay and click heatmaps",
+  "scripts": {
+    "dev:backend": "npm --prefix backend run dev",
+    "dev:frontend": "npm --prefix frontend run dev",
+    "dev:demo": "npm --prefix demo run dev",
+    "install:all": "npm install && npm --prefix backend install && npm --prefix frontend install",
+    "test": "npm --prefix backend test"
+  },
+  "keywords": [
+    "analytics",
+    "session-tracking",
+    "heatmap",
+    "user-behavior",
+    "causalfunnel",
+    "full-stack"
+  ],
+  "author": "Vivaan Garg",
+  "license": "MIT"
+}
