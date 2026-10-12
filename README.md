@@ -4,16 +4,16 @@
 
 TraceFlow is an end-to-end behavioral analytics platform that captures user interactions, reconstructs browsing sessions, and visualizes click behavior through interactive heatmaps and user journey timelines.
 
-Built as part of the **CausalFunnel Full Stack Engineer Evaluation** by **Vivaan Garg**.
+Built with **Vanilla JavaScript, Node.js, Express, MongoDB, React, and Vite**, TraceFlow provides a complete environment for collecting, processing, and exploring user interaction data across an e-commerce storefront.
 
 <p align="center">
   <a href="https://github.com/vivaangarg2005/TraceFlow">
-    <img src="https://img.shields.io/badge/Project-TraceFlow-6366f1?style=for-the-badge" alt="TraceFlow Project" />
+    <img src="https://img.shields.io/badge/Project-TraceFlow-6366f1?style=for-the-badge" alt="TraceFlow" />
   </a>
-  <img src="https://img.shields.io/badge/Tests-10%2F10%20Passing-22c55e?style=for-the-badge" alt="10 out of 10 tests passing" />
-  <img src="https://img.shields.io/badge/Node.js-18%2B-339933?style=for-the-badge&logo=nodedotjs&logoColor=white" alt="Node.js 18 or higher" />
-  <img src="https://img.shields.io/badge/React-19-61DAFB?style=for-the-badge&logo=react&logoColor=black" alt="React 19" />
-  <img src="https://img.shields.io/badge/MongoDB-7-47A248?style=for-the-badge&logo=mongodb&logoColor=white" alt="MongoDB 7" />
+  <img src="https://img.shields.io/badge/Tests-10%2F10%20Passing-22c55e?style=for-the-badge" alt="Tests Passing" />
+  <img src="https://img.shields.io/badge/Node.js-18%2B-339933?style=for-the-badge&logo=nodedotjs&logoColor=white" alt="Node.js" />
+  <img src="https://img.shields.io/badge/React-19-61DAFB?style=for-the-badge&logo=react&logoColor=black" alt="React" />
+  <img src="https://img.shields.io/badge/MongoDB-7-47A248?style=for-the-badge&logo=mongodb&logoColor=white" alt="MongoDB" />
 </p>
 
 <p align="center">
@@ -32,12 +32,12 @@ Built as part of the **CausalFunnel Full Stack Engineer Evaluation** by **Vivaan
 - [Application URLs](#-application-urls)
 - [How It Works](#-how-it-works)
 - [API Reference](#-api-reference)
-- [Database Design](#-database-design)
+- [Database Design](#️-database-design)
 - [Testing](#-testing)
 - [Engineering Decisions](#-engineering-decisions)
 - [Project Structure](#-project-structure)
 - [Troubleshooting](#-troubleshooting)
-- [Future Improvements](#-future-improvements)
+- [Future Improvements](#️-future-improvements)
 - [Author](#-author)
 - [License](#-license)
 
@@ -45,27 +45,37 @@ Built as part of the **CausalFunnel Full Stack Engineer Evaluation** by **Vivaan
 
 ## 📌 Overview
 
-TraceFlow is a full-stack analytics application inspired by behavioral analytics systems used in modern e-commerce platforms.
+TraceFlow Analytics is a full-stack behavioral analytics application designed to help developers and product teams understand how users interact with websites.
 
-It captures client-side events, associates them with browsing sessions, stores them in MongoDB, and exposes analytics through a REST API and a React dashboard.
+Traditional analytics often focus on aggregate metrics such as pageviews and sessions. TraceFlow goes further by capturing individual interactions, preserving their chronological order, and visualizing where users click on a page.
 
-The project includes **Aura Wear**, an interactive demo storefront that simulates an e-commerce customer journey, from browsing products to adding items to a cart and proceeding through checkout.
+The platform combines a lightweight browser tracking script, a REST API, MongoDB-based event storage, and a React analytics dashboard into a single application.
 
 ### The Problem
 
-Understanding how users interact with a website requires more than counting pageviews. Product teams need to know:
+Understanding user behavior requires more than knowing how many people visited a website. Developers and product teams also need to understand:
 
 - Which pages users visit and in what order.
-- Where users click and which interface elements attract attention.
+- Which buttons and interface elements receive the most interactions.
 - How users navigate between pages during a session.
-- Which pages and elements receive the most interactions.
-- How interaction patterns differ across viewport sizes.
+- Where clicks are concentrated within a page.
+- How interaction patterns vary across viewport sizes.
+- How users move through an e-commerce journey.
 
 ### The Solution
 
-TraceFlow combines lightweight browser instrumentation, event ingestion, database aggregation, and interactive visualization into one cohesive application.
+TraceFlow captures structured interaction events, associates them with browsing sessions, and exposes the resulting data through an interactive analytics dashboard.
 
-The result is a locally runnable analytics platform with a real demo storefront, a tracking script, a backend API, and a dashboard for exploring collected behavioral data.
+The included **Aura Wear** demo storefront provides a practical environment for generating real browsing sessions and testing the tracking pipeline.
+
+### Project Goals
+
+- Build a lightweight, framework-independent client tracking script.
+- Design a reliable event ingestion API.
+- Store and query behavioral events efficiently.
+- Reconstruct chronological user journeys.
+- Visualize click distributions using interactive heatmaps.
+- Provide a reproducible local development environment.
 
 ---
 
@@ -74,63 +84,69 @@ The result is a locally runnable analytics platform with a real demo storefront,
 ### ⚡ Lightweight Client-Side Tracking
 
 - Dependency-free JavaScript tracking script.
-- Automatic `page_view` event capture.
-- Click tracking with viewport-relative and pixel coordinates.
+- Automatic pageview event capture.
+- Click tracking with pixel and percentage-based coordinates.
 - DOM context collection, including element tag, ID, and text.
 - Client-generated session identifiers.
 - Session renewal after 30 minutes of inactivity.
-- Asynchronous event delivery using `navigator.sendBeacon` with a `fetch` keepalive fallback.
-- Batched event transmission to reduce request overhead.
+- Asynchronous event transmission using `navigator.sendBeacon`.
+- `fetch` with `keepalive: true` as a fallback.
+- Client-side event batching to reduce request overhead.
 
 ### 📊 Interactive Analytics Dashboard
 
 **Sessions Explorer**
-- Browse recorded sessions.
-- View event counts, pageviews, clicks, and session duration.
-- Explore chronological user journeys.
-- Inspect event timestamps, URLs, and click coordinates.
+
+- Browse recorded user sessions.
+- View total events, pageviews, clicks, and session duration.
+- Inspect chronological user journeys.
+- Explore timestamps, URLs, and click coordinates.
+- Filter and navigate through recorded session data.
 
 **Click Heatmaps**
-- Radial glow visualization for click density.
-- 10 × 10 density grid for spatial analysis.
-- Element-level click pins with contextual tooltips.
-- Store wireframe overlay for visual orientation.
-- Page selection based on tracked URLs.
 
-**Overview Metrics**
+- **Radial Glow:** Visualizes areas with concentrated clicks.
+- **10 × 10 Density Grid:** Groups interactions into spatial cells.
+- **Element Pins:** Displays individual click locations with contextual tooltips.
+- **Store Wireframe:** Provides visual context for the demo storefront.
+- **Page Selection:** Switch between tracked pages to explore interaction patterns.
+
+**Overview Analytics**
+
 - High-level activity metrics.
 - Tracked-page summaries.
-- Click and pageview breakdowns.
-- Insights derived from collected interaction events.
+- Pageview and click breakdowns.
+- Metrics derived from stored interaction events.
 
 ### 🛍️ Interactive E-Commerce Demo
 
-The included Aura Wear storefront provides a realistic environment for testing tracking behavior.
+TraceFlow includes **Aura Wear**, a multi-page storefront for testing tracking functionality.
 
 - Product catalog and promotional banner.
 - Product details and sizing interactions.
-- Cart interactions.
+- Add-to-cart interactions.
 - Checkout flow.
-- Multi-page navigation for session reconstruction.
-- Real-time tracking HUD for observing tracking activity during testing.
+- Multi-page navigation.
+- Tracking HUD for observing events during testing.
 
 ### 🚀 Backend & Data Processing
 
 - RESTful API built with Node.js and Express.
 - Single-event and batch-event ingestion.
 - Event validation.
-- Session aggregation using MongoDB aggregation pipelines.
+- Session-level aggregation using MongoDB pipelines.
 - Chronological event retrieval.
 - Click analytics and tracked-page discovery.
-- Compound database indexes for common query patterns.
+- Compound indexes for common query patterns.
+- Health-check endpoint.
 
 ### 🧪 Automated Testing
 
 - Native Node.js test runner using `node:test`.
 - Assertions using `node:assert`.
-- Integration coverage for the core API endpoints.
-- Validation of malformed events and missing click coordinates.
-- Coverage of session aggregation and analytics retrieval.
+- API integration tests.
+- Event validation and edge-case coverage.
+- Session aggregation and analytics tests.
 
 ---
 
@@ -183,8 +199,8 @@ TraceFlow follows a layered architecture that separates browser instrumentation,
 └────────────────────────▲─────────────────────────────────┘
                          │
                          │ Analytics API responses
-                         │
-┌────────────────────────┴─────────────────────────────────┐
+                         ▼
+┌──────────────────────────────────────────────────────────┐
 │                   DASHBOARD TIER                         │
 │                                                          │
 │  React 19 + Vite                     Port 5173           │
@@ -199,10 +215,10 @@ TraceFlow follows a layered architecture that separates browser instrumentation,
 
 1. A visitor opens the Aura Wear storefront.
 2. `tracker.js` initializes or resumes a tracking session.
-3. Pageviews and user clicks are converted into structured events.
-4. Events are batched and transmitted to the backend.
+3. Pageviews and clicks are converted into structured events.
+4. Events are buffered and transmitted to the backend.
 5. Express validates and persists accepted events in MongoDB.
-6. Aggregation pipelines calculate session-level and page-level metrics.
+6. MongoDB aggregation pipelines calculate session-level and page-level metrics.
 7. The React dashboard requests the resulting data and renders timelines, metrics, and heatmaps.
 
 ---
@@ -212,14 +228,14 @@ TraceFlow follows a layered architecture that separates browser instrumentation,
 | Layer | Technology | Purpose |
 |---|---|---|
 | Tracking | Vanilla JavaScript | Lightweight browser instrumentation |
-| Backend | Node.js 18+ | Server-side JavaScript runtime |
-| API | Express 4.x | REST endpoints and event ingestion |
+| Runtime | Node.js 18+ | Server-side JavaScript execution |
+| Backend | Express 4.x | REST API and event ingestion |
 | Database | MongoDB 7 | Persistent event storage |
 | ODM | Mongoose 8.x | Document schemas and database access |
 | Frontend | React 19 | Interactive analytics dashboard |
-| Build Tool | Vite | Development server and frontend bundling |
-| Styling | Vanilla CSS | Custom dark theme and responsive UI |
-| Containers | Docker Compose | Reproducible MongoDB setup |
+| Build Tool | Vite | Frontend development and bundling |
+| Styling | Vanilla CSS | Custom dark theme and responsive layouts |
+| Containers | Docker Compose | Reproducible database setup |
 | Testing | `node:test` | Native Node.js test execution |
 
 ---
@@ -230,7 +246,7 @@ Follow these steps to run TraceFlow locally.
 
 ### Prerequisites
 
-Ensure the following tools are installed:
+Install the following tools before proceeding:
 
 - [Node.js](https://nodejs.org/) — version 18 or later.
 - npm — included with Node.js.
@@ -247,7 +263,7 @@ cd TraceFlow
 
 ### 2. Configure MongoDB
 
-**Option A — Docker Compose (recommended)**
+#### Option A: Docker Compose (Recommended)
 
 From the project root, run:
 
@@ -257,19 +273,19 @@ docker compose up -d
 
 This starts the MongoDB service defined in the project's Compose configuration.
 
-The default local MongoDB connection string is typically:
+The default local connection string is typically:
 
 ```env
-mongodb://127.0.0.1:27017/traceflow
+MONGODB_URI=mongodb://127.0.0.1:27017/traceflow
 ```
 
-Use the actual connection settings defined in your project if they differ.
+Use the actual connection settings configured for your environment.
 
-**Option B — MongoDB Atlas**
+#### Option B: MongoDB Atlas
 
-1. Create a MongoDB Atlas cluster.
+1. Create a cluster in [MongoDB Atlas](https://www.mongodb.com/products/platform/atlas-database).
 2. Configure database access and network permissions.
-3. Copy the database connection string.
+3. Copy the cluster connection string.
 4. Create the backend environment file:
 
 ```bash
@@ -282,17 +298,19 @@ cp backend/.env.example backend/.env
 MONGODB_URI=mongodb+srv://<username>:<password>@<cluster-host>/traceflow?retryWrites=true&w=majority
 ```
 
-Replace the placeholders with your actual credentials and cluster hostname. Do not commit `.env` files or database credentials to Git.
+Replace the placeholders with your actual credentials and cluster hostname.
+
+**Security note:** Never commit `.env` files, database credentials, or private connection strings to version control.
 
 ### 3. Install Dependencies
 
-If the repository root defines the documented `install:all` script, run:
+If the root `package.json` defines the documented `install:all` script, run:
 
 ```bash
 npm run install:all
 ```
 
-Alternatively, install dependencies separately:
+Alternatively, install the backend and frontend dependencies separately:
 
 ```bash
 cd backend
@@ -302,7 +320,7 @@ cd ../frontend
 npm install
 ```
 
-Return to the project root before running root-level scripts.
+Return to the project root before running root-level commands.
 
 ### 4. Start the Application
 
@@ -326,9 +344,9 @@ npm run dev:frontend
 npm run dev:demo
 ```
 
-Keep all three processes running while testing the application.
+Keep all three services running while testing the application.
 
-> **Note:** The commands above reflect the project's documented npm scripts. If a command is unavailable, check the root and package-level `package.json` files for the actual script names.
+> These commands reflect the documented project scripts. If a script is unavailable, check the relevant `package.json` file for the actual script name.
 
 ### 5. Verify the Installation
 
@@ -338,12 +356,14 @@ Open the backend health endpoint:
 http://localhost:5000/api/health
 ```
 
-Then open the following applications:
+Then open the dashboard and demo storefront:
 
 - Dashboard: `http://localhost:5173`
 - Demo store: `http://localhost:3000`
 
-Navigate through the storefront, click product and cart elements, and proceed through the checkout flow. Return to the dashboard to inspect the collected sessions and interactions.
+Navigate through the storefront, click product and cart elements, and proceed through checkout.
+
+Return to the dashboard to inspect recorded sessions, user journeys, and click heatmaps.
 
 For reliable results, confirm that MongoDB is connected and that the browser's Network panel shows successful requests to the event ingestion endpoint.
 
@@ -353,13 +373,13 @@ For reliable results, confirm that MongoDB is connected and that the browser's N
 
 | Service | URL | Description |
 |---|---|---|
-| Analytics Dashboard | [localhost:5173](http://localhost:5173) | Session explorer, metrics, and heatmaps |
-| Aura Wear Store | [localhost:3000](http://localhost:3000) | Interactive storefront for generating events |
+| Analytics Dashboard | [localhost:5173](http://localhost:5173) | Sessions, metrics, and heatmaps |
+| Aura Wear Store | [localhost:3000](http://localhost:3000) | Demo storefront for generating events |
 | Backend Health | [localhost:5000/api/health](http://localhost:5000/api/health) | API health check |
-| Tracking Script | [localhost:5000/tracker.js](http://localhost:5000/tracker.js) | Browser tracking script |
-| MongoDB | `localhost:27017` | Local database, when exposed by the Compose configuration |
+| Tracking Script | [localhost:5000/tracker.js](http://localhost:5000/tracker.js) | Embeddable tracking script |
+| MongoDB | `localhost:27017` | Local database, if exposed by the Compose configuration |
 
-These URLs assume the default local ports and a successful startup.
+These URLs assume the default ports and a successful startup.
 
 ---
 
@@ -367,9 +387,9 @@ These URLs assume the default local ports and a successful startup.
 
 ### 1. Event Tracking
 
-The tracking script captures supported user interactions and sends structured event documents to the backend.
+The browser tracking script captures supported user interactions and converts them into structured event documents.
 
-**Pageview event**
+**Example: Pageview event**
 
 ```json
 {
@@ -383,7 +403,7 @@ The tracking script captures supported user interactions and sends structured ev
 }
 ```
 
-**Click event**
+**Example: Click event**
 
 ```json
 {
@@ -401,13 +421,13 @@ The tracking script captures supported user interactions and sends structured ev
 }
 ```
 
-These payloads illustrate the documented event format; they are examples, not records from a live session.
+These payloads illustrate the documented event format. They are examples rather than records from a live session.
 
 ### 2. Session Management
 
 The tracker uses a client-generated session identifier to associate events with a browsing session.
 
-The documented lifecycle is:
+The documented session lifecycle is:
 
 - Reuse the existing session while it remains valid.
 - Track inactivity using a 30-minute window.
@@ -417,21 +437,21 @@ The implementation uses browser storage with a cookie fallback, as described in 
 
 ### 3. Event Transmission
 
-To reduce overhead and improve delivery during navigation:
+To reduce network overhead and improve delivery during navigation, the tracker:
 
-- Events are placed into a client-side queue.
-- The queue is flushed periodically.
-- The queue is also flushed when it reaches the configured batch threshold.
-- `navigator.sendBeacon` is used where appropriate.
-- `fetch` with `keepalive: true` provides a fallback.
+- Buffers events in a client-side queue.
+- Flushes events periodically.
+- Flushes when the queue reaches the configured batch threshold.
+- Uses `navigator.sendBeacon` where appropriate.
+- Uses `fetch` with `keepalive: true` as a fallback.
 
 The documented batching configuration uses a 1.5-second interval or a queue size of five events.
 
-Asynchronous delivery reduces interference with the user interface, but it does not guarantee delivery in every browser, network, or shutdown scenario.
+Asynchronous delivery reduces interference with the user interface, but it cannot guarantee delivery under every network or browser condition.
 
 ### 4. Coordinate Normalization
 
-TraceFlow records both absolute and viewport-relative click coordinates.
+TraceFlow records both absolute click coordinates and viewport-relative percentages.
 
 The normalization formulas are:
 
@@ -449,7 +469,7 @@ Percentage-based coordinates make heatmaps more adaptable to different viewport 
 
 ### 5. Analytics & Visualization
 
-The backend exposes aggregated session and page data, while the dashboard uses those responses to render:
+The backend exposes session and page analytics, while the dashboard uses the resulting data to render:
 
 - Session summaries and activity counts.
 - Chronological user journeys.
@@ -463,7 +483,7 @@ This separation keeps event collection, persistence, aggregation, and visualizat
 
 ## 📡 API Reference
 
-The following endpoints describe the documented TraceFlow API.
+TraceFlow exposes REST endpoints for event ingestion, session retrieval, and analytics.
 
 ### Endpoint Summary
 
@@ -475,12 +495,12 @@ The following endpoints describe the documented TraceFlow API.
 | `GET` | `/api/sessions` | Retrieve paginated session summaries |
 | `GET` | `/api/sessions/:sessionId/events` | Retrieve a session's event timeline |
 | `GET` | `/api/analytics/clicks` | Retrieve click data for heatmaps |
-| `GET` | `/api/analytics/pages` | List tracked pages and their activity |
+| `GET` | `/api/analytics/pages` | List tracked pages and activity |
 | `GET` | `/api/analytics/overview` | Retrieve overview metrics |
 
 ### 1. Ingest Events
 
-**`POST /api/events`**
+**Endpoint:** `POST /api/events`
 
 Accepts a single event object or a batch of events, subject to the backend's validation rules.
 
@@ -500,15 +520,13 @@ curl -X POST http://localhost:5000/api/events \
   }'
 ```
 
-For click events, provide the required coordinate fields and other fields expected by the backend schema.
+For click events, provide the required coordinate fields and any other fields expected by the backend schema.
 
 ### 2. Retrieve Sessions
 
-**`GET /api/sessions?page=1&limit=50`**
+**Endpoint:** `GET /api/sessions?page=1&limit=50`
 
-Returns paginated session summaries, including the documented event counts, pageviews, clicks, and duration.
-
-Example:
+Returns paginated session summaries, including documented event counts, pageviews, clicks, and session duration.
 
 ```bash
 curl "http://localhost:5000/api/sessions?page=1&limit=50"
@@ -516,11 +534,9 @@ curl "http://localhost:5000/api/sessions?page=1&limit=50"
 
 ### 3. Retrieve a User Journey
 
-**`GET /api/sessions/:sessionId/events`**
+**Endpoint:** `GET /api/sessions/:sessionId/events`
 
-Returns the events associated with a specified session in chronological order.
-
-Example:
+Returns events associated with a specified session in chronological order.
 
 ```bash
 curl "http://localhost:5000/api/sessions/tf_example-session-id/events"
@@ -528,22 +544,18 @@ curl "http://localhost:5000/api/sessions/tf_example-session-id/events"
 
 ### 4. Retrieve Click Heatmap Data
 
-**`GET /api/analytics/clicks?url=...`**
+**Endpoint:** `GET /api/analytics/clicks?url=...`
 
 Retrieves click coordinates and DOM context for the requested page.
-
-Example:
 
 ```bash
 curl -G "http://localhost:5000/api/analytics/clicks" \
   --data-urlencode "url=http://localhost:3000/index.html"
 ```
 
-The exact response fields and URL matching behavior depend on the backend implementation.
-
 ### 5. Retrieve Tracked Pages
 
-**`GET /api/analytics/pages`**
+**Endpoint:** `GET /api/analytics/pages`
 
 Returns the distinct tracked pages and their associated activity counts for dashboard page selection.
 
@@ -553,7 +565,7 @@ curl http://localhost:5000/api/analytics/pages
 
 ### 6. Retrieve Overview Metrics
 
-**`GET /api/analytics/overview`**
+**Endpoint:** `GET /api/analytics/overview`
 
 Returns high-level analytics metrics used by the dashboard.
 
@@ -561,7 +573,7 @@ Returns high-level analytics metrics used by the dashboard.
 curl http://localhost:5000/api/analytics/overview
 ```
 
-> **API note:** Example commands illustrate how to call the documented endpoints. Response schemas, error codes, authentication requirements, and exact validation rules should be taken from the implementation.
+> **API note:** These examples demonstrate how to call the documented endpoints. Exact response schemas, status codes, and validation behavior should be verified against the implementation.
 
 ---
 
@@ -570,8 +582,6 @@ curl http://localhost:5000/api/analytics/overview
 MongoDB stores interaction events as documents, allowing pageviews and clicks to share common fields while retaining event-specific attributes.
 
 ### Event Data Model
-
-The documented event payloads include:
 
 | Field | Purpose |
 |---|---|
@@ -600,25 +610,25 @@ The documented compound indexes are:
 { path: 1, eventType: 1 }
 ```
 
-Their intended use is:
+Their intended purposes are:
 
-- **Session and timestamp:** efficient retrieval of a session's events in chronological order.
-- **URL and event type:** filtering page activity by event category.
-- **Path and event type:** querying activity grouped by normalized page path.
+- **Session and timestamp:** Retrieve session events in chronological order.
+- **URL and event type:** Filter page activity by event category.
+- **Path and event type:** Query activity grouped by normalized page path.
 
-Index usefulness depends on actual query predicates, sorting, cardinality, and data volume. Indexes should be validated against representative workloads using MongoDB's query explain plans.
+Index effectiveness depends on query predicates, sorting, data distribution, and event volume. Query plans should be evaluated against representative workloads.
 
-### Aggregation
+### Aggregation Strategy
 
-MongoDB aggregation pipelines are used to calculate session and analytics summaries without requiring the application to load every event into memory.
+MongoDB aggregation pipelines calculate session and analytics summaries without requiring the application to load every event into memory.
 
 The documented design uses operations such as:
 
-- `$group` for grouping events and calculating session-level metrics.
-- `$min` and `$max` for temporal boundaries.
-- `$facet` for combining multiple aggregation outputs where appropriate.
+- `$group` to group events and calculate session-level metrics.
+- `$min` and `$max` to identify temporal boundaries.
+- `$facet` to combine multiple aggregation outputs where appropriate.
 
-This approach keeps common analytics calculations close to the data.
+This keeps common analytics calculations close to the data.
 
 ---
 
@@ -632,9 +642,9 @@ Run the test suite from the project root:
 npm test
 ```
 
-The repository documentation reports the following ten test cases as passing.
+The project's documented test suite contains ten test cases.
 
-| # | Test | Expected behavior |
+| # | Test | Expected Behavior |
 |---:|---|---|
 | 1 | Health check | Returns a healthy API status |
 | 2 | Tracker delivery | Serves `tracker.js` |
@@ -649,7 +659,7 @@ The repository documentation reports the following ten test cases as passing.
 
 **Reported result: 10 passed, 0 failed.**
 
-The results above reflect the project's supplied test report. Run `npm test` to verify the current checkout and environment.
+These results reflect the project's supplied test report. Run `npm test` to verify the current checkout and environment.
 
 ---
 
@@ -659,84 +669,98 @@ The results above reflect the project's supplied test report. Run `npm test` to 
 
 **Decision:** Generate and maintain session identifiers in the browser.
 
-**Rationale:**
+**Benefits**
 - Reduces the need for server-side session state.
 - Simplifies association of events across page navigation.
 - Supports a consistent inactivity policy.
 
-**Trade-off:** Browser storage restrictions, privacy settings, cleared storage, and cross-device activity can affect session continuity. A 30-minute inactivity threshold is a product decision, not a universal analytics standard.
+**Trade-offs**
+
+Browser storage restrictions, cleared storage, privacy settings, and cross-device activity can affect session continuity. A 30-minute inactivity threshold is a design choice rather than a universal standard.
 
 ### 2. Pixel and Percentage Coordinates
 
 **Decision:** Record both absolute coordinates and normalized percentages.
 
-**Rationale:**
+**Benefits**
 - Pixel coordinates preserve the original viewport-relative measurements.
 - Percentages allow responsive heatmap positioning.
-- Both formats are useful for debugging and analysis.
+- Both representations are useful for analysis and debugging.
 
-**Trade-off:** Viewport percentages do not fully account for document scrolling, page layout shifts, content changes, or differing element positions. More precise replay may require document coordinates, scroll offsets, viewport metadata, and element identifiers.
+**Trade-offs**
+
+Viewport percentages do not fully account for document scrolling, page layout shifts, content changes, or differing element positions. More precise replay may require document coordinates, scroll offsets, viewport metadata, and element identifiers.
 
 ### 3. Asynchronous Event Delivery
 
 **Decision:** Use `navigator.sendBeacon` with a `fetch` keepalive fallback.
 
-**Rationale:**
-- Avoids blocking the main interaction flow with synchronous network requests.
+**Benefits**
+- Avoids blocking the main interaction flow with synchronous requests.
 - Improves the likelihood of delivery during page navigation or shutdown.
 - Supports lightweight event transmission.
 
-**Trade-off:** Delivery is not guaranteed. Beacon payload limits, network failures, browser restrictions, and server errors can still result in lost events. High-reliability deployments may need durable local queues, retry policies, idempotency keys, and ingestion monitoring.
+**Trade-offs**
+
+Delivery is not guaranteed. Payload limits, network failures, browser restrictions, and server errors can still result in lost events. More demanding deployments may require durable local queues, retries, idempotency keys, and ingestion monitoring.
 
 ### 4. Event Batching
 
 **Decision:** Buffer events and flush them periodically or when the batch reaches a configured size.
 
-**Rationale:**
-- Reduces the number of individual network requests.
-- Helps control request overhead during rapid interactions.
+**Benefits**
+- Reduces individual network request overhead.
+- Helps control request volume during rapid interactions.
 - Separates event collection from transmission timing.
 
-**Trade-off:** Batching introduces a small delay before ingestion and may lose queued events if the page closes unexpectedly before delivery.
+**Trade-offs**
 
-### 5. Aggregation at the Database Layer
+Batching introduces a short ingestion delay and may lose queued events if the page closes unexpectedly before delivery.
+
+### 5. Database-Level Aggregation
 
 **Decision:** Use MongoDB aggregation pipelines for session summaries and analytics.
 
-**Rationale:**
-- Avoids loading large event collections into application memory for basic summaries.
+**Benefits**
+- Avoids loading all events into application memory for basic summaries.
 - Uses database-side filtering and grouping.
-- Supports compound-indexed access patterns.
+- Supports indexed query patterns.
 
-**Trade-off:** Performance still depends on data volume, index selection, pipeline structure, and concurrency. Query plans and latency should be measured against realistic datasets.
+**Trade-offs**
+
+Performance depends on data volume, index selection, pipeline structure, and concurrency. Query plans and latency should be measured against realistic datasets.
 
 ### 6. Minimal Tracking Dependencies
 
 **Decision:** Implement browser tracking with vanilla JavaScript.
 
-**Rationale:**
+**Benefits**
 - Keeps the tracking payload lightweight.
 - Avoids coupling the tracker to a specific frontend framework.
-- Makes embedding on conventional multi-page websites straightforward.
+- Supports embedding on conventional multi-page websites.
 
-**Trade-off:** Framework-independent tracking requires careful handling of navigation, event listeners, storage, cross-origin requests, and browser compatibility.
+**Trade-offs**
 
-### 7. Clear Separation of Responsibilities
+Framework-independent tracking requires careful handling of navigation, event listeners, storage, cross-origin requests, and browser compatibility.
+
+### 7. Separation of Responsibilities
 
 **Decision:** Separate the tracker, backend, database, and dashboard.
 
-**Rationale:**
-- Each layer has a well-defined responsibility.
-- The API can serve analytics clients independently of the demo store.
-- Individual components can evolve without requiring a complete architectural rewrite.
+**Benefits**
+- Gives each layer a clearly defined responsibility.
+- Allows the API to serve analytics clients independently of the demo storefront.
+- Makes individual components easier to maintain and extend.
 
-**Trade-off:** Separate services introduce configuration, startup ordering, network, and integration-testing requirements.
+**Trade-offs**
+
+Separate services introduce configuration, startup ordering, networking, and integration-testing requirements.
 
 ---
 
 ## 📂 Project Structure
 
-The following is a logical overview based on the documented components. Confirm exact filenames and directories against the repository.
+The following is a logical overview of the documented components. Update it to match the actual repository layout.
 
 ```text
 TraceFlow/
@@ -757,7 +781,7 @@ TraceFlow/
 └── README.md
 ```
 
-The project includes a browser tracking script served through `/tracker.js`. Its source location should be confirmed from the backend configuration.
+The project also includes a browser tracking script served through `/tracker.js`. Confirm its source location against the backend configuration.
 
 ---
 
@@ -766,34 +790,34 @@ The project includes a browser tracking script served through `/tracker.js`. Its
 ### MongoDB Connection Failure
 
 - Verify that MongoDB is running.
-- Check the `MONGODB_URI` value in the backend environment.
-- Confirm that the selected port is accessible.
+- Check `MONGODB_URI` in the backend environment.
+- Confirm that the configured port is accessible.
 - For Atlas, verify network access and database credentials.
-- Check backend logs for connection errors.
+- Inspect backend logs for connection errors.
 
 ### Dashboard Shows No Sessions
 
 - Start the backend and demo storefront.
 - Browse the store to generate pageviews and clicks.
 - Inspect the browser Network panel for `POST /api/events`.
-- Confirm that the backend accepts the events and MongoDB persists them.
+- Confirm that the backend accepts events and MongoDB persists them.
 - Check that the dashboard is using the correct API URL.
 
 ### Click Heatmap Is Empty
 
-- Generate click events on the relevant page.
+- Generate click events on the selected page.
 - Select the correct tracked URL in the dashboard.
-- Confirm that the click requests contain valid coordinates.
-- Check whether URL query strings, trailing slashes, or path normalization affect matching.
+- Confirm that the requests contain valid click coordinates.
+- Check whether query strings, trailing slashes, or path normalization affect URL matching.
 - Verify the response from `/api/analytics/clicks`.
 
 ### Port Already in Use
 
-If a port is occupied, stop the process using it or update the corresponding service configuration and its dependent URLs.
+If a port is occupied, stop the conflicting process or update the corresponding service configuration and dependent URLs.
 
 ### npm Script Not Found
 
-Inspect the relevant `package.json` file and use the script names actually defined in the checked-out version of the project.
+Inspect the relevant `package.json` file and use the script names defined in the checked-out version of the project.
 
 ---
 
@@ -801,17 +825,18 @@ Inspect the relevant `package.json` file and use the script names actually defin
 
 Potential extensions for a production-oriented version include:
 
-- **Session replay:** Reconstruct interactions with scroll positions, navigation, and element context.
-- **Funnel analytics:** Measure conversion between product views, cart actions, and checkout.
-- **Retention analysis:** Track returning sessions over time.
-- **Event reliability:** Add durable client queues, retries, idempotency, and ingestion monitoring.
-- **Privacy controls:** Add consent management, configurable data retention, and sensitive-field redaction.
-- **Advanced heatmaps:** Support document coordinates, scroll depth, and responsive layout-aware visualization.
-- **Performance monitoring:** Track API latency, ingestion throughput, and aggregation costs.
-- **Scalable ingestion:** Introduce queue-based processing and background workers when event volume justifies the additional complexity.
-- **Deployment:** Add automated CI checks, production configuration, and deployment documentation.
+- **Session Replay:** Reconstruct interactions using scroll positions, navigation events, and element context.
+- **Funnel Analytics:** Measure conversion between product views, cart actions, and checkout.
+- **Retention Analysis:** Track returning sessions over time.
+- **Event Reliability:** Add durable client queues, retries, idempotency, and ingestion monitoring.
+- **Privacy Controls:** Implement consent management, configurable data retention, and sensitive-field redaction.
+- **Advanced Heatmaps:** Support document coordinates, scroll depth, and layout-aware visualization.
+- **Performance Monitoring:** Track API latency, ingestion throughput, and aggregation costs.
+- **Scalable Ingestion:** Introduce queue-based processing and background workers when event volume justifies the added complexity.
+- **Automated CI:** Run tests and quality checks on every change.
+- **Deployment:** Document production configuration, environment variables, and deployment procedures.
 
-These are possible directions for future development, not claims about existing functionality.
+These are potential directions for future development, not claims about existing functionality.
 
 ---
 
@@ -819,15 +844,15 @@ These are possible directions for future development, not claims about existing 
 
 **Vivaan Garg**
 
-Full-stack engineering project developed for the CausalFunnel Full Stack Engineer evaluation.
+GitHub: [@vivaangarg2005](https://github.com/vivaangarg2005)
 
-- **Repository:** [github.com/vivaangarg2005/TraceFlow](https://github.com/vivaangarg2005/TraceFlow)
+Project repository: [TraceFlow Analytics](https://github.com/vivaangarg2005/TraceFlow)
 
 ---
 
 ## 📄 License
 
-This project is intended to be distributed under the MIT License, as indicated by the repository's existing license badge.
+This project is intended to be distributed under the MIT License, as indicated by the existing repository badge.
 
 See the [`LICENSE`](LICENSE) file for the complete license terms.
 
