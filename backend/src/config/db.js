@@ -1,4 +1,12 @@
 const mongoose = require('mongoose');
+const dns = require('dns');
+
+// Ensure MongoDB Atlas SRV records resolve smoothly across Windows/ISP networks
+try {
+  dns.setServers(['8.8.8.8', '1.1.1.1']);
+} catch (e) {
+  // Ignore if permissions or platform restriction
+}
 
 /**
  * Connect to MongoDB with robust error handling and lifecycle listeners
