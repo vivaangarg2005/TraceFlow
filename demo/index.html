@@ -7,7 +7,7 @@
   <meta name="description" content="Shop modern minimalist essentials with premium craftsmanship. Designed for thoughtful everyday living.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
   <style>
     :root {
       --bg: #090d16;
@@ -23,7 +23,8 @@
       --accent-glow: rgba(99, 102, 241, 0.25);
       --emerald: #10b981;
       --amber: #f59e0b;
-      --font-sans: 'Plus Jakarta Sans', -apple-system, sans-serif;
+      --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      --font-heading: 'Outfit', 'Inter', sans-serif;
       --font-mono: 'JetBrains Mono', monospace;
     }
 
@@ -37,7 +38,12 @@
         radial-gradient(at 90% 90%, rgba(16, 185, 129, 0.08) 0px, transparent 40%);
       color: var(--text);
       min-height: 100vh;
-      line-height: 1.5;
+      line-height: 1.6;
+      letter-spacing: 0.01em;
+    }
+
+    h1, h2, h3, h4, .brand, .catalog-title {
+      font-family: var(--font-heading);
     }
 
     header {
@@ -263,8 +269,22 @@
       font-weight: 600;
       margin-bottom: 0.25rem;
     }
-    .product-name { font-size: 1.05rem; font-weight: 700; margin-bottom: 0.4rem; }
-    .product-desc { font-size: 0.84rem; color: var(--text-muted); line-height: 1.45; margin-bottom: 1.25rem; flex-grow: 1; }
+    .product-name { 
+      font-family: var(--font-heading);
+      font-size: 1.12rem; 
+      font-weight: 700; 
+      margin-bottom: 0.5rem; 
+      letter-spacing: -0.01em;
+      color: #fff;
+    }
+    .product-desc { 
+      font-size: 0.88rem; 
+      color: var(--text-muted); 
+      line-height: 1.62; 
+      letter-spacing: 0.012em;
+      margin-bottom: 1.25rem; 
+      flex-grow: 1; 
+    }
     
     .product-footer {
       display: flex;
@@ -363,6 +383,9 @@
       padding: 0.85rem 1.4rem;
       border-radius: 12px;
       box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
+      display: none;
+    }
+
     /* Responsive Media Queries */
     @media (max-width: 860px) {
       header { padding: 0.75rem 1.25rem; }

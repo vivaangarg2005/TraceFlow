@@ -14,17 +14,27 @@ export default function SessionsView({
   const [filterType, setFilterType] = useState('all'); // all, multi-page, high-activity, bounces
   const [copiedId, setCopiedId] = useState(null);
 
-  // Time format helper
+  // Time format helper - Clean HH:MM:SS AM/PM
   function formatTime(isoString) {
     if (!isoString) return 'Just now';
     const date = new Date(isoString);
-    return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+    return date.toLocaleTimeString('en-US', {
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+      hour12: true,
+    });
   }
 
+  // Date format helper - Clean Month Day, Year
   function formatDate(isoString) {
     if (!isoString) return '';
     const date = new Date(isoString);
-    return date.toLocaleDateString([], { month: 'short', day: 'numeric' });
+    return date.toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric',
+    });
   }
 
   function copySessionId(e, id) {
@@ -281,8 +291,8 @@ export default function SessionsView({
                     {/* Last active time */}
                     <td>
                       <div className="time-cell">
-                        <span className="time-primary">{formatTime(s.lastSeen)}</span>
-                        <span className="time-secondary">{formatDate(s.lastSeen)}</span>
+                        <div className="time-primary mono">{formatTime(s.lastSeen)}</div>
+                        <div className="time-secondary">{formatDate(s.lastSeen)}</div>
                       </div>
                     </td>
 

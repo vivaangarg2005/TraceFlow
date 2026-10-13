@@ -8,11 +8,12 @@ export default function UserJourneyModal({ sessionData, events, loading, onClose
 
   function formatTime(isoString) {
     if (!isoString) return '';
-    return new Date(isoString).toLocaleTimeString([], {
+    return new Date(isoString).toLocaleTimeString('en-US', {
       hour: '2-digit',
       minute: '2-digit',
       second: '2-digit',
       fractionalSecondDigits: 3,
+      hour12: true,
     });
   }
 

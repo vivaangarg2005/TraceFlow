@@ -558,6 +558,35 @@
   white-space: nowrap;
 }
 
+.sessions-table th:nth-child(6),
+.sessions-table td:nth-child(6) {
+  min-width: 160px;
+  white-space: nowrap;
+}
+
+.time-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  white-space: nowrap;
+}
+
+.time-primary {
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: #f8fafc;
+  letter-spacing: 0.03em;
+  line-height: 1.2;
+}
+
+.time-secondary {
+  font-size: 0.76rem;
+  color: #94a3b8;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+  line-height: 1.2;
+}
+
 .events-cell {
   display: flex;
   flex-direction: column;
