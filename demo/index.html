@@ -393,7 +393,7 @@
 
     <ul class="nav-links">
       <li><a href="index.html" class="active" id="nav-home">Home</a></li>
-      <li><a href="product.html?id=runner" id="nav-catalog">Products</a></li>
+      <li><a href="product.html" id="nav-catalog">Products</a></li>
       <li><a href="checkout.html" id="nav-checkout">Checkout</a></li>
     </ul>
 
@@ -418,7 +418,7 @@
         <h1>Thoughtful Apparel for <span>Deliberate Living</span></h1>
         <p>Curated minimal menswear, footwear, and accessories crafted from recycled performance textiles. Built for form, longevity, and ease.</p>
         <div class="hero-buttons">
-          <a href="product.html?id=runner" class="btn btn-primary" id="hero-cta-shop-now">Explore Collection</a>
+          <a href="product.html" class="btn btn-primary" id="hero-cta-shop-now">Explore Collection</a>
           <button class="btn btn-outline" id="hero-cta-quick-buy" onclick="addToCart('Aura Core Hoodie', 89)">⚡ Quick Add Hoodie ($89)</button>
         </div>
       </div>
@@ -436,7 +436,10 @@
         </div>
         <div style="font-size: 1.2rem; font-weight: 700; margin-bottom: 0.35rem;">Merino Minimalist Coat</div>
         <div style="font-size: 1.4rem; font-weight: 800; color: #38bdf8; margin-bottom: 1rem;">$249.00</div>
-        <button class="btn btn-primary btn-sm" id="hero-featured-btn" onclick="addToCart('Merino Minimalist Coat', 249)">Add to Cart</button>
+        <div style="display: flex; gap: 0.5rem; justify-content: center;">
+          <a href="product.html?id=coat" class="btn btn-outline btn-sm" id="hero-featured-details-btn">Details</a>
+          <button class="btn btn-primary btn-sm" id="hero-featured-btn" onclick="addToCart('Merino Minimalist Coat', 249)">Add to Cart</button>
+        </div>
       </div>
     </section>
 
@@ -617,7 +620,7 @@
     </div>
     <div style="display:flex; align-items:center; gap: 0.75rem;">
       <button class="btn btn-outline btn-sm" onclick="resetSession()">🔄 New Session</button>
-      <a href="product.html?id=runner" class="btn btn-outline btn-sm">Product Page →</a>
+      <a href="product.html" class="btn btn-outline btn-sm">Products Catalog →</a>
       <a href="checkout.html" class="btn btn-outline btn-sm">Checkout →</a>
       <a href="http://localhost:5173" target="_blank" class="btn btn-primary btn-sm">Dashboard ↗</a>
       <button class="hud-close-btn" onclick="toggleHud(false)">✕ Minimize</button>

@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Aura Store — Product Details</title>
-  <meta name="description" content="View product specifications, materials, and sizing.">
+  <title>Aura Store — Products</title>
+  <meta name="description" content="View product specifications, materials, and complete collection.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -41,6 +41,9 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
+      position: sticky;
+      top: 0;
+      z-index: 100;
     }
     .brand { display: flex; align-items: center; gap: 0.75rem; text-decoration: none; color: #fff; font-weight: 800; }
     .brand-logo { width: 34px; height: 34px; background: linear-gradient(135deg, #6366f1, #8b5cf6); border-radius: 9px; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 1.05rem; }
@@ -48,12 +51,13 @@
     .nav-links a { color: var(--text-muted); text-decoration: none; font-size: 0.9rem; font-weight: 500; }
     .nav-links a:hover, .nav-links a.active { color: #fff; }
 
-    .container { max-width: 1100px; margin: 2.5rem auto; padding: 0 1.5rem; }
+    .container { max-width: 1120px; margin: 2rem auto; padding: 0 1.5rem 4rem; }
 
-    .breadcrumb { display: flex; gap: 0.5rem; font-size: 0.85rem; color: var(--text-muted); margin-bottom: 2rem; }
+    .breadcrumb { display: flex; gap: 0.5rem; font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1.75rem; align-items: center; }
     .breadcrumb a { color: var(--text-muted); text-decoration: none; }
     .breadcrumb a:hover { color: #fff; }
 
+    /* Single Product Detail Layout */
     .product-layout {
       display: grid;
       grid-template-columns: 1fr 1.25fr;
@@ -65,14 +69,52 @@
       background: var(--card-bg);
       border: 1px solid var(--card-border);
       border-radius: 20px;
-      padding: 3.5rem 2rem;
+      padding: 3rem 2rem;
       text-align: center;
       display: flex;
+      flex-direction: column;
       align-items: center;
       justify-content: center;
       box-shadow: 0 20px 40px rgba(0,0,0,0.4);
+      position: relative;
+      overflow: hidden;
+      min-height: 340px;
     }
-    .product-hero-vector { width: 180px; height: 180px; filter: drop-shadow(0 15px 30px rgba(0,0,0,0.6)); }
+    .gallery-box::before {
+      content: '';
+      position: absolute;
+      width: 240px;
+      height: 240px;
+      border-radius: 50%;
+      background: radial-gradient(circle, var(--accent-glow) 0%, transparent 70%);
+      pointer-events: none;
+    }
+    .product-hero-vector {
+      width: 200px;
+      height: 200px;
+      filter: drop-shadow(0 15px 30px rgba(0,0,0,0.6));
+      transition: transform 0.3s ease;
+      z-index: 1;
+    }
+    .product-hero-vector:hover {
+      transform: scale(1.06) rotate(-1deg);
+    }
+    .gallery-tags {
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+      justify-content: center;
+      margin-top: 1.5rem;
+      z-index: 1;
+    }
+    .gallery-tag-pill {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      font-size: 0.72rem;
+      color: var(--text-muted);
+      padding: 0.25rem 0.65rem;
+      border-radius: 9999px;
+    }
 
     .badge-pill {
       display: inline-block;
@@ -95,12 +137,14 @@
 
     .options-group { margin-bottom: 2rem; }
     .options-title { font-size: 0.88rem; font-weight: 700; margin-bottom: 0.75rem; }
-    .size-selector { display: flex; gap: 0.5rem; }
+    .size-selector { display: flex; gap: 0.5rem; flex-wrap: wrap; }
     .size-btn {
-      width: 44px; height: 44px; border-radius: 9px;
+      min-width: 44px; height: 44px; border-radius: 9px;
       border: 1px solid var(--card-border);
       background: rgba(255, 255, 255, 0.05);
       color: #fff; font-weight: 600; cursor: pointer; transition: all 0.2s;
+      padding: 0 0.85rem;
+      font-size: 0.88rem;
     }
     .size-btn:hover, .size-btn.active { background: var(--accent); border-color: var(--accent); }
 
@@ -114,6 +158,127 @@
     .btn-primary:hover { background: var(--accent-hover); transform: translateY(-1px); }
     .btn-secondary { background: rgba(255, 255, 255, 0.06); color: white; border: 1px solid var(--card-border); }
     .btn-secondary:hover { background: rgba(255, 255, 255, 0.12); }
+    .btn-outline { background: rgba(255, 255, 255, 0.05); color: white; border: 1px solid var(--card-border); }
+    .btn-outline:hover { background: rgba(255, 255, 255, 0.1); border-color: rgba(255, 255, 255, 0.2); }
+    .btn-sm { padding: 0.45rem 0.95rem; font-size: 0.82rem; border-radius: 8px; }
+
+    /* Catalog View Styles */
+    .catalog-header {
+      margin-bottom: 2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 1.25rem;
+    }
+    .catalog-title { font-size: 2rem; font-weight: 800; letter-spacing: -0.02em; }
+    .filter-tabs {
+      display: flex;
+      background: rgba(255, 255, 255, 0.03);
+      padding: 3px;
+      border-radius: 10px;
+      border: 1px solid var(--card-border);
+      gap: 0.25rem;
+      flex-wrap: wrap;
+    }
+    .tab-btn {
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      padding: 0.45rem 1rem;
+      border-radius: 7px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .tab-btn.active, .tab-btn:hover { background: rgba(255, 255, 255, 0.08); color: #fff; }
+
+    .product-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 1.5rem;
+      margin-bottom: 3.5rem;
+    }
+    .product-card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 16px;
+      padding: 1.25rem;
+      display: flex;
+      flex-direction: column;
+      transition: all 0.25s ease;
+    }
+    .product-card:hover {
+      transform: translateY(-3px);
+      border-color: rgba(99, 102, 241, 0.4);
+      box-shadow: 0 12px 28px rgba(0, 0, 0, 0.35);
+    }
+    .product-preview {
+      width: 100%;
+      height: 180px;
+      background: linear-gradient(135deg, #161e2e, #0f172a);
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 1rem;
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      position: relative;
+    }
+    .product-card-vector {
+      width: 110px;
+      height: 110px;
+      filter: drop-shadow(0 10px 20px rgba(0,0,0,0.5));
+    }
+    .category-tag {
+      font-size: 0.72rem;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: #94a3b8;
+      font-weight: 600;
+      margin-bottom: 0.25rem;
+    }
+    .product-card-title { font-size: 1.08rem; font-weight: 700; margin-bottom: 0.4rem; color: #fff; }
+    .product-card-desc { font-size: 0.84rem; color: var(--text-muted); line-height: 1.45; margin-bottom: 1.25rem; flex-grow: 1; }
+    .product-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-top: auto;
+      padding-top: 0.85rem;
+      border-top: 1px solid rgba(255, 255, 255, 0.06);
+    }
+    .product-card-price { font-size: 1.25rem; font-weight: 800; color: #fff; }
+    .card-actions { display: flex; gap: 0.45rem; }
+
+    /* Related Products Shelf */
+    .related-shelf {
+      margin-top: 4.5rem;
+      padding-top: 2.5rem;
+      border-top: 1px solid var(--card-border);
+    }
+    .related-title {
+      font-size: 1.45rem;
+      font-weight: 800;
+      letter-spacing: -0.01em;
+    }
+
+    /* Toast Notification */
+    #toast {
+      position: fixed;
+      top: 24px;
+      right: 24px;
+      z-index: 2000;
+      background: #1e1b4b;
+      border: 1px solid rgba(99, 102, 241, 0.5);
+      color: white;
+      padding: 0.85rem 1.4rem;
+      border-radius: 12px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
+      display: none;
+      font-size: 0.9rem;
+    }
 
     /* Floating trigger & HUD */
     #hud-pill-trigger {
@@ -141,7 +306,7 @@
     @media (max-width: 600px) {
       header { flex-wrap: wrap; gap: 0.75rem; justify-content: space-between; }
       .nav-links { gap: 1rem; }
-      .container { padding: 0 1rem; }
+      .container { padding: 0 1rem 3rem; }
       h1 { font-size: 1.8rem; }
       .action-row { flex-direction: column; }
       .action-row .btn { width: 100%; }
@@ -158,7 +323,7 @@
     </a>
     <ul class="nav-links">
       <li><a href="index.html" id="link-home">Home</a></li>
-      <li><a href="product.html?id=runner" class="active" id="link-product">Products</a></li>
+      <li><a href="product.html" class="active" id="link-product">Products</a></li>
       <li><a href="checkout.html" id="link-checkout">Checkout</a></li>
     </ul>
     <div>
@@ -169,47 +334,79 @@
   </header>
 
   <div class="container">
-    <div class="breadcrumb">
-      <a href="index.html" id="bc-home">Home</a> &gt; 
-      <a href="index.html" id="bc-category"><span id="bc-cat-name">Footwear</span></a> &gt; 
-      <span id="bc-product-name">Monochrome Runner V2</span>
+    <div class="breadcrumb" id="product-breadcrumb">
+      <!-- Breadcrumb generated by JS -->
     </div>
 
-    <div class="product-layout">
-      <div class="gallery-box" id="product-gallery">
-        <svg id="product-vector-svg" class="product-hero-vector" viewBox="0 0 100 100" fill="none">
-          <path d="M15 65C15 65 30 68 50 68C70 68 85 62 85 55C85 45 75 42 65 42L55 35L35 48L15 65Z" fill="#1e293b" stroke="#38bdf8" stroke-width="2.5"/>
-          <path d="M15 68H85V75H15V68Z" fill="#0f172a" stroke="#38bdf8" stroke-width="2"/>
-        </svg>
+    <!-- 1. All Products Catalog View (When browsing collection) -->
+    <div id="catalog-view" style="display: none;">
+      <div class="catalog-header">
+        <div>
+          <h1 class="catalog-title">Aura Essentials Collection</h1>
+          <p style="color: var(--text-muted); font-size: 0.92rem; margin-top: 0.35rem;">
+            Explore thoughtful minimal silhouettes, engineered performance footwear, and daily essentials.
+          </p>
+        </div>
+        <div class="filter-tabs">
+          <button class="tab-btn active" id="tab-all" onclick="filterCatalog('all', this)">All Items (7)</button>
+          <button class="tab-btn" id="tab-apparel" onclick="filterCatalog('Apparel', this)">Apparel</button>
+          <button class="tab-btn" id="tab-footwear" onclick="filterCatalog('Footwear', this)">Footwear</button>
+          <button class="tab-btn" id="tab-accessories" onclick="filterCatalog('Accessories', this)">Accessories</button>
+        </div>
       </div>
 
-      <div class="product-details">
-        <span class="badge-pill" id="product-badge">Top Seller</span>
-        <h1 id="product-heading">Monochrome Runner V2</h1>
-        <div class="price-tag" id="product-price">$145.00</div>
-        
-        <div class="rating">
-          ★★★★★ <span>(4.9 / 5 from 182 verified customers)</span>
-        </div>
+      <div class="product-grid" id="catalog-grid">
+        <!-- Rendered by JS -->
+      </div>
+    </div>
 
-        <p class="description" id="product-description">
-          Engineered for all-day comfort and street-ready aesthetics. Crafted from breathable recycled knit fabric, reinforced TPU heel support, and ultralight dual-density EVA foam cushioning.
-        </p>
-
-        <div class="options-group">
-          <div class="options-title">Select US Size:</div>
-          <div class="size-selector">
-            <button class="size-btn" id="size-8" onclick="selectSize(8, this)">8</button>
-            <button class="size-btn active" id="size-9" onclick="selectSize(9, this)">9</button>
-            <button class="size-btn" id="size-10" onclick="selectSize(10, this)">10</button>
-            <button class="size-btn" id="size-11" onclick="selectSize(11, this)">11</button>
-            <button class="size-btn" id="size-12" onclick="selectSize(12, this)">12</button>
+    <!-- 2. Single Product Details View (When inspecting a product) -->
+    <div id="detail-view" style="display: none;">
+      <div class="product-layout">
+        <div class="gallery-box" id="product-gallery">
+          <div id="product-vector-container" style="display:flex; align-items:center; justify-content:center; width:100%; min-height:220px;">
+            <!-- Injected Product SVG Vector -->
+          </div>
+          <div class="gallery-tags" id="gallery-tags">
+            <!-- Injected Feature Tags -->
           </div>
         </div>
 
-        <div class="action-row">
-          <button class="btn btn-primary" id="btn-add-to-cart" onclick="handleAddToCart()">🛒 Add to Cart</button>
-          <a href="checkout.html" class="btn btn-secondary" id="btn-buy-now">⚡ Proceed to Checkout</a>
+        <div class="product-details">
+          <span class="badge-pill" id="product-badge">Top Seller</span>
+          <h1 id="product-heading">Monochrome Runner V2</h1>
+          <div class="price-tag" id="product-price">$145.00</div>
+          
+          <div class="rating" id="product-rating">
+            ★★★★★ <span id="product-rating-count">(4.9 / 5 from 182 verified reviews)</span>
+          </div>
+
+          <p class="description" id="product-description">
+            Engineered for all-day comfort and street-ready aesthetics. Crafted from breathable recycled knit fabric, reinforced TPU heel support, and ultralight dual-density EVA foam cushioning.
+          </p>
+
+          <div class="options-group">
+            <div class="options-title" id="options-title">Select US Size:</div>
+            <div class="size-selector" id="options-selector">
+              <!-- Injected Option Buttons -->
+            </div>
+          </div>
+
+          <div class="action-row">
+            <button class="btn btn-primary" id="btn-add-to-cart" onclick="handleAddToCart()">🛒 Add to Cart</button>
+            <a href="checkout.html" class="btn btn-secondary" id="btn-buy-now">⚡ Proceed to Checkout</a>
+          </div>
+        </div>
+      </div>
+
+      <!-- More From Collection Section -->
+      <div class="related-shelf">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem; flex-wrap:wrap; gap:0.75rem;">
+          <h2 class="related-title">Explore More From Collection</h2>
+          <a href="product.html" class="btn btn-secondary btn-sm" id="btn-view-all-products">View All Products (7) →</a>
+        </div>
+        <div class="product-grid" id="related-grid">
+          <!-- Rendered by JS -->
         </div>
       </div>
     </div>
@@ -229,7 +426,8 @@
       <div style="color: var(--text-muted);">Page: <strong style="color: #38bdf8; font-family: monospace;">/demo/product.html</strong></div>
     </div>
     <div style="display:flex; align-items:center; gap: 0.75rem;">
-      <a href="index.html" class="btn btn-secondary" style="padding: 0.35rem 0.75rem; font-size: 0.8rem;">← Back to Store</a>
+      <a href="index.html" class="btn btn-secondary" style="padding: 0.35rem 0.75rem; font-size: 0.8rem;">← Home</a>
+      <a href="product.html" class="btn btn-secondary" style="padding: 0.35rem 0.75rem; font-size: 0.8rem;">Products Catalog</a>
       <a href="checkout.html" class="btn btn-secondary" style="padding: 0.35rem 0.75rem; font-size: 0.8rem;">Checkout →</a>
       <a href="http://localhost:5173" target="_blank" class="btn btn-primary" style="padding: 0.35rem 0.75rem; font-size: 0.8rem;">Dashboard ↗</a>
       <button onclick="toggleHud(false)" style="background:transparent; border:1px solid rgba(255,255,255,0.2); color:#94a3b8; border-radius:6px; padding:0.2rem 0.5rem; cursor:pointer;">✕ Minimize</button>
@@ -241,44 +439,393 @@
   <script>
     var cartItems = parseInt(sessionStorage.getItem('aura_cart_count') || '0', 10);
     document.getElementById('cart-counter').innerText = cartItems;
-    var selectedSize = 9;
+    var selectedOption = '';
 
-    // Dynamic product loader based on URL query param
-    var params = new URLSearchParams(window.location.search);
-    var pid = params.get('id') || 'runner';
-
+    // Complete catalog of 7 items with dedicated vector SVG illustrations
     var PRODUCTS = {
-      runner: { name: 'Monochrome Runner V2', price: '$145.00', numPrice: 145, category: 'Footwear', badge: 'Top Seller', desc: 'Ultra-light breathable knit upper with dual-density ergonomic foam cushion.' },
-      tee: { name: 'Heavyweight Combed Tee', price: '$48.00', numPrice: 48, category: 'Apparel', badge: 'Organic Cotton', desc: '280 GSM organic combed cotton crafted in an architectural boxy drape.' },
-      pack: { name: 'Commuter Waterproof Pack', price: '$120.00', numPrice: 120, category: 'Accessories', badge: 'Weatherproof', desc: 'TPU matte-coated fabric with dedicated padded 16" laptop sleeve.' },
-      watch: { name: 'Titanium Minimalist Timepiece', price: '$185.00', numPrice: 185, category: 'Accessories', badge: 'Sapphire Crystal', desc: 'Sapphire crystal face with genuine vegetable-tanned leather strap.' },
-      overshirt: { name: 'Structured Overshirt', price: '$110.00', numPrice: 110, category: 'Apparel', badge: 'Wool Blend', desc: 'Heavyweight brushed wool blend designed for clean seasonal layering.' },
-      boot: { name: 'All-Terrain Chelsea Boot', price: '$195.00', numPrice: 195, category: 'Footwear', badge: 'Vibram Outsole', desc: 'Full-grain waterproof nubuck with reinforced lugged Vibram rubber outsole.' },
+      runner: {
+        id: 'runner',
+        name: 'Monochrome Runner V2',
+        price: '$145.00',
+        numPrice: 145,
+        category: 'Footwear',
+        badge: 'Top Seller',
+        ratingText: '(4.9 / 5 from 182 verified reviews)',
+        desc: 'Engineered for all-day comfort and street-ready aesthetics. Crafted from breathable recycled knit fabric, reinforced TPU heel support, and ultralight dual-density EVA foam cushioning.',
+        optionLabel: 'Select US Size:',
+        options: ['8', '9', '10', '11', '12'],
+        tags: ['Dual-Density Cushion', 'Recycled Knit', 'Ultralight Sole'],
+        svg: `<svg class="product-hero-vector" viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <linearGradient id="runnerGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stop-color="#38bdf8" stop-opacity="0.25"/>
+              <stop offset="100%" stop-color="#0284c7" stop-opacity="0.08"/>
+            </linearGradient>
+          </defs>
+          <path d="M14 78C14 78 30 82 55 82C85 82 106 74 106 65C106 52 92 50 80 50L68 40L42 56L14 78Z" fill="url(#runnerGrad)" stroke="#38bdf8" stroke-width="2.8" stroke-linejoin="round"/>
+          <path d="M14 82H106V90C106 90 90 93 55 93C25 93 14 89 14 87V82Z" fill="#0f172a" stroke="#38bdf8" stroke-width="2.2"/>
+          <path d="M68 40L58 26C56 23 52 23 50 26L42 38" stroke="#38bdf8" stroke-width="2" stroke-linecap="round"/>
+          <line x1="52" y1="36" x2="62" y2="42" stroke="#bae6fd" stroke-width="2" stroke-linecap="round"/>
+          <line x1="48" y1="44" x2="58" y2="50" stroke="#bae6fd" stroke-width="2" stroke-linecap="round"/>
+          <line x1="44" y1="52" x2="54" y2="58" stroke="#bae6fd" stroke-width="2" stroke-linecap="round"/>
+          <path d="M28 72Q55 60 88 64" stroke="#0ea5e9" stroke-width="2.5" stroke-linecap="round"/>
+          <circle cx="95" cy="62" r="3" fill="#38bdf8"/>
+        </svg>`,
+        previewSvg: `<svg class="product-card-vector" viewBox="0 0 100 100" fill="none">
+          <path d="M15 65C15 65 30 68 50 68C70 68 85 62 85 55C85 45 75 42 65 42L55 35L35 48L15 65Z" fill="#1e293b" stroke="#38bdf8" stroke-width="2.5"/>
+          <path d="M15 68H85V75H15V68Z" fill="#0f172a" stroke="#38bdf8" stroke-width="2"/>
+          <circle cx="45" cy="46" r="3" fill="#38bdf8"/>
+          <circle cx="55" cy="42" r="3" fill="#38bdf8"/>
+        </svg>`
+      },
+      tee: {
+        id: 'tee',
+        name: 'Heavyweight Combed Tee',
+        price: '$48.00',
+        numPrice: 48,
+        category: 'Apparel',
+        badge: 'Organic Cotton',
+        ratingText: '(4.8 / 5 from 94 verified reviews)',
+        desc: 'Constructed from substantial 280 GSM long-staple organic cotton. Features an architectural boxy silhouette, double-needle coverstitched collar, and preshrunk hand-feel.',
+        optionLabel: 'Select Size:',
+        options: ['S', 'M', 'L', 'XL', 'XXL'],
+        tags: ['280 GSM Organic Cotton', 'Boxy Relaxed Cut', 'Preshrunk'],
+        svg: `<svg class="product-hero-vector" viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <linearGradient id="teeGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stop-color="#818cf8" stop-opacity="0.3"/>
+              <stop offset="100%" stop-color="#4f46e5" stop-opacity="0.08"/>
+            </linearGradient>
+          </defs>
+          <path d="M36 28L16 46L28 58L40 52V96H80V52L92 58L104 46L84 28C78 34 42 34 36 28Z" fill="url(#teeGrad)" stroke="#818cf8" stroke-width="2.8" stroke-linejoin="round"/>
+          <path d="M46 28C48 35 72 35 74 28" stroke="#a5b4fc" stroke-width="2.5" stroke-linecap="round"/>
+          <line x1="18" y1="48" x2="28" y2="57" stroke="#6366f1" stroke-width="1.8"/>
+          <line x1="102" y1="48" x2="92" y2="57" stroke="#6366f1" stroke-width="1.8"/>
+          <line x1="41" y1="92" x2="79" y2="92" stroke="#6366f1" stroke-width="1.8" stroke-dasharray="3 3"/>
+          <rect x="65" y="44" width="12" height="14" rx="2" stroke="#a5b4fc" stroke-width="1.6" fill="rgba(255,255,255,0.05)"/>
+        </svg>`,
+        previewSvg: `<svg class="product-card-vector" viewBox="0 0 100 100" fill="none">
+          <path d="M30 25L15 40L25 50L35 45V75H65V45L75 50L85 40L70 25C65 30 35 30 30 25Z" fill="#1e293b" stroke="#818cf8" stroke-width="2.5"/>
+        </svg>`
+      },
+      pack: {
+        id: 'pack',
+        name: 'Commuter Waterproof Pack',
+        price: '$120.00',
+        numPrice: 120,
+        category: 'Accessories',
+        badge: 'Weatherproof',
+        ratingText: '(4.9 / 5 from 147 verified reviews)',
+        desc: 'Engineered for daily urban transit and all-weather commutes. Features matte TPU-coated ballistic fabric, quick magnetic Fidlock buckles, and a dedicated suspended 16" laptop compartment.',
+        optionLabel: 'Select Colorway:',
+        options: ['Obsidian Black', 'Stealth Olive', 'Slate Grey'],
+        tags: ['IPX4 Weatherproof', 'Fidlock Magnetics', '16" Laptop Sleeve'],
+        svg: `<svg class="product-hero-vector" viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <linearGradient id="packGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stop-color="#10b981" stop-opacity="0.25"/>
+              <stop offset="100%" stop-color="#059669" stop-opacity="0.08"/>
+            </linearGradient>
+          </defs>
+          <path d="M48 30V18C48 15 72 15 72 18V30" stroke="#34d399" stroke-width="2.8" stroke-linecap="round"/>
+          <rect x="32" y="30" width="56" height="70" rx="14" fill="url(#packGrad)" stroke="#10b981" stroke-width="2.8"/>
+          <path d="M32 46H88" stroke="#34d399" stroke-width="2.2"/>
+          <rect x="42" y="62" width="36" height="26" rx="6" fill="#0f172a" stroke="#10b981" stroke-width="2"/>
+          <line x1="48" y1="70" x2="72" y2="70" stroke="#6ee7b7" stroke-width="1.8"/>
+          <circle cx="68" cy="70" r="2" fill="#34d399"/>
+          <line x1="28" y1="52" x2="32" y2="52" stroke="#10b981" stroke-width="2.5" stroke-linecap="round"/>
+          <line x1="28" y1="68" x2="32" y2="68" stroke="#10b981" stroke-width="2.5" stroke-linecap="round"/>
+          <line x1="88" y1="52" x2="92" y2="52" stroke="#10b981" stroke-width="2.5" stroke-linecap="round"/>
+          <line x1="88" y1="68" x2="92" y2="68" stroke="#10b981" stroke-width="2.5" stroke-linecap="round"/>
+        </svg>`,
+        previewSvg: `<svg class="product-card-vector" viewBox="0 0 100 100" fill="none">
+          <rect x="30" y="30" width="40" height="50" rx="10" fill="#1e293b" stroke="#10b981" stroke-width="2.5"/>
+          <path d="M40 30V22C40 18 60 18 60 22V30" stroke="#10b981" stroke-width="2.5"/>
+          <rect x="36" y="55" width="28" height="18" rx="4" fill="#0f172a" stroke="#10b981" stroke-width="1.5"/>
+        </svg>`
+      },
+      watch: {
+        id: 'watch',
+        name: 'Titanium Minimalist Timepiece',
+        price: '$185.00',
+        numPrice: 185,
+        category: 'Accessories',
+        badge: 'Sapphire Crystal',
+        ratingText: '(5.0 / 5 from 63 verified reviews)',
+        desc: 'Crafted from aerospace-grade Grade 2 titanium with an anti-reflective sapphire crystal face. Powered by high-accuracy Swiss quartz and complemented by Italian vegetable-tanned leather.',
+        optionLabel: 'Select Strap Edition:',
+        options: ['Tan Saddle', 'Matte Black', 'Titanium Mesh'],
+        tags: ['Grade 2 Titanium', 'Sapphire Glass', '5 ATM Water Resistant'],
+        svg: `<svg class="product-hero-vector" viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <linearGradient id="watchGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stop-color="#f59e0b" stop-opacity="0.25"/>
+              <stop offset="100%" stop-color="#d97706" stop-opacity="0.08"/>
+            </linearGradient>
+          </defs>
+          <rect x="48" y="10" width="24" height="100" rx="4" fill="#1e293b" stroke="#f59e0b" stroke-width="2"/>
+          <line x1="51" y1="12" x2="51" y2="34" stroke="#d97706" stroke-width="1.2" stroke-dasharray="2 2"/>
+          <line x1="69" y1="12" x2="69" y2="34" stroke="#d97706" stroke-width="1.2" stroke-dasharray="2 2"/>
+          <line x1="51" y1="86" x2="51" y2="108" stroke="#d97706" stroke-width="1.2" stroke-dasharray="2 2"/>
+          <line x1="69" y1="86" x2="69" y2="108" stroke="#d97706" stroke-width="1.2" stroke-dasharray="2 2"/>
+          <circle cx="60" cy="60" r="30" fill="url(#watchGrad)" stroke="#f59e0b" stroke-width="3"/>
+          <circle cx="60" cy="60" r="25" fill="#090d16" stroke="#fbbf24" stroke-width="1.2"/>
+          <rect x="90" y="56" width="5" height="8" rx="1.5" fill="#f59e0b"/>
+          <line x1="60" y1="38" x2="60" y2="42" stroke="#fde68a" stroke-width="2" stroke-linecap="round"/>
+          <line x1="60" y1="78" x2="60" y2="82" stroke="#fde68a" stroke-width="2" stroke-linecap="round"/>
+          <line x1="38" y1="60" x2="42" y2="60" stroke="#fde68a" stroke-width="2" stroke-linecap="round"/>
+          <line x1="78" y1="60" x2="82" y2="60" stroke="#fde68a" stroke-width="2" stroke-linecap="round"/>
+          <line x1="60" y1="60" x2="60" y2="45" stroke="#fff" stroke-width="2.4" stroke-linecap="round"/>
+          <line x1="60" y1="60" x2="72" y2="60" stroke="#38bdf8" stroke-width="2" stroke-linecap="round"/>
+          <circle cx="60" cy="60" r="3" fill="#f59e0b"/>
+        </svg>`,
+        previewSvg: `<svg class="product-card-vector" viewBox="0 0 100 100" fill="none">
+          <rect x="42" y="15" width="16" height="70" rx="3" fill="#334155" stroke="#f59e0b" stroke-width="1.5"/>
+          <circle cx="50" cy="50" r="22" fill="#0f172a" stroke="#f59e0b" stroke-width="2.5"/>
+          <line x1="50" y1="50" x2="50" y2="36" stroke="#f59e0b" stroke-width="2"/>
+          <line x1="50" y1="50" x2="60" y2="50" stroke="#f59e0b" stroke-width="2"/>
+        </svg>`
+      },
+      overshirt: {
+        id: 'overshirt',
+        name: 'Structured Overshirt',
+        price: '$110.00',
+        numPrice: 110,
+        category: 'Apparel',
+        badge: 'Wool Blend',
+        ratingText: '(4.8 / 5 from 110 verified reviews)',
+        desc: 'Heavyweight brushed wool-poly blend tailored with clean structural lines. Features horn-look buttons, twin flap utility chest pockets, and relaxed shoulders for effortless layering.',
+        optionLabel: 'Select Size:',
+        options: ['S', 'M', 'L', 'XL', 'XXL'],
+        tags: ['Wool Blend Weave', 'Dual Flap Pockets', 'Layering Fit'],
+        svg: `<svg class="product-hero-vector" viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <linearGradient id="overshirtGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stop-color="#c084fc" stop-opacity="0.3"/>
+              <stop offset="100%" stop-color="#9333ea" stop-opacity="0.08"/>
+            </linearGradient>
+          </defs>
+          <path d="M34 26L14 46L26 58L38 52V98H82V52L94 58L106 46L86 26C80 32 40 32 34 26Z" fill="url(#overshirtGrad)" stroke="#c084fc" stroke-width="2.8" stroke-linejoin="round"/>
+          <path d="M42 27L52 38L60 30L68 38L78 27" stroke="#e9d5ff" stroke-width="2.2" stroke-linejoin="round"/>
+          <line x1="60" y1="38" x2="60" y2="98" stroke="#c084fc" stroke-width="1.8"/>
+          <circle cx="60" cy="48" r="2" fill="#e9d5ff"/>
+          <circle cx="60" cy="62" r="2" fill="#e9d5ff"/>
+          <circle cx="60" cy="76" r="2" fill="#e9d5ff"/>
+          <circle cx="60" cy="90" r="2" fill="#e9d5ff"/>
+          <rect x="42" y="50" width="13" height="15" rx="2" fill="rgba(0,0,0,0.3)" stroke="#c084fc" stroke-width="1.6"/>
+          <path d="M42 50L48.5 54L55 50" stroke="#e9d5ff" stroke-width="1.5"/>
+          <rect x="65" y="50" width="13" height="15" rx="2" fill="rgba(0,0,0,0.3)" stroke="#c084fc" stroke-width="1.6"/>
+          <path d="M65 50L71.5 54L78 50" stroke="#e9d5ff" stroke-width="1.5"/>
+        </svg>`,
+        previewSvg: `<svg class="product-card-vector" viewBox="0 0 100 100" fill="none">
+          <path d="M28 25L15 42L25 50L35 45V75H65V45L75 50L85 42L72 25C65 30 35 30 28 25Z" fill="#1e293b" stroke="#c084fc" stroke-width="2.5"/>
+          <line x1="50" y1="30" x2="50" y2="75" stroke="#c084fc" stroke-width="1.5" stroke-dasharray="3 3"/>
+        </svg>`
+      },
+      boot: {
+        id: 'boot',
+        name: 'All-Terrain Chelsea Boot',
+        price: '$195.00',
+        numPrice: 195,
+        category: 'Footwear',
+        badge: 'Vibram Outsole',
+        ratingText: '(4.9 / 5 from 128 verified reviews)',
+        desc: 'Oiled waterproof nubuck leather with elasticated side gussets and reinforced nylon pull tabs. Built on a lugged Vibram Arctic-Grip rubber outsole ready for rough terrain and slick city sidewalks.',
+        optionLabel: 'Select US Size:',
+        options: ['8', '9', '10', '11', '12'],
+        tags: ['Vibram Lugged Outsole', 'Oiled Nubuck Leather', 'Waterproof'],
+        svg: `<svg class="product-hero-vector" viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <linearGradient id="bootGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stop-color="#f43f5e" stop-opacity="0.3"/>
+              <stop offset="100%" stop-color="#be123c" stop-opacity="0.08"/>
+            </linearGradient>
+          </defs>
+          <path d="M40 22V16H48V22" stroke="#fda4af" stroke-width="2" stroke-linecap="round"/>
+          <path d="M38 22V60L16 72C16 72 32 78 58 78C82 78 102 72 102 62L82 22H38Z" fill="url(#bootGrad)" stroke="#f43f5e" stroke-width="2.8" stroke-linejoin="round"/>
+          <path d="M52 30H68V54C68 57 65 60 60 60C55 60 52 57 52 54V30Z" fill="#1e293b" stroke="#fb7185" stroke-width="2"/>
+          <path d="M16 75H102V86C102 86 82 89 58 89C32 89 16 86 16 86V75Z" fill="#0f172a" stroke="#f43f5e" stroke-width="2.2"/>
+          <line x1="26" y1="86" x2="26" y2="90" stroke="#fb7185" stroke-width="2.5" stroke-linecap="round"/>
+          <line x1="42" y1="87" x2="42" y2="91" stroke="#fb7185" stroke-width="2.5" stroke-linecap="round"/>
+          <line x1="58" y1="88" x2="58" y2="92" stroke="#fb7185" stroke-width="2.5" stroke-linecap="round"/>
+          <line x1="74" y1="87" x2="74" y2="91" stroke="#fb7185" stroke-width="2.5" stroke-linecap="round"/>
+          <line x1="90" y1="86" x2="90" y2="90" stroke="#fb7185" stroke-width="2.5" stroke-linecap="round"/>
+        </svg>`,
+        previewSvg: `<svg class="product-card-vector" viewBox="0 0 100 100" fill="none">
+          <path d="M35 25V55L15 65C15 65 30 70 50 70C70 70 85 65 85 55L65 25H35Z" fill="#1e293b" stroke="#f43f5e" stroke-width="2.5"/>
+          <path d="M45 35H55V50H45V35Z" fill="#334155"/>
+        </svg>`
+      },
+      coat: {
+        id: 'coat',
+        name: 'Merino Minimalist Coat',
+        price: '$249.00',
+        numPrice: 249,
+        category: 'Apparel',
+        badge: 'Merino Wool',
+        ratingText: '(4.9 / 5 from 79 verified reviews)',
+        desc: 'Tailored minimalist outerwear cut from double-faced Australian merino wool with a hidden button placket, deep slant pockets, and a clean structural fall.',
+        optionLabel: 'Select Size:',
+        options: ['S', 'M', 'L', 'XL'],
+        tags: ['Double-Faced Merino', 'Hidden Placket', 'Tailored Cut'],
+        svg: `<svg class="product-hero-vector" viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <linearGradient id="coatGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stop-color="#6366f1" stop-opacity="0.3"/>
+              <stop offset="100%" stop-color="#4338ca" stop-opacity="0.1"/>
+            </linearGradient>
+          </defs>
+          <rect x="30" y="22" width="60" height="84" rx="10" fill="url(#coatGrad)" stroke="#818cf8" stroke-width="2.8"/>
+          <path d="M30 40L60 58L90 40" stroke="#a5b4fc" stroke-width="2.2"/>
+          <path d="M60 58V106" stroke="#a5b4fc" stroke-width="2" stroke-dasharray="3 3"/>
+          <circle cx="60" cy="20" r="9" fill="#312e81" stroke="#818cf8" stroke-width="2"/>
+        </svg>`,
+        previewSvg: `<svg class="product-card-vector" viewBox="0 0 100 100" fill="none">
+          <rect x="25" y="20" width="50" height="65" rx="10" fill="#312e81" stroke="#818cf8" stroke-width="2.5"/>
+          <path d="M25 35L50 50L75 35" stroke="#a5b4fc" stroke-width="2"/>
+          <circle cx="50" cy="18" r="8" fill="#4338ca"/>
+        </svg>`
+      }
     };
 
-    var currentProd = PRODUCTS[pid] || PRODUCTS.runner;
-    document.getElementById('product-heading').innerText = currentProd.name;
-    document.getElementById('bc-product-name').innerText = currentProd.name;
-    document.getElementById('bc-cat-name').innerText = currentProd.category;
-    document.getElementById('product-price').innerText = currentProd.price;
-    document.getElementById('product-badge').innerText = currentProd.badge;
-    document.getElementById('product-description').innerText = currentProd.desc;
-    document.title = 'Aura Store — ' + currentProd.name;
+    var params = new URLSearchParams(window.location.search);
+    var pid = params.get('id');
 
-    function selectSize(sz, btn) {
-      selectedSize = sz;
-      document.querySelectorAll('.size-btn').forEach(function(b) { b.classList.remove('active'); });
-      btn.classList.add('active');
+    // Create a product card HTML element
+    function createProductCard(prod) {
+      return `
+        <div class="product-card" data-category="${prod.category}">
+          <div class="product-preview">
+            ${prod.previewSvg}
+          </div>
+          <span class="category-tag">${prod.category}</span>
+          <h3 class="product-card-title">${prod.name}</h3>
+          <p class="product-card-desc">${prod.desc}</p>
+          <div class="product-footer">
+            <span class="product-card-price">${prod.price}</span>
+            <div class="card-actions">
+              <a href="product.html?id=${prod.id}" class="btn btn-outline btn-sm" id="btn-view-${prod.id}">Details</a>
+              <button class="btn btn-primary btn-sm" id="btn-cart-${prod.id}" onclick="quickAddToCart('${prod.id}', ${prod.numPrice})">Add to Cart</button>
+            </div>
+          </div>
+        </div>
+      `;
     }
 
-    function handleAddToCart() {
+    // Filter catalog view by category
+    function filterCatalog(cat, btn) {
+      document.querySelectorAll('.tab-btn').forEach(function(b) { b.classList.remove('active'); });
+      if (btn) btn.classList.add('active');
+      var cards = document.querySelectorAll('#catalog-grid .product-card');
+      cards.forEach(function(card) {
+        if (cat === 'all' || card.getAttribute('data-category').toLowerCase() === cat.toLowerCase()) {
+          card.style.display = 'flex';
+        } else {
+          card.style.display = 'none';
+        }
+      });
+    }
+
+    // Quick add to cart from grid card
+    function quickAddToCart(prodId, price) {
+      var prod = PRODUCTS[prodId];
+      if (!prod) return;
       cartItems++;
       sessionStorage.setItem('aura_cart_count', cartItems);
       document.getElementById('cart-counter').innerText = cartItems;
+      showToast('🛒 Added <strong>' + prod.name + '</strong> ($' + price + ') to cart');
+    }
+
+    function showToast(html) {
       var toast = document.getElementById('toast');
-      toast.innerHTML = '✅ Added <strong>' + currentProd.name + ' (Size ' + selectedSize + ')</strong> to cart';
+      toast.innerHTML = html;
       toast.style.display = 'block';
-      setTimeout(function() { toast.style.display = 'none'; }, 2500);
+      setTimeout(function() { toast.style.display = 'none'; }, 2600);
+    }
+
+    // Determine whether to display the Catalog (all products) or Single Product Details
+    if (!pid || pid === 'all' || !PRODUCTS[pid]) {
+      // 1. Show Catalog View
+      document.getElementById('catalog-view').style.display = 'block';
+      document.getElementById('detail-view').style.display = 'none';
+      document.getElementById('product-breadcrumb').innerHTML = `
+        <a href="index.html" id="bc-home">Home</a> &gt; 
+        <span style="color:#fff; font-weight:600;">All Products</span>
+      `;
+      document.title = 'Aura Store — Products Catalog';
+
+      var catalogGrid = document.getElementById('catalog-grid');
+      catalogGrid.innerHTML = Object.keys(PRODUCTS).map(function(key) {
+        return createProductCard(PRODUCTS[key]);
+      }).join('');
+
+    } else {
+      // 2. Show Single Product Detail View
+      var currentProd = PRODUCTS[pid];
+      document.getElementById('catalog-view').style.display = 'none';
+      document.getElementById('detail-view').style.display = 'block';
+
+      document.getElementById('product-breadcrumb').innerHTML = `
+        <a href="index.html" id="bc-home">Home</a> &gt; 
+        <a href="product.html" id="bc-all-products">Products</a> &gt; 
+        <span style="color:var(--text-muted);">${currentProd.category}</span> &gt; 
+        <span style="color:#fff; font-weight:600;">${currentProd.name}</span>
+      `;
+      document.title = 'Aura Store — ' + currentProd.name;
+
+      // Populate textual info
+      document.getElementById('product-heading').innerText = currentProd.name;
+      document.getElementById('product-price').innerText = currentProd.price;
+      document.getElementById('product-badge').innerText = currentProd.badge;
+      document.getElementById('product-description').innerText = currentProd.desc;
+      document.getElementById('product-rating-count').innerText = currentProd.ratingText;
+
+      // Populate dedicated dynamic illustration & tags
+      document.getElementById('product-vector-container').innerHTML = currentProd.svg;
+      var tagsContainer = document.getElementById('gallery-tags');
+      if (currentProd.tags && currentProd.tags.length) {
+        tagsContainer.innerHTML = currentProd.tags.map(function(t) {
+          return '<span class="gallery-tag-pill">' + t + '</span>';
+        }).join('');
+      }
+
+      // Populate tailored options (sizes/colors)
+      var optTitle = document.getElementById('options-title');
+      var optSelector = document.getElementById('options-selector');
+      optTitle.innerText = currentProd.optionLabel || 'Select Size:';
+      optSelector.innerHTML = '';
+
+      if (currentProd.options && currentProd.options.length) {
+        selectedOption = currentProd.options[0];
+        currentProd.options.forEach(function(opt, index) {
+          var btn = document.createElement('button');
+          btn.className = 'size-btn' + (index === 0 ? ' active' : '');
+          btn.id = 'opt-' + opt.toLowerCase().replace(/[^a-z0-9]/g, '-');
+          btn.innerText = opt;
+          btn.onclick = function() {
+            selectedOption = opt;
+            document.querySelectorAll('.size-btn').forEach(function(b) { b.classList.remove('active'); });
+            btn.classList.add('active');
+          };
+          optSelector.appendChild(btn);
+        });
+      }
+
+      // Render Related Products Shelf (excluding currently viewed product)
+      var relatedGrid = document.getElementById('related-grid');
+      var otherKeys = Object.keys(PRODUCTS).filter(function(k) { return k !== pid; });
+      relatedGrid.innerHTML = otherKeys.map(function(k) {
+        return createProductCard(PRODUCTS[k]);
+      }).join('');
+    }
+
+    function handleAddToCart() {
+      var activeProd = PRODUCTS[pid] || PRODUCTS.runner;
+      cartItems++;
+      sessionStorage.setItem('aura_cart_count', cartItems);
+      document.getElementById('cart-counter').innerText = cartItems;
+      var optionDetail = selectedOption ? ' (' + selectedOption + ')' : '';
+      showToast('✅ Added <strong>' + activeProd.name + optionDetail + '</strong> to cart');
     }
 
     function toggleHud(show) {
