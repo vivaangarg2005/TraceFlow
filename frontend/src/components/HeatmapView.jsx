@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useRef } from 'react';
+import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { getTrackedPages, getPageClicks } from '../services/api';
 
 export default function HeatmapView({ userMode, timeRange, includeSimulated }) {
@@ -11,16 +11,80 @@ export default function HeatmapView({ userMode, timeRange, includeSimulated }) {
   const [error, setError] = useState(null);
 
   // Visualization & Viewport Settings
-  const [renderMode, setRenderMode] = useState('dots'); // 'dots' | 'grid' | 'pins'
+  const [renderMode, setRenderMode] = useState('thermal'); // 'thermal' | 'dots' | 'pins' | 'grid'
   const [showOverlay, setShowOverlay] = useState(true);
-  const [previewDevice, setPreviewDevice] = useState('desktop'); // 'desktop' | 'tablet' | 'mobile'
+  const [interactionMode, setInteractionMode] = useState('interactive'); // 'interactive' | 'inspect'
+  const [previewDevice, setPreviewDevice] = useState('desktop'); // 'all' | 'desktop' | 'tablet' | 'mobile'
+  const [heatmapRadius, setHeatmapRadius] = useState(32);
+  const [heatmapOpacity, setHeatmapOpacity] = useState(85);
+
+  // Scroll and dimensions synchronization
+  const [iframeScrollY, setIframeScrollY] = useState(0);
+  const [iframeDimensions, setIframeDimensions] = useState({ width: 1000, height: 680, docHeight: 1800 });
+
+  // Element filtering & Inspection
   const [selectedElementHighlight, setSelectedElementHighlight] = useState(null);
   const [hoveredClick, setHoveredClick] = useState(null);
   const [iframeError, setIframeError] = useState(false);
 
   const iframeRef = useRef(null);
+  const canvasRef = useRef(null);
+  const containerRef = useRef(null);
 
-  // Load distinct tracked pages
+  // 1. Pre-generate thermal palette (0..255) for 60fps canvas colorization
+  const thermalPalette = useMemo(() => {
+    const pCanvas = document.createElement('canvas');
+    pCanvas.width = 1;
+    pCanvas.height = 256;
+    const pCtx = pCanvas.getContext('2d');
+    const grad = pCtx.createLinearGradient(0, 0, 0, 256);
+    // Cold to Scorching Thermal Spectrum:
+    grad.addColorStop(0.0, 'rgba(0,0,0,0)');
+    grad.addColorStop(0.12, 'rgba(56, 189, 248, 0.45)'); // Sky Blue
+    grad.addColorStop(0.28, 'rgba(6, 182, 212, 0.7)');   // Cyan / Teal
+    grad.addColorStop(0.48, 'rgba(34, 197, 94, 0.85)');  // Emerald Green
+    grad.addColorStop(0.68, 'rgba(234, 179, 8, 0.95)');  // Golden Amber
+    grad.addColorStop(0.85, 'rgba(249, 115, 22, 1.0)');  // Warm Orange
+    grad.addColorStop(1.0, 'rgba(225, 29, 72, 1.0)');    // Intense Crimson Red
+    pCtx.fillStyle = grad;
+    pCtx.fillRect(0, 0, 1, 256);
+    return pCtx.getImageData(0, 0, 1, 256).data;
+  }, []);
+
+  // 2. Synchronize live events, scrolling, and navigation from demo store iframe
+  useEffect(() => {
+    function handleMessage(e) {
+      if (!e.data) return;
+      if (e.data.type === 'TRACEFLOW_SCROLL') {
+        setIframeScrollY(e.data.scrollY || 0);
+        if (e.data.docHeight) {
+          setIframeDimensions((prev) => ({ ...prev, docHeight: e.data.docHeight }));
+        }
+      } else if (e.data.type === 'TRACEFLOW_IFRAME_LOADED') {
+        if (e.data.scrollY !== undefined) setIframeScrollY(e.data.scrollY);
+        if (e.data.docHeight) {
+          setIframeDimensions((prev) => ({
+            ...prev,
+            docHeight: e.data.docHeight,
+            docWidth: e.data.docWidth || prev.width,
+          }));
+        }
+        // Auto-synchronize page dropdown if iframe navigated
+        if (e.data.path && pages.length > 0) {
+          const matchingPage = pages.find((p) => p.path === e.data.path);
+          if (matchingPage && matchingPage.url !== selectedUrl) {
+            setSelectedUrl(matchingPage.url);
+          }
+        }
+      } else if (e.data.type === 'TRACEFLOW_EVENT_RECORDED' && e.data.event?.eventType === 'click') {
+        setClicks((prev) => [e.data.event, ...prev]);
+      }
+    }
+    window.addEventListener('message', handleMessage);
+    return () => window.removeEventListener('message', handleMessage);
+  }, [pages, selectedUrl]);
+
+  // 3. Load distinct tracked pages
   useEffect(() => {
     async function loadPages() {
       try {
@@ -45,39 +109,41 @@ export default function HeatmapView({ userMode, timeRange, includeSimulated }) {
     loadPages();
   }, [timeRange, includeSimulated]);
 
-  // Load clicks for the selected page URL
-  useEffect(() => {
+  // 4. Load clicks for the selected page URL & device mode
+  const fetchClicks = useCallback(async () => {
     if (!selectedUrl) {
       setClicks([]);
       setClickSummary(null);
       return;
     }
 
-    async function loadClicks() {
-      try {
-        setLoadingClicks(true);
-        setError(null);
-        setIframeError(false);
-        const res = await getPageClicks({
-          url: selectedUrl,
-          timeRange,
-          includeSimulated,
-        });
-        setClicks(res.data || []);
-        setClickSummary({
-          totalClicks: res.totalClicks || 0,
-          uniqueSessions: res.uniqueSessions || 0,
-          sectionBreakdown: res.sectionBreakdown || {},
-          rapidClicksCount: res.rapidClicksCount || 0,
-        });
-      } catch (err) {
-        setError('Failed to fetch click coordinates: ' + err.message);
-      } finally {
-        setLoadingClicks(false);
-      }
+    try {
+      setLoadingClicks(true);
+      setError(null);
+      setIframeError(false);
+      const res = await getPageClicks({
+        url: selectedUrl,
+        timeRange,
+        includeSimulated,
+        deviceType: previewDevice !== 'all' ? previewDevice : undefined,
+      });
+      setClicks(res.data || []);
+      setClickSummary({
+        totalClicks: res.totalClicks || 0,
+        uniqueSessions: res.uniqueSessions || 0,
+        sectionBreakdown: res.sectionBreakdown || {},
+        rapidClicksCount: res.rapidClicksCount || 0,
+      });
+    } catch (err) {
+      setError('Failed to fetch click coordinates: ' + err.message);
+    } finally {
+      setLoadingClicks(false);
     }
-    loadClicks();
-  }, [selectedUrl, timeRange, includeSimulated]);
+  }, [selectedUrl, timeRange, includeSimulated, previewDevice]);
+
+  useEffect(() => {
+    fetchClicks();
+  }, [fetchClicks]);
 
   // Extract normalized page path for iframe URL
   const selectedPath = useMemo(() => {
@@ -101,6 +167,107 @@ export default function HeatmapView({ userMode, timeRange, includeSimulated }) {
     if (previewDevice === 'tablet') return '768px';
     return '100%';
   }, [previewDevice]);
+
+  // Filtered click dataset (respects element highlight isolation)
+  const activeClicks = useMemo(() => {
+    if (!selectedElementHighlight) return clicks;
+    return clicks.filter(
+      (c) => `${c.elementTag}:${c.elementId}:${c.elementText}` === selectedElementHighlight
+    );
+  }, [clicks, selectedElementHighlight]);
+
+  // 5. High-Performance Canvas Thermal Heatmap Renderer
+  useEffect(() => {
+    if (renderMode !== 'thermal' || !canvasRef.current || !showOverlay) return;
+
+    const canvas = canvasRef.current;
+    const container = containerRef.current;
+    if (!container) return;
+
+    const width = container.clientWidth || 800;
+    const height = container.clientHeight || 680;
+
+    if (canvas.width !== width || canvas.height !== height) {
+      canvas.width = width;
+      canvas.height = height;
+    }
+
+    const ctx = canvas.getContext('2d');
+    ctx.clearRect(0, 0, width, height);
+
+    if (activeClicks.length === 0) return;
+
+    // Create offscreen alpha accumulator canvas
+    const offscreen = document.createElement('canvas');
+    offscreen.width = width;
+    offscreen.height = height;
+    const offCtx = offscreen.getContext('2d');
+
+    const radius = Math.max(12, heatmapRadius);
+    const docHeight = iframeDimensions.docHeight || 1800;
+
+    // Render radial alpha splats
+    activeClicks.forEach((c) => {
+      // Calculate responsive X coordinate
+      const x = c.xPercent !== null && c.xPercent !== undefined
+        ? (c.xPercent / 100) * width
+        : c.x;
+
+      // Calculate document Y coordinate minus current iframe scroll position
+      const docY = c.y !== undefined && c.y !== null
+        ? c.y
+        : (c.yPercent !== null && c.yPercent !== undefined ? (c.yPercent / 100) * docHeight : 300);
+
+      const y = docY - iframeScrollY;
+
+      // Skip offscreen points
+      if (y < -radius || y > height + radius || x < -radius || x > width + radius) {
+        return;
+      }
+
+      const grad = offCtx.createRadialGradient(x, y, 0, x, y, radius);
+      grad.addColorStop(0, 'rgba(0, 0, 0, 0.45)');
+      grad.addColorStop(0.65, 'rgba(0, 0, 0, 0.2)');
+      grad.addColorStop(1, 'rgba(0, 0, 0, 0)');
+
+      offCtx.fillStyle = grad;
+      offCtx.beginPath();
+      offCtx.arc(x, y, radius, 0, Math.PI * 2);
+      offCtx.fill();
+    });
+
+    // Colorize alpha channel via 256-color thermal spectrum palette
+    try {
+      const imgData = offCtx.getImageData(0, 0, width, height);
+      const data = imgData.data;
+      const alphaMultiplier = heatmapOpacity / 100;
+
+      for (let i = 0; i < data.length; i += 4) {
+        const alpha = data[i + 3];
+        if (alpha > 0) {
+          const paletteIdx = alpha * 4;
+          data[i] = thermalPalette[paletteIdx];         // R
+          data[i + 1] = thermalPalette[paletteIdx + 1]; // G
+          data[i + 2] = thermalPalette[paletteIdx + 2]; // B
+          data[i + 3] = Math.min(255, Math.floor(thermalPalette[paletteIdx + 3] * alphaMultiplier)); // A
+        }
+      }
+
+      ctx.putImageData(imgData, 0, 0);
+    } catch (err) {
+      console.error('Heatmap render error:', err);
+    }
+  }, [
+    activeClicks,
+    renderMode,
+    showOverlay,
+    iframeScrollY,
+    heatmapRadius,
+    heatmapOpacity,
+    iframeDimensions,
+    thermalPalette,
+    deviceContainerWidth,
+  ]);
 
   // Aggregate and Rank Top Clicked Elements
   const topElements = useMemo(() => {
@@ -126,11 +293,11 @@ export default function HeatmapView({ userMode, timeRange, includeSimulated }) {
 
   // Generate 10x10 density grid matrix
   const gridCells = useMemo(() => {
-    if (renderMode !== 'grid' || clicks.length === 0) return [];
+    if (renderMode !== 'grid' || activeClicks.length === 0) return [];
     const matrix = Array.from({ length: 10 }, () => Array(10).fill(0));
     let maxCellCount = 1;
 
-    clicks.forEach((c) => {
+    activeClicks.forEach((c) => {
       let xPct = c.xPercent !== null && c.xPercent !== undefined ? c.xPercent : 50;
       let yPct = c.yPercent !== null && c.yPercent !== undefined ? c.yPercent : 50;
 
@@ -145,21 +312,50 @@ export default function HeatmapView({ userMode, timeRange, includeSimulated }) {
       for (let c = 0; c < 10; c++) {
         const count = matrix[r][c];
         const intensity = count > 0 ? (count / maxCellCount).toFixed(2) : 0;
-        const percentOfTotal = clicks.length > 0 ? ((count / clicks.length) * 100).toFixed(1) : 0;
+        const percentOfTotal = activeClicks.length > 0 ? ((count / activeClicks.length) * 100).toFixed(1) : 0;
         cells.push({ row: r, col: c, count, intensity, percentOfTotal });
       }
     }
     return cells;
-  }, [clicks, renderMode]);
+  }, [activeClicks, renderMode]);
 
-  // Generate Evidence-Based Plain-English Insights (Strict 5-Part Format)
+  // Inspect Hover Proximity Tracker for Canvas Mode
+  const handleMouseMoveInspect = (e) => {
+    if (interactionMode !== 'inspect' || activeClicks.length === 0) return;
+    const container = containerRef.current;
+    if (!container) return;
+
+    const rect = container.getBoundingClientRect();
+    const mouseX = e.clientX - rect.left;
+    const mouseY = e.clientY - rect.top;
+    const width = container.clientWidth || 800;
+    const docHeight = iframeDimensions.docHeight || 1800;
+
+    let closest = null;
+    let minDistance = 40; // 40px proximity threshold
+
+    activeClicks.forEach((c) => {
+      const x = c.xPercent !== null && c.xPercent !== undefined ? (c.xPercent / 100) * width : c.x;
+      const docY = c.y !== undefined && c.y !== null ? c.y : (c.yPercent / 100) * docHeight;
+      const y = docY - iframeScrollY;
+      const dist = Math.hypot(mouseX - x, mouseY - y);
+
+      if (dist < minDistance) {
+        minDistance = dist;
+        closest = { ...c, screenX: x, screenY: y };
+      }
+    });
+
+    setHoveredClick(closest);
+  };
+
+  // Plain-English Store Owner Insights
   const plainEnglishInsights = useMemo(() => {
     if (clicks.length === 0) return [];
     const insights = [];
     const total = clicks.length;
     const uniqueVisits = clickSummary?.uniqueSessions || 1;
 
-    // Insight 1: Top Clicked Element
     if (topElements.length > 0) {
       const top = topElements[0];
       const topPct = ((top.count / total) * 100).toFixed(1);
@@ -173,12 +369,8 @@ export default function HeatmapView({ userMode, timeRange, includeSimulated }) {
       });
     }
 
-    // Insight 2: Section Concentration
     const sections = clickSummary?.sectionBreakdown || {};
     const heroClicks = sections['hero'] || 0;
-    const catalogClicks = sections['catalog'] || 0;
-    const checkoutClicks = sections['checkout'] || 0;
-
     if (heroClicks > 0 && total >= 3) {
       const heroPct = ((heroClicks / total) * 100).toFixed(1);
       insights.push({
@@ -191,7 +383,6 @@ export default function HeatmapView({ userMode, timeRange, includeSimulated }) {
       });
     }
 
-    // Insight 3: Potential User Frustration / Repeated Clicks
     if (clickSummary?.rapidClicksCount > 0) {
       insights.push({
         title: `Repeated Click Anomaly Detected`,
@@ -208,7 +399,7 @@ export default function HeatmapView({ userMode, timeRange, includeSimulated }) {
 
   return (
     <div className="heatmap-view-container animate-fade-in">
-      {/* Configuration & Page Selector Bar */}
+      {/* Primary Configuration Bar */}
       <div className="heatmap-control-bar glass-card">
         {/* Page Selector */}
         <div className="page-selector-group">
@@ -222,8 +413,8 @@ export default function HeatmapView({ userMode, timeRange, includeSimulated }) {
             >
               {pages.length === 0 && <option value="">No pages tracked yet</option>}
               {pages.map((p) => (
-                <option key={p.url} value={p.url}>
-                  {p.path || p.url} ({p.totalClicks || 0} clicks • {p.totalViews || 0} views)
+                <option key={p.path || p.url} value={p.url}>
+                  {p.path === '/index.html' ? '🏠 Home (/index.html)' : p.path === '/product.html' ? '🛍️ Product Details (/product.html)' : p.path === '/checkout.html' ? '💳 Checkout (/checkout.html)' : p.path} ({p.totalClicks || 0} clicks • {p.totalViews || 0} views)
                 </option>
               ))}
             </select>
@@ -232,32 +423,42 @@ export default function HeatmapView({ userMode, timeRange, includeSimulated }) {
 
         {/* Heatmap Visual Mode Switcher */}
         <div className="render-mode-group">
-          <label className="selector-label">Heatmap Overlay Mode:</label>
+          <label className="selector-label">Visual Engine:</label>
           <div className="mode-btn-group">
+            <button
+              className={`mode-btn ${renderMode === 'thermal' ? 'active' : ''}`}
+              onClick={() => setRenderMode('thermal')}
+              title="State-of-the-art continuous thermal heat gradient (Hotjar/Clarity standard)"
+            >
+              🔥 Thermal Heatmap
+            </button>
             <button
               className={`mode-btn ${renderMode === 'dots' ? 'active' : ''}`}
               onClick={() => setRenderMode('dots')}
+              title="Individual radial hotspot glow rings"
             >
-              🔴 Radial Glow
-            </button>
-            <button
-              className={`mode-btn ${renderMode === 'grid' ? 'active' : ''}`}
-              onClick={() => setRenderMode('grid')}
-            >
-              ▦ 10×10 Grid
+              🔴 Glow Hotspots
             </button>
             <button
               className={`mode-btn ${renderMode === 'pins' ? 'active' : ''}`}
               onClick={() => setRenderMode('pins')}
+              title="Precision landmark pins with interactive tags"
             >
               📍 Precision Pins
+            </button>
+            <button
+              className={`mode-btn ${renderMode === 'grid' ? 'active' : ''}`}
+              onClick={() => setRenderMode('grid')}
+              title="10×10 sector density percentage matrix"
+            >
+              ▦ 10×10 Grid
             </button>
           </div>
         </div>
 
         {/* Device Viewport Simulation */}
         <div className="device-viewport-group">
-          <label className="selector-label">Display Viewport:</label>
+          <label className="selector-label">Device Filter:</label>
           <div className="mode-btn-group">
             <button
               className={`mode-btn ${previewDevice === 'desktop' ? 'active' : ''}`}
@@ -277,19 +478,102 @@ export default function HeatmapView({ userMode, timeRange, includeSimulated }) {
             >
               📱 Mobile
             </button>
+            <button
+              className={`mode-btn ${previewDevice === 'all' ? 'active' : ''}`}
+              onClick={() => setPreviewDevice('all')}
+            >
+              🌐 All
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Secondary Controls Bar: Precision Sliders & Interaction Modes */}
+      <div className="heatmap-tuning-bar glass-card">
+        {/* Interaction Mode Pill */}
+        <div className="tuning-item">
+          <span className="tuning-label">Store Interaction:</span>
+          <div className="mode-toggle-pill">
+            <button
+              className={`mode-pill-btn ${interactionMode === 'interactive' ? 'active' : ''}`}
+              onClick={() => {
+                setInteractionMode('interactive');
+                setHoveredClick(null);
+              }}
+              title="Freely click buttons, add to cart, and browse store while viewing heatmaps"
+            >
+              🖱️ Live Click Mode
+            </button>
+            <button
+              className={`mode-pill-btn ${interactionMode === 'inspect' ? 'active' : ''}`}
+              onClick={() => setInteractionMode('inspect')}
+              title="Hover hotspots to inspect click targets, coordinates, and session details"
+            >
+              🔍 Inspect Hotspots
+            </button>
           </div>
         </div>
 
-        {/* Overlay Toggle */}
-        <div className="overlay-toggle-group">
-          <label className="selector-label">Overlay Control:</label>
-          <button
-            className={`btn btn-sm ${showOverlay ? 'btn-primary' : 'btn-secondary'}`}
-            onClick={() => setShowOverlay(!showOverlay)}
-          >
-            {showOverlay ? '👁️ Heatmap: Visible' : '👁️‍🗨️ Heatmap: Hidden'}
-          </button>
+        {/* Radius Slider (For Thermal & Glow) */}
+        {(renderMode === 'thermal' || renderMode === 'dots') && (
+          <div className="tuning-item">
+            <span className="tuning-label">Heat Radius:</span>
+            <input
+              type="range"
+              min="16"
+              max="54"
+              value={heatmapRadius}
+              onChange={(e) => setHeatmapRadius(Number(e.target.value))}
+              className="tuning-slider"
+            />
+            <span className="tuning-val mono">{heatmapRadius}px</span>
+          </div>
+        )}
+
+        {/* Opacity Slider */}
+        <div className="tuning-item">
+          <span className="tuning-label">Heat Opacity:</span>
+          <input
+            type="range"
+            min="25"
+            max="100"
+            value={heatmapOpacity}
+            onChange={(e) => setHeatmapOpacity(Number(e.target.value))}
+            className="tuning-slider"
+          />
+          <span className="tuning-val mono">{heatmapOpacity}%</span>
         </div>
+
+        {/* Visibility Toggle */}
+        <button
+          className={`btn btn-sm ${showOverlay ? 'btn-primary' : 'btn-secondary'}`}
+          onClick={() => setShowOverlay(!showOverlay)}
+          style={{ fontSize: '0.76rem' }}
+        >
+          {showOverlay ? '👁️ Heatmap Visible' : '👁️‍🗨️ Heatmap Hidden'}
+        </button>
+
+        {/* Refresh Clicks */}
+        <button
+          className="btn btn-secondary btn-sm"
+          onClick={fetchClicks}
+          title="Reload latest clicks from backend"
+          style={{ fontSize: '0.76rem' }}
+        >
+          🔄 Refresh
+        </button>
+
+        {/* New Tab Store Link */}
+        <a
+          href={iframeSrc}
+          target="_blank"
+          rel="noreferrer"
+          className="btn btn-secondary btn-sm"
+          style={{ fontSize: '0.76rem' }}
+          title="Open demo store in new tab"
+        >
+          ↗ Open Tab
+        </a>
       </div>
 
       {/* Metrics & Intensity Legend Bar */}
@@ -306,17 +590,25 @@ export default function HeatmapView({ userMode, timeRange, includeSimulated }) {
             {clickSummary?.uniqueSessions || 0}
           </span>
         </div>
-        
+        {selectedElementHighlight && (
+          <div className="h-stat">
+            <span className="h-stat-label">Filtered Clicks:</span>
+            <span className="h-stat-val" style={{ color: '#38bdf8' }}>
+              {activeClicks.length}
+            </span>
+          </div>
+        )}
+
         {/* Intensity Legend */}
         <div className="heatmap-legend">
-          <span className="legend-label">Intensity Scale:</span>
+          <span className="legend-label">Thermal Scale:</span>
           <div className="legend-bar">
             <span className="legend-gradient"></span>
           </div>
           <div className="legend-stops">
-            <span>Low</span>
-            <span>Moderate</span>
-            <span>Hotspot</span>
+            <span>Low (1-2)</span>
+            <span>Moderate (5+)</span>
+            <span>Hotspot (15+)</span>
           </div>
         </div>
       </div>
@@ -329,7 +621,7 @@ export default function HeatmapView({ userMode, timeRange, includeSimulated }) {
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
               <span className="live-indicator-dot"></span>
               <span className="mono" style={{ fontSize: '0.82rem', color: '#cbd5e1' }}>
-                LIVE PREVIEW: <strong>{iframeSrc}</strong>
+                LIVE STORE: <strong>{iframeSrc}</strong>
               </span>
             </div>
             <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
@@ -339,18 +631,21 @@ export default function HeatmapView({ userMode, timeRange, includeSimulated }) {
                   style={{ fontSize: '0.72rem', padding: '0.2rem 0.5rem' }}
                   onClick={() => setSelectedElementHighlight(null)}
                 >
-                  Clear Highlight Filter ✕
+                  Clear Element Filter ✕
                 </button>
               )}
-              <span className="badge badge-click">{clicks.length} CLICKS RECORDED</span>
+              <span className="badge badge-click">{activeClicks.length} CLICKS SHOWN</span>
             </div>
           </div>
 
           {/* Device Centered Wrapper */}
           <div className="device-center-wrapper">
             <div
+              ref={containerRef}
               className="heatmap-preview-container"
               style={{ width: deviceContainerWidth }}
+              onMouseMove={handleMouseMoveInspect}
+              onMouseLeave={() => setHoveredClick(null)}
             >
               {/* Actual Live Webpage Preview (Iframe) */}
               <iframe
@@ -361,9 +656,20 @@ export default function HeatmapView({ userMode, timeRange, includeSimulated }) {
                 onError={() => setIframeError(true)}
               />
 
-              {/* Synchronized Heatmap Overlay Layer */}
-              {showOverlay && (
-                <div className="heatmap-overlay-layer">
+              {/* 1. Real HTML5 Canvas Thermal Heatmap Engine */}
+              {showOverlay && renderMode === 'thermal' && (
+                <canvas
+                  ref={canvasRef}
+                  className="thermal-heatmap-canvas"
+                />
+              )}
+
+              {/* 2. DOM-Based Modes: Glow Dots, Precision Pins, 10x10 Grid */}
+              {showOverlay && renderMode !== 'thermal' && (
+                <div
+                  className={`heatmap-overlay-layer mode-${interactionMode}`}
+                  style={{ transform: `translateY(-${iframeScrollY}px)` }}
+                >
                   {/* Density Grid Mode */}
                   {renderMode === 'grid' && (
                     <div className="density-grid-matrix">
@@ -391,16 +697,9 @@ export default function HeatmapView({ userMode, timeRange, includeSimulated }) {
 
                   {/* Radial Glow Dots Mode */}
                   {renderMode === 'dots' &&
-                    clicks.map((c, i) => {
-                      const isHighlighted =
-                        !selectedElementHighlight ||
-                        `${c.elementTag}:${c.elementId}:${c.elementText}` === selectedElementHighlight;
-
-                      if (!isHighlighted) return null;
-
-                      // Use document percentage if available, fallback to clientX/Y
+                    activeClicks.map((c, i) => {
                       const left = c.xPercent !== null && c.xPercent !== undefined ? `${c.xPercent}%` : `${c.x}px`;
-                      const top = c.yPercent !== null && c.yPercent !== undefined ? `${c.yPercent}%` : `${c.y}px`;
+                      const top = c.y !== undefined && c.y !== null ? `${c.y}px` : (c.yPercent !== null && c.yPercent !== undefined ? `${c.yPercent}%` : '50%');
 
                       return (
                         <div
@@ -409,9 +708,9 @@ export default function HeatmapView({ userMode, timeRange, includeSimulated }) {
                           style={{
                             left,
                             top,
-                            width: '36px',
-                            height: '36px',
-                            opacity: 0.85,
+                            width: `${heatmapRadius * 1.2}px`,
+                            height: `${heatmapRadius * 1.2}px`,
+                            opacity: heatmapOpacity / 100,
                           }}
                           onMouseEnter={() => setHoveredClick(c)}
                           onMouseLeave={() => setHoveredClick(null)}
@@ -421,15 +720,9 @@ export default function HeatmapView({ userMode, timeRange, includeSimulated }) {
 
                   {/* Precision Pins Mode */}
                   {renderMode === 'pins' &&
-                    clicks.map((c, i) => {
-                      const isHighlighted =
-                        !selectedElementHighlight ||
-                        `${c.elementTag}:${c.elementId}:${c.elementText}` === selectedElementHighlight;
-
-                      if (!isHighlighted) return null;
-
+                    activeClicks.map((c, i) => {
                       const left = c.xPercent !== null && c.xPercent !== undefined ? `${c.xPercent}%` : `${c.x}px`;
-                      const top = c.yPercent !== null && c.yPercent !== undefined ? `${c.yPercent}%` : `${c.y}px`;
+                      const top = c.y !== undefined && c.y !== null ? `${c.y}px` : (c.yPercent !== null && c.yPercent !== undefined ? `${c.yPercent}%` : '50%');
 
                       return (
                         <div
@@ -444,65 +737,70 @@ export default function HeatmapView({ userMode, timeRange, includeSimulated }) {
                         </div>
                       );
                     })}
+                </div>
+              )}
 
-                  {/* Hover Tooltip */}
-                  {hoveredClick && (
-                    <div
-                      className="heatmap-hover-tooltip glass-card mono"
-                      style={{
-                        left:
-                          hoveredClick.xPercent !== null
-                            ? `calc(${hoveredClick.xPercent}% + 12px)`
-                            : `${hoveredClick.x + 12}px`,
-                        top:
-                          hoveredClick.yPercent !== null
-                            ? `calc(${hoveredClick.yPercent}% + 12px)`
-                            : `${hoveredClick.y + 12}px`,
-                      }}
-                    >
-                      <div className="tooltip-title">
-                        📍 Click @ ({hoveredClick.x}px, {hoveredClick.y}px)
-                      </div>
-                      <div className="tooltip-row">
-                        Target: <strong>&lt;{hoveredClick.elementTag}&gt;</strong> in {hoveredClick.elementSection}
-                      </div>
-                      {hoveredClick.elementText && (
-                        <div className="tooltip-row">
-                          Text: "{hoveredClick.elementText}"
-                        </div>
-                      )}
-                      <div className="tooltip-row" style={{ color: '#94a3b8', fontSize: '0.72rem' }}>
-                        Session: {hoveredClick.sessionId} ({hoveredClick.deviceType || 'desktop'})
-                      </div>
+              {/* Hover Tooltip (Active across all modes when Inspect Mode is selected) */}
+              {hoveredClick && interactionMode === 'inspect' && (
+                <div
+                  className="heatmap-hover-tooltip glass-card mono animate-fade-in"
+                  style={{
+                    left: `${Math.min(
+                      (containerRef.current?.clientWidth || 800) - 270,
+                      Math.max(12, hoveredClick.screenX !== undefined ? hoveredClick.screenX + 16 : 100)
+                    )}px`,
+                    top: `${Math.min(
+                      580,
+                      Math.max(12, hoveredClick.screenY !== undefined ? hoveredClick.screenY + 16 : 100)
+                    )}px`,
+                  }}
+                >
+                  <div className="tooltip-title">
+                    📍 Click @ ({hoveredClick.x}px, {hoveredClick.y}px)
+                  </div>
+                  <div className="tooltip-row">
+                    Target: <strong>&lt;{hoveredClick.elementTag || 'ELEMENT'}&gt;</strong> in {hoveredClick.elementSection || 'main'}
+                  </div>
+                  {hoveredClick.elementText && (
+                    <div className="tooltip-row" style={{ color: '#c7d2fe' }}>
+                      Text: "{hoveredClick.elementText}"
                     </div>
                   )}
-
-                  {/* Loading / Empty States */}
-                  {loadingClicks && (
-                    <div className="canvas-overlay-message">
-                      <div className="spin-icon" style={{ fontSize: '2rem' }}>🔄</div>
-                      <p>Aligning click coordinates with live webpage...</p>
+                  {hoveredClick.elementSelector && (
+                    <div className="tooltip-row" style={{ color: '#94a3b8', fontSize: '0.68rem' }}>
+                      Selector: <code>{hoveredClick.elementSelector}</code>
                     </div>
                   )}
+                  <div className="tooltip-row" style={{ color: '#64748b', fontSize: '0.68rem', marginTop: '0.3rem' }}>
+                    Session: {hoveredClick.sessionId?.slice(0, 16)}... • {hoveredClick.deviceType || 'desktop'}
+                  </div>
+                </div>
+              )}
 
-                  {!loadingClicks && clicks.length === 0 && (
-                    <div className="canvas-overlay-message">
-                      <div style={{ fontSize: '2.5rem' }}>🎯</div>
-                      <h3>No Click Data Recorded for This Page</h3>
-                      <p style={{ maxWidth: '420px', margin: '0.5rem auto' }}>
-                        Visit <strong>{iframeSrc}</strong> in your browser to interact with buttons and generate live click hotspots.
-                      </p>
-                      <a
-                        href={iframeSrc}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="btn btn-primary btn-sm"
-                        style={{ marginTop: '0.75rem' }}
-                      >
-                        Open This Page & Click Buttons ↗
-                      </a>
-                    </div>
-                  )}
+              {/* Loading & Empty States */}
+              {loadingClicks && (
+                <div className="canvas-overlay-message">
+                  <div className="spin-icon" style={{ fontSize: '2rem' }}>🔄</div>
+                  <p>Synthesizing interaction heatmap...</p>
+                </div>
+              )}
+
+              {!loadingClicks && clicks.length === 0 && (
+                <div className="canvas-overlay-message">
+                  <div style={{ fontSize: '2.5rem' }}>🎯</div>
+                  <h3>No Click Data Recorded for This Page</h3>
+                  <p style={{ maxWidth: '420px', margin: '0.5rem auto' }}>
+                    Visit <strong>{iframeSrc}</strong> in your browser to interact with buttons and generate live click hotspots.
+                  </p>
+                  <a
+                    href={iframeSrc}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="btn btn-primary btn-sm"
+                    style={{ marginTop: '0.75rem' }}
+                  >
+                    Open Page & Test Clicks ↗
+                  </a>
                 </div>
               )}
             </div>

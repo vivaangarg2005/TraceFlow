@@ -662,11 +662,40 @@
 
 .journey-summary-strip {
   display: grid;
-  grid-template-columns: repeat(5, 1fr);
-  gap: 1rem;
-  background: rgba(0, 0, 0, 0.35);
-  padding: 0.9rem 1.75rem;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 0.85rem;
+  background: rgba(10, 15, 30, 0.6);
+  padding: 0.85rem 1.5rem;
   border-bottom: 1px solid var(--border-subtle);
+}
+
+.summary-metric {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  background: rgba(255, 255, 255, 0.03);
+  padding: 0.65rem 0.85rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  min-width: 0;
+}
+
+.summary-label {
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.summary-val {
+  font-size: 1.25rem;
+  font-weight: 800;
+  color: #fff;
+  line-height: 1.2;
 }
 
 .modal-body {
@@ -737,6 +766,101 @@
   font-weight: 700;
   color: #f1f5f9;
   margin-top: 0.2rem;
+}
+
+.timeline-item-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.4rem;
+}
+
+.step-tag {
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: #94a3b8;
+  letter-spacing: 0.05em;
+}
+
+.step-delta {
+  font-size: 0.72rem;
+  color: #38bdf8;
+  background: rgba(56, 189, 248, 0.1);
+  padding: 0.1rem 0.4rem;
+  border-radius: 4px;
+}
+
+.step-timestamp {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.detail-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.82rem;
+}
+
+.detail-label {
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.detail-url {
+  color: #c7d2fe;
+}
+
+.click-details-panel {
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: var(--radius-sm);
+  padding: 0.75rem;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.click-coords-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 0.6rem;
+}
+
+.coord-box {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  background: rgba(255, 255, 255, 0.02);
+  padding: 0.45rem 0.65rem;
+  border-radius: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+.coord-label {
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  letter-spacing: 0.05em;
+}
+
+.coord-val {
+  font-size: 0.8rem;
+  color: #e2e8f0;
+}
+
+.payload-toggle-row {
+  margin-top: 0.6rem;
+}
+
+.raw-payload-box {
+  background: #020617;
+  padding: 0.75rem;
+  border-radius: 6px;
+  font-size: 0.72rem;
+  color: #94a3b8;
+  max-height: 200px;
+  overflow-y: auto;
+  margin-top: 0.4rem;
+  border: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 .modal-footer {
@@ -843,6 +967,55 @@
   border: 1px solid rgba(99, 102, 241, 0.4);
 }
 
+.heatmap-tuning-bar {
+  padding: 0.75rem 1.4rem;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  flex-wrap: wrap;
+  gap: 1.25rem;
+  background: rgba(15, 23, 42, 0.65);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+}
+
+.tuning-item {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.tuning-label {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+.tuning-slider {
+  accent-color: var(--accent-indigo);
+  cursor: pointer;
+  width: 90px;
+  height: 4px;
+}
+
+.tuning-val {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: #c7d2fe;
+  min-width: 38px;
+}
+
+.thermal-heatmap-canvas {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 10;
+}
+
 .heatmap-stats-strip {
   padding: 0.85rem 1.4rem;
   display: flex;
@@ -947,19 +1120,46 @@
 
 .heatmap-overlay-layer {
   position: absolute;
-  inset: 0;
+  top: 0;
+  left: 0;
+  width: 100%;
+  pointer-events: none;
+  overflow: visible;
+  transition: transform 0.05s ease-out;
+}
+
+/* In interactive mode: all pointer events pass through to iframe so user can test buttons & scroll freely */
+.heatmap-overlay-layer.mode-interactive {
+  pointer-events: none;
+}
+.heatmap-overlay-layer.mode-interactive .heatmap-glow-dot,
+.heatmap-overlay-layer.mode-interactive .heatmap-pin,
+.heatmap-overlay-layer.mode-interactive .matrix-cell {
+  pointer-events: none;
+}
+
+/* In inspect mode: hotspots capture pointer events to show target details and coordinates */
+.heatmap-overlay-layer.mode-inspect {
+  pointer-events: none;
+}
+.heatmap-overlay-layer.mode-inspect .heatmap-glow-dot,
+.heatmap-overlay-layer.mode-inspect .heatmap-pin,
+.heatmap-overlay-layer.mode-inspect .matrix-cell {
   pointer-events: auto;
-  overflow: hidden;
+  cursor: pointer;
 }
 
 /* 10x10 Matrix */
 .density-grid-matrix {
   position: absolute;
-  inset: 0;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 680px;
   display: grid;
   grid-template-columns: repeat(10, 1fr);
   grid-template-rows: repeat(10, 1fr);
-  pointer-events: auto;
+  pointer-events: none;
 }
 
 .matrix-cell {
@@ -1024,6 +1224,46 @@
   padding: 1px 4px;
   border-radius: 4px;
   font-family: var(--font-mono);
+}
+
+/* Hover Tooltip */
+.heatmap-hover-tooltip {
+  position: absolute;
+  z-index: 100;
+  pointer-events: none;
+  background: rgba(15, 23, 42, 0.92);
+  border: 1px solid rgba(99, 102, 241, 0.4);
+  padding: 0.6rem 0.85rem;
+  border-radius: 8px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.8);
+  font-size: 0.76rem;
+  color: #f1f5f9;
+  max-width: 280px;
+}
+
+.tooltip-title {
+  font-weight: 700;
+  color: #fbbf24;
+  margin-bottom: 0.25rem;
+}
+
+.tooltip-row {
+  margin-top: 0.2rem;
+  line-height: 1.35;
+}
+
+.canvas-overlay-message {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: rgba(9, 13, 22, 0.85);
+  backdrop-filter: blur(4px);
+  text-align: center;
+  padding: 2rem;
+  z-index: 30;
 }
 
 /* Heatmap Sidebar & 5-Part Insights */

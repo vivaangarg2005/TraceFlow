@@ -418,11 +418,35 @@ exports.getPageClicks = async (req, res, next) => {
       filter.deviceType = deviceType;
     }
 
-    if (url) {
-      filter.$or = [{ url: url }, { path: url }];
-    } else if (path) {
-      filter.path = path;
+    // Extract clean pathname for robust cross-origin and query-string matching
+    let targetPath = path || '';
+    if (!targetPath && url) {
+      try {
+        targetPath = new URL(url).pathname;
+      } catch {
+        targetPath = url.startsWith('/') ? url : '/' + url;
+      }
     }
+
+    // Normalize home page variations ('/' and '/index.html')
+    const matchPaths = [targetPath];
+    if (targetPath === '/' || targetPath === '/index.html' || targetPath.endsWith('/index.html')) {
+      matchPaths.push('/', '/index.html');
+    }
+
+    const pathOrConditions = [
+      { path: { $in: matchPaths } },
+      { url: { $in: matchPaths } },
+    ];
+
+    if (url) {
+      pathOrConditions.push({ url: url });
+      pathOrConditions.push({ url: { $regex: targetPath.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), $options: 'i' } });
+    } else {
+      pathOrConditions.push({ url: { $regex: targetPath.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), $options: 'i' } });
+    }
+
+    filter.$or = pathOrConditions;
 
     const clicks = await Event.find(filter)
       .select(
@@ -458,7 +482,7 @@ exports.getPageClicks = async (req, res, next) => {
 
     return res.status(200).json({
       success: true,
-      query: { url: url || null, path: path || null, deviceType: deviceType || 'all' },
+      query: { url: url || null, path: path || targetPath, deviceType: deviceType || 'all' },
       totalClicks: clicks.length,
       uniqueSessions: uniqueSessionIds.size,
       sectionBreakdown: sectionCounts,
@@ -485,9 +509,20 @@ exports.getTrackedPages = async (req, res, next) => {
     const pipeline = [
       { $match: matchFilter },
       {
+        $addFields: {
+          normalizedPath: {
+            $cond: [
+              { $in: ['$path', ['/', '/index.html', '']] },
+              '/index.html',
+              { $ifNull: ['$path', '/index.html'] }
+            ]
+          }
+        }
+      },
+      {
         $group: {
-          _id: '$url',
-          path: { $first: '$path' },
+          _id: '$normalizedPath',
+          sampleUrl: { $first: '$url' },
           totalViews: {
             $sum: { $cond: [{ $eq: ['$eventType', 'page_view'] }, 1, 0] },
           },
@@ -500,9 +535,15 @@ exports.getTrackedPages = async (req, res, next) => {
       },
       {
         $project: {
-          url: '$_id',
+          path: '$_id',
+          url: {
+            $cond: [
+              { $eq: ['$_id', '/index.html'] },
+              'http://localhost:3000/index.html',
+              { $concat: ['http://localhost:3000', '$_id'] }
+            ]
+          },
           _id: 0,
-          path: 1,
           totalViews: 1,
           totalClicks: 1,
           totalInteractions: { $add: ['$totalViews', '$totalClicks'] },

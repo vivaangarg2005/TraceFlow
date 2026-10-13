@@ -106,30 +106,30 @@ export default function UserJourneyModal({ sessionData, events, loading, onClose
         {/* Milestone Summary Strip */}
         <div className="journey-summary-strip">
           <div className="summary-metric">
-            <span className="summary-label">Total Actions</span>
-            <span className="summary-val">{events.length}</span>
+            <div className="summary-label">Total Actions</div>
+            <div className="summary-val">{events.length}</div>
           </div>
           <div className="summary-metric">
-            <span className="summary-label">Active Time</span>
-            <span className="summary-val">{sessionData.durationSeconds || 0}s</span>
+            <div className="summary-label">Active Time</div>
+            <div className="summary-val">{sessionData.durationSeconds || 0}s</div>
           </div>
           <div className="summary-metric">
-            <span className="summary-label">Pages Explored</span>
-            <span className="summary-val" style={{ color: '#38bdf8' }}>
+            <div className="summary-label">Pages Explored</div>
+            <div className="summary-val" style={{ color: '#38bdf8' }}>
               {new Set(events.map((e) => e.path || e.url)).size}
-            </span>
+            </div>
           </div>
           <div className="summary-metric">
-            <span className="summary-label">Cart Engagement</span>
-            <span className="summary-val" style={{ color: events.some((e) => e.elementId?.includes('cart') || e.elementText?.toLowerCase().includes('cart')) ? '#34d399' : '#94a3b8' }}>
+            <div className="summary-label">Cart Engagement</div>
+            <div className="summary-val" style={{ color: events.some((e) => e.elementId?.includes('cart') || e.elementText?.toLowerCase().includes('cart')) ? '#34d399' : '#94a3b8' }}>
               {events.some((e) => e.elementId?.includes('cart') || e.elementText?.toLowerCase().includes('cart')) ? 'Yes' : 'No'}
-            </span>
+            </div>
           </div>
           <div className="summary-metric">
-            <span className="summary-label">Device Type</span>
-            <span className="summary-val" style={{ textTransform: 'capitalize' }}>
+            <div className="summary-label">Device Type</div>
+            <div className="summary-val" style={{ textTransform: 'capitalize' }}>
               {sessionData.deviceType || 'Desktop'}
-            </span>
+            </div>
           </div>
         </div>
 

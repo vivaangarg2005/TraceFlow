@@ -318,6 +318,13 @@
       window.dispatchEvent(new CustomEvent('traceflow:event', { detail: eventData }));
     } catch (e) {}
 
+    // If running in an iframe (e.g. inside TraceFlow Heatmap preview), notify parent in real time
+    if (window.self !== window.top) {
+      try {
+        window.parent.postMessage({ type: 'TRACEFLOW_EVENT_RECORDED', event: eventData }, '*');
+      } catch (e) {}
+    }
+
     if (eventQueue.length >= 5) {
       if (dispatchTimer) clearTimeout(dispatchTimer);
       flushQueue();
@@ -499,6 +506,49 @@
     window.addEventListener('pagehide', function () {
       flushQueue();
     });
+
+    // 5. If embedded in iframe (e.g. inside TraceFlow Heatmap preview), report scroll position
+    if (window.self !== window.top) {
+      var lastReportedScroll = -1;
+      function reportScroll() {
+        var sY = window.scrollY || window.pageYOffset || (document.documentElement && document.documentElement.scrollTop) || 0;
+        if (sY !== lastReportedScroll) {
+          lastReportedScroll = sY;
+          try {
+            window.parent.postMessage({
+              type: 'TRACEFLOW_SCROLL',
+              scrollY: sY,
+              docHeight: Math.max(
+                document.documentElement ? document.documentElement.scrollHeight : 0,
+                document.body ? document.body.scrollHeight : 0,
+                window.innerHeight || 0
+              ),
+            }, '*');
+          } catch (e) {}
+        }
+      }
+      window.addEventListener('scroll', reportScroll, { passive: true });
+      reportScroll();
+
+      // Report current loaded page and dimensions to parent dashboard
+      try {
+        window.parent.postMessage({
+          type: 'TRACEFLOW_IFRAME_LOADED',
+          url: window.location.href,
+          path: window.location.pathname,
+          docHeight: Math.max(
+            document.documentElement ? document.documentElement.scrollHeight : 0,
+            document.body ? document.body.scrollHeight : 0,
+            window.innerHeight || 0
+          ),
+          docWidth: Math.max(
+            document.documentElement ? document.documentElement.scrollWidth : 0,
+            document.body ? document.body.scrollWidth : 0,
+            window.innerWidth || 0
+          ),
+        }, '*');
+      } catch (e) {}
+    }
 
     log('TraceFlow initialized safely. Active Session:', getSessionId());
   }
