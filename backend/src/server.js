@@ -68,8 +68,16 @@ app.get('/api/health', (req, res) => {
 
 // Serve client tracking script for external sites embedding
 app.get(['/tracker.js', '/tracker/tracker.js'], (req, res) => {
-  const trackerPath = path.resolve(__dirname, '../../tracker/tracker.js');
-  res.sendFile(trackerPath);
+  const fs = require('fs');
+  const localTracker = path.resolve(__dirname, '../public/tracker.js');
+  const rootTracker = path.resolve(__dirname, '../../tracker/tracker.js');
+  if (fs.existsSync(localTracker)) {
+    return res.sendFile(localTracker);
+  }
+  if (fs.existsSync(rootTracker)) {
+    return res.sendFile(rootTracker);
+  }
+  res.status(404).send('Tracker script not found');
 });
 
 // Mount Analytics & Session Routes

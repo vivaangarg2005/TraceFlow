@@ -231,9 +231,10 @@ export default function HeatmapView({ userMode, timeRange, includeSimulated }) {
     }
   }, [selectedUrl]);
 
-  // Local demo store URL corresponding to selected path
+  // Target demo store URL corresponding to selected path (supports VITE_DEMO_URL in production)
   const iframeSrc = useMemo(() => {
-    return `http://localhost:3000${selectedPath}`;
+    const demoBase = import.meta.env.VITE_DEMO_URL || 'http://localhost:3000';
+    return `${demoBase.replace(/\/$/, '')}${selectedPath}`;
   }, [selectedPath]);
 
   // Target native viewports (what the user sees on real devices)

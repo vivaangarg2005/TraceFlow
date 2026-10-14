@@ -154,7 +154,7 @@ export default function Header({
             </button>
 
             <a
-              href="http://localhost:3000"
+              href={import.meta.env.VITE_DEMO_URL || 'http://localhost:3000'}
               target="_blank"
               rel="noopener noreferrer"
               className="btn btn-primary btn-sm"

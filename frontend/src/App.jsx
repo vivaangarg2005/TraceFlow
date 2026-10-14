@@ -106,12 +106,13 @@ export default function App() {
       setIsGenerating(true);
       const newSessionId = 'tf_sim_' + Math.random().toString(36).substring(2, 9);
       const now = new Date();
+      const demoBase = (import.meta.env.VITE_DEMO_URL || 'http://localhost:3000').replace(/\/$/, '');
 
       const sampleEvents = [
         {
           sessionId: newSessionId,
           eventType: 'page_view',
-          url: 'http://localhost:3000/index.html',
+          url: `${demoBase}/index.html`,
           path: '/index.html',
           title: 'Aura Store — Modern Minimalist Apparel & Essentials',
           timestamp: new Date(now.getTime() - 8000).toISOString(),
@@ -127,7 +128,7 @@ export default function App() {
         {
           sessionId: newSessionId,
           eventType: 'click',
-          url: 'http://localhost:3000/index.html',
+          url: `${demoBase}/index.html`,
           path: '/index.html',
           x: 280,
           y: 290,
@@ -151,7 +152,7 @@ export default function App() {
         {
           sessionId: newSessionId,
           eventType: 'click',
-          url: 'http://localhost:3000/index.html',
+          url: `${demoBase}/index.html`,
           path: '/index.html',
           x: 480,
           y: 720,
@@ -175,7 +176,7 @@ export default function App() {
         {
           sessionId: newSessionId,
           eventType: 'page_view',
-          url: 'http://localhost:3000/product.html?id=runner',
+          url: `${demoBase}/product.html?id=runner`,
           path: '/product.html',
           title: 'Aura Store — Monochrome Runner V2',
           timestamp: new Date(now.getTime() - 3200).toISOString(),
@@ -191,7 +192,7 @@ export default function App() {
         {
           sessionId: newSessionId,
           eventType: 'click',
-          url: 'http://localhost:3000/product.html?id=runner',
+          url: `${demoBase}/product.html?id=runner`,
           path: '/product.html',
           x: 620,
           y: 540,
@@ -215,7 +216,7 @@ export default function App() {
         {
           sessionId: newSessionId,
           eventType: 'page_view',
-          url: 'http://localhost:3000/checkout.html',
+          url: `${demoBase}/checkout.html`,
           path: '/checkout.html',
           title: 'Aura Store — Secure Checkout',
           timestamp: new Date(now.getTime() - 800).toISOString(),
