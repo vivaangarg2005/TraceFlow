@@ -3,7 +3,9 @@
  * Centralized HTTP communication with backend analytics endpoints
  */
 
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+const rawApi = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+const cleanApi = rawApi.trim().replace(/\/+$/, '');
+const API_BASE = cleanApi.endsWith('/api') ? cleanApi : `${cleanApi}/api`;
 
 /**
  * Serialize query parameters safely
