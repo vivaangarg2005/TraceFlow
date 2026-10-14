@@ -4,7 +4,7 @@ import OverviewCards from './components/OverviewCards';
 import SessionsView from './components/SessionsView';
 import HeatmapView from './components/HeatmapView';
 import UserJourneyModal from './components/UserJourneyModal';
-import { getOverview, getSessions, getSessionEvents, trackEvents } from './services/api';
+import { getOverview, getSessions, getSessionEvents, trackEvents, resetClicks } from './services/api';
 import './App.css';
 
 export default function App() {
@@ -19,6 +19,7 @@ export default function App() {
   const [sessions, setSessions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [isGenerating, setIsGenerating] = useState(false);
+  const [isResetting, setIsResetting] = useState(false);
   const [toastMessage, setToastMessage] = useState(null);
 
   // Selected session for journey modal
@@ -64,6 +65,23 @@ export default function App() {
     const interval = setInterval(loadData, 15000);
     return () => clearInterval(interval);
   }, [loadData]);
+
+  // Global reset for recorded click coordinates
+  const handleResetClicks = async () => {
+    if (!window.confirm('Are you sure you want to reset all click data? This will clear all recorded click hotspots and heatmap overlays.')) {
+      return;
+    }
+    try {
+      setIsResetting(true);
+      const res = await resetClicks({ allEvents: 'false' });
+      showToast(`🗑️ Click data reset: ${res.deletedCount || 0} clicks cleared.`);
+      await loadData();
+    } catch (err) {
+      showToast('❌ Failed to reset clicks: ' + err.message);
+    } finally {
+      setIsResetting(false);
+    }
+  };
 
   // Inspect session journey
   const handleSelectSession = async (session) => {
@@ -239,6 +257,8 @@ export default function App() {
         loading={loading}
         onGenerateDemo={handleGenerateDemo}
         isGenerating={isGenerating}
+        onResetClicks={handleResetClicks}
+        isResetting={isResetting}
       />
 
       {/* Main Dashboard Body */}

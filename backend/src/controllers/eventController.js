@@ -728,3 +728,30 @@ exports.getOverview = async (req, res, next) => {
     next(error);
   }
 };
+
+/**
+ * 7. Reset / Clear click events (or all events)
+ */
+exports.resetClicks = async (req, res, next) => {
+  try {
+    const { url, allEvents } = req.query;
+    let filter = {};
+    if (allEvents === 'true') {
+      filter = {};
+    } else {
+      filter = { eventType: 'click' };
+      if (url && url !== 'all') {
+        filter.url = url;
+      }
+    }
+
+    const result = await Event.deleteMany(filter);
+    return res.status(200).json({
+      success: true,
+      message: `Successfully deleted ${result.deletedCount} ${allEvents === 'true' ? 'events' : 'click events'}`,
+      deletedCount: result.deletedCount,
+    });
+  } catch (error) {
+    next(error);
+  }
+};

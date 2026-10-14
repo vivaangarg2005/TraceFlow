@@ -95,3 +95,12 @@ export async function trackEvents(events) {
     body: JSON.stringify(events),
   });
 }
+
+/**
+ * Reset / Delete click events from backend
+ */
+export async function resetClicks(params = {}) {
+  return request(`/analytics/clicks${toQueryString(params)}`, {
+    method: 'DELETE',
+  });
+}

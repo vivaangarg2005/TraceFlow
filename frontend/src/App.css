@@ -1128,37 +1128,55 @@
 
 .device-center-wrapper {
   background: #040711;
-  padding: 1.5rem 1rem;
+  padding: 1.25rem;
   display: flex;
   justify-content: center;
-  align-items: flex-start;
-  overflow: hidden;
+  align-items: center;
   border-radius: var(--radius-md);
-  min-height: 480px;
-}
-
-.device-stage-scaler {
-  position: relative;
-  display: flex;
-  justify-content: center;
-  align-items: flex-start;
-  transition: height 0.25s ease;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  overflow: hidden;
 }
 
 .heatmap-preview-container {
   position: relative;
   background: #090e18;
   border: 1px solid rgba(255, 255, 255, 0.15);
-  border-radius: var(--radius-md);
   overflow: hidden;
   box-shadow: 0 15px 35px rgba(0, 0, 0, 0.6);
-  transition: transform 0.2s ease, width 0.2s ease;
+  box-sizing: border-box;
   flex-shrink: 0;
 }
 
-.live-store-iframe {
+.heatmap-preview-container.device-desktop,
+.heatmap-preview-container.device-all {
   width: 100%;
-  height: 100%;
+  max-width: 100%;
+  aspect-ratio: 1280 / 800;
+  border-radius: 12px;
+}
+
+.heatmap-preview-container.device-tablet {
+  width: 100%;
+  max-width: 768px;
+  aspect-ratio: 768 / 960;
+  border-radius: 20px;
+  box-shadow: 0 0 0 8px #1e293b, 0 20px 45px rgba(0, 0, 0, 0.8);
+}
+
+.heatmap-preview-container.device-mobile {
+  width: 100%;
+  max-width: 390px;
+  aspect-ratio: 390 / 844;
+  border-radius: 32px;
+  box-shadow: 0 0 0 10px #1e293b, 0 20px 45px rgba(0, 0, 0, 0.8);
+}
+
+.live-store-iframe {
+  position: absolute;
+  top: 0;
+  left: 0;
   border: none;
   background: #090d16;
 }

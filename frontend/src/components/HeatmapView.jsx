@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
-import { getTrackedPages, getPageClicks } from '../services/api';
+import { getTrackedPages, getPageClicks, resetClicks } from '../services/api';
 
 export default function HeatmapView({ userMode, timeRange, includeSimulated }) {
   const [pages, setPages] = useState([]);
@@ -30,10 +30,6 @@ export default function HeatmapView({ userMode, timeRange, includeSimulated }) {
   const [newClickPulse, setNewClickPulse] = useState(false);
   const prevClicksCountRef = useRef(0);
 
-  // Scaled Device Viewport & Multi-Device Precision System (Hotjar/Clarity standard)
-  const stageOuterRef = useRef(null);
-  const [availableStageWidth, setAvailableStageWidth] = useState(1280);
-  const [scaleMode, setScaleMode] = useState('fit'); // 'fit' | '100%'
   const [stageExpanded, setStageExpanded] = useState(false);
 
   const iframeRef = useRef(null);
@@ -181,6 +177,26 @@ export default function HeatmapView({ userMode, timeRange, includeSimulated }) {
     fetchClicks(false);
   }, [fetchClicks]);
 
+  // Reset all recorded clicks
+  const [resettingClicks, setResettingClicks] = useState(false);
+  const handleResetClicks = async () => {
+    if (!window.confirm('Are you sure you want to reset all click data? This will clear all click hotspots.')) {
+      return;
+    }
+    try {
+      setResettingClicks(true);
+      await resetClicks({ allEvents: 'false' });
+      setClicks([]);
+      setClickSummary(null);
+      setSelectedElementHighlight(null);
+      await fetchClicks(false);
+    } catch (err) {
+      alert('Failed to reset clicks: ' + err.message);
+    } finally {
+      setResettingClicks(false);
+    }
+  };
+
   // Live real-time background polling (every 2.5s) when liveSync is active
   useEffect(() => {
     if (!liveSync || !selectedUrl) return;
@@ -220,39 +236,41 @@ export default function HeatmapView({ userMode, timeRange, includeSimulated }) {
     return `http://localhost:3000${selectedPath}`;
   }, [selectedPath]);
 
-  // Standard device viewports (Hotjar / Microsoft Clarity standard)
+  // Target native viewports (what the user sees on real devices)
   const DEVICE_VIEWPORTS = {
-    desktop: { width: 1280, height: 760, label: 'Desktop', icon: '💻', res: '1280px' },
-    tablet: { width: 768, height: 860, label: 'Tablet', icon: '📟', res: '768px' },
-    mobile: { width: 390, height: 844, label: 'Mobile', icon: '📱', res: '390px' },
-    all: { width: 1280, height: 760, label: 'All Devices', icon: '🌐', res: '1280px' },
+    desktop: { width: 1280, height: 820, label: 'Desktop' },
+    tablet: { width: 768, height: 960, label: 'Tablet' },
+    mobile: { width: 390, height: 844, label: 'Mobile' },
+    all: { width: 1280, height: 820, label: 'All Devices' },
   };
 
-  const currentViewport = DEVICE_VIEWPORTS[previewDevice] || DEVICE_VIEWPORTS.desktop;
-  const targetDeviceWidth = currentViewport.width;
-  const targetDeviceHeight = currentViewport.height;
+  const currentDevice = DEVICE_VIEWPORTS[previewDevice] || DEVICE_VIEWPORTS.desktop;
+  const baseWidth = currentDevice.width;
+  const baseHeight = currentDevice.height;
 
-  // Track outer container available width dynamically to compute proportional scale-to-fit
+  // Track container clientWidth with zero feedback loop (container size is strictly 100% / aspect-ratio driven by CSS)
+  const [containerWidth, setContainerWidth] = useState(800);
+
   useEffect(() => {
-    if (!stageOuterRef.current) return;
+    if (!containerRef.current) return;
     const measure = () => {
-      if (stageOuterRef.current) {
-        setAvailableStageWidth(stageOuterRef.current.clientWidth);
+      if (containerRef.current) {
+        const w = containerRef.current.clientWidth;
+        if (w > 0) {
+          setContainerWidth((prev) => (Math.abs(prev - w) > 2 ? w : prev));
+        }
       }
     };
     measure();
     const ro = new ResizeObserver(measure);
-    ro.observe(stageOuterRef.current);
+    ro.observe(containerRef.current);
     return () => ro.disconnect();
-  }, [stageExpanded]);
+  }, [stageExpanded, previewDevice]);
 
-  // Viewport scale factor (Hotjar scale-to-fit engine)
-  const viewportScale = useMemo(() => {
-    if (scaleMode === '100%') return 1;
-    const avail = Math.max(320, availableStageWidth - 28);
-    if (avail >= targetDeviceWidth) return 1;
-    return Number((avail / targetDeviceWidth).toFixed(4));
-  }, [scaleMode, availableStageWidth, targetDeviceWidth]);
+  // Proportional scale factor: base resolution (1280px) scales down to exact container width
+  const scaleFactor = useMemo(() => {
+    return containerWidth > 0 ? Number((containerWidth / baseWidth).toFixed(5)) : 0.625;
+  }, [containerWidth, baseWidth]);
 
   // Filtered click dataset (respects element highlight isolation)
   const activeClicks = useMemo(() => {
@@ -262,35 +280,43 @@ export default function HeatmapView({ userMode, timeRange, includeSimulated }) {
     );
   }, [clicks, selectedElementHighlight]);
 
-  // Precise coordinate normalizer across responsive screens
+  // Precise coordinate normalizer in base device resolution (1280px desktop, 768px tablet, 390px mobile)
   const getNormalizedCoords = useCallback((c) => {
     const recDocW = c.documentWidth || c.viewportWidth || (c.deviceType === 'mobile' ? 390 : c.deviceType === 'tablet' ? 768 : 1280);
-    const docH = iframeDimensions.docHeight || 1800;
+    const docH = iframeDimensions.docHeight || baseHeight || 1800;
 
-    let x = c.x;
-    // For desktop screens (target >= 1100 and recorded >= 1100):
-    // Centered container layouts (e.g. max-width: 1200px; margin: 0 auto) center their content.
-    // Preserving the offset relative to page center guarantees elements inside the centered container
-    // stay locked at 0px drift between 1280px, 1440px, or 1920px viewports!
-    if (targetDeviceWidth >= 1100 && recDocW >= 1100) {
-      const recordedCenter = recDocW / 2;
-      const targetCenter = targetDeviceWidth / 2;
-      const offsetFromCenter = c.x - recordedCenter;
-      x = targetCenter + offsetFromCenter;
+    let x;
+    // For desktop (baseWidth = 1280):
+    // In demo store, .container has max-width: 1200px; margin: 0 auto;
+    // Desktop recordings preserve offset within the 1200px centered container
+    if (baseWidth >= 1100 && recDocW >= 1100) {
+      const recLeftGutter = (recDocW > 1200) ? (recDocW - 1200) / 2 : 0;
+      const targetLeftGutter = (baseWidth - 1200) / 2; // exactly 40px for 1280
+      const xInsideContent = Math.max(0, c.x - recLeftGutter);
+      const contentRatio = Math.min(1, xInsideContent / 1200);
+      x = targetLeftGutter + (contentRatio * 1200);
     } else if (c.xPercent !== null && c.xPercent !== undefined) {
-      x = (c.xPercent / 100) * targetDeviceWidth;
+      x = (c.xPercent / 100) * baseWidth;
     } else if (c.x !== undefined && c.x !== null) {
-      x = (c.x / recDocW) * targetDeviceWidth;
+      x = (c.x / recDocW) * baseWidth;
+    } else {
+      x = baseWidth / 2;
     }
 
-    x = Math.max(0, Math.min(targetDeviceWidth, x));
+    x = Math.max(0, Math.min(baseWidth, x));
 
-    let docY = c.y !== undefined && c.y !== null
-      ? c.y
-      : (c.yPercent !== null && c.yPercent !== undefined ? (c.yPercent / 100) * docH : 200);
+    let docY;
+    if (c.yPercent !== null && c.yPercent !== undefined) {
+      docY = (c.yPercent / 100) * docH;
+    } else if (c.y !== undefined && c.y !== null) {
+      const recDocH = c.documentHeight || docH;
+      docY = recDocH > 0 ? (c.y / recDocH) * docH : c.y;
+    } else {
+      docY = 200;
+    }
 
     return { x, docY };
-  }, [targetDeviceWidth, iframeDimensions.docHeight]);
+  }, [baseWidth, baseHeight, iframeDimensions.docHeight]);
 
   // 5. High-Performance Canvas Thermal Heatmap Renderer
   useEffect(() => {
@@ -299,24 +325,24 @@ export default function HeatmapView({ userMode, timeRange, includeSimulated }) {
     const canvas = canvasRef.current;
     if (!canvas) return;
 
-    // Canvas internal buffer matches target device resolution (1280px / 768px / 390px)
-    if (canvas.width !== targetDeviceWidth || canvas.height !== targetDeviceHeight) {
-      canvas.width = targetDeviceWidth;
-      canvas.height = targetDeviceHeight;
+    // Canvas internal buffer matches target base device resolution (1280px / 768px / 390px)
+    if (canvas.width !== baseWidth || canvas.height !== baseHeight) {
+      canvas.width = baseWidth;
+      canvas.height = baseHeight;
     }
 
     const ctx = canvas.getContext('2d');
-    ctx.clearRect(0, 0, targetDeviceWidth, targetDeviceHeight);
+    ctx.clearRect(0, 0, baseWidth, baseHeight);
 
     if (activeClicks.length === 0) return;
 
     // Create offscreen alpha accumulator canvas
     const offscreen = document.createElement('canvas');
-    offscreen.width = targetDeviceWidth;
-    offscreen.height = targetDeviceHeight;
+    offscreen.width = baseWidth;
+    offscreen.height = baseHeight;
     const offCtx = offscreen.getContext('2d');
 
-    const radius = Math.max(12, heatmapRadius);
+    const radius = Math.max(14, heatmapRadius);
 
     // Render radial alpha splats
     activeClicks.forEach((c) => {
@@ -324,7 +350,7 @@ export default function HeatmapView({ userMode, timeRange, includeSimulated }) {
       const y = docY - iframeScrollY;
 
       // Skip offscreen points
-      if (y < -radius || y > targetDeviceHeight + radius || x < -radius || x > targetDeviceWidth + radius) {
+      if (y < -radius || y > baseHeight + radius || x < -radius || x > baseWidth + radius) {
         return;
       }
 
@@ -341,7 +367,7 @@ export default function HeatmapView({ userMode, timeRange, includeSimulated }) {
 
     // Colorize alpha channel via 256-color thermal spectrum palette
     try {
-      const imgData = offCtx.getImageData(0, 0, targetDeviceWidth, targetDeviceHeight);
+      const imgData = offCtx.getImageData(0, 0, baseWidth, baseHeight);
       const data = imgData.data;
       const alphaMultiplier = heatmapOpacity / 100;
 
@@ -367,8 +393,8 @@ export default function HeatmapView({ userMode, timeRange, includeSimulated }) {
     iframeScrollY,
     heatmapRadius,
     heatmapOpacity,
-    targetDeviceWidth,
-    targetDeviceHeight,
+    baseWidth,
+    baseHeight,
     thermalPalette,
     getNormalizedCoords,
   ]);
@@ -423,19 +449,19 @@ export default function HeatmapView({ userMode, timeRange, includeSimulated }) {
     return cells;
   }, [activeClicks, renderMode]);
 
-  // Inspect Hover Proximity Tracker for Canvas Mode (respects viewport scale factor)
+  // Inspect Hover Proximity Tracker for Canvas Mode
   const handleMouseMoveInspect = (e) => {
     if (interactionMode !== 'inspect' || activeClicks.length === 0) return;
     const container = containerRef.current;
     if (!container) return;
 
     const rect = container.getBoundingClientRect();
-    const scale = viewportScale || 1;
-    const mouseX = (e.clientX - rect.left) / scale;
-    const mouseY = (e.clientY - rect.top) / scale;
+    const factor = scaleFactor || 1;
+    const mouseX = (e.clientX - rect.left) / factor;
+    const mouseY = (e.clientY - rect.top) / factor;
 
     let closest = null;
-    let minDistance = 45; // 45px proximity threshold
+    let minDistance = 50; // 50px proximity threshold in base space
 
     activeClicks.forEach((c) => {
       const { x, docY } = getNormalizedCoords(c);
@@ -444,7 +470,11 @@ export default function HeatmapView({ userMode, timeRange, includeSimulated }) {
 
       if (dist < minDistance) {
         minDistance = dist;
-        closest = { ...c, screenX: x, screenY: y };
+        closest = {
+          ...c,
+          screenX: Math.round(x * factor),
+          screenY: Math.round(y * factor),
+        };
       }
     });
 
@@ -640,27 +670,6 @@ export default function HeatmapView({ userMode, timeRange, includeSimulated }) {
           </div>
         </div>
 
-        {/* Display Scale Mode Toggle */}
-        <div className="tuning-item">
-          <span className="tuning-label">Viewport Zoom:</span>
-          <div className="mode-toggle-pill">
-            <button
-              className={`mode-pill-btn ${scaleMode === 'fit' ? 'active' : ''}`}
-              onClick={() => setScaleMode('fit')}
-              title="Auto-scale viewport proportionally to fit available dashboard space"
-            >
-              📐 Fit ({Math.round(viewportScale * 100)}%)
-            </button>
-            <button
-              className={`mode-pill-btn ${scaleMode === '100%' ? 'active' : ''}`}
-              onClick={() => setScaleMode('100%')}
-              title="Render at 100% true native hardware resolution"
-            >
-              🖥️ 100% (1:1)
-            </button>
-          </div>
-        </div>
-
         {/* Studio Expand Toggle */}
         <button
           className={`btn btn-sm ${stageExpanded ? 'btn-primary' : 'btn-secondary'}`}
@@ -755,6 +764,22 @@ export default function HeatmapView({ userMode, timeRange, includeSimulated }) {
           🔄 Refresh
         </button>
 
+        {/* Reset Clicks */}
+        <button
+          className="btn btn-secondary btn-sm"
+          onClick={handleResetClicks}
+          disabled={resettingClicks}
+          title="Reset and clear all click data from the database"
+          style={{
+            fontSize: '0.76rem',
+            color: '#f87171',
+            borderColor: 'rgba(239, 68, 68, 0.4)',
+            background: 'rgba(239, 68, 68, 0.08)',
+          }}
+        >
+          {resettingClicks ? '⏳ Resetting...' : '🗑️ Reset Clicks'}
+        </button>
+
         {/* New Tab Store Link */}
         <a
           href={iframeSrc}
@@ -818,7 +843,7 @@ export default function HeatmapView({ userMode, timeRange, includeSimulated }) {
             </div>
             <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
               <span className="badge badge-indigo mono" style={{ fontSize: '0.7rem' }}>
-                {targetDeviceWidth}×{targetDeviceHeight}px • Zoom: {Math.round(viewportScale * 100)}%
+                {previewDevice === 'mobile' ? '390px Mobile' : previewDevice === 'tablet' ? '768px Tablet' : 'Desktop (1280px)'} • Scale: {Math.round(scaleFactor * 100)}% ({Math.round(containerWidth)}px)
               </span>
               {selectedElementHighlight && (
                 <button
@@ -833,78 +858,72 @@ export default function HeatmapView({ userMode, timeRange, includeSimulated }) {
             </div>
           </div>
 
-          {/* Scaled Device Viewport Outer Stage */}
-          <div ref={stageOuterRef} className="device-center-wrapper">
+          {/* Device Viewport Stage (100% Proportional Scale Fit) */}
+          <div className="device-center-wrapper">
             <div
-              className="device-stage-scaler"
-              style={{
-                width: scaleMode === '100%' ? `${targetDeviceWidth}px` : '100%',
-                height: `${Math.round(targetDeviceHeight * viewportScale)}px`,
-                overflow: scaleMode === '100%' ? 'auto' : 'hidden',
-                display: 'flex',
-                justifyContent: 'center',
-              }}
+              ref={containerRef}
+              className={`heatmap-preview-container device-${previewDevice}`}
+              onMouseMove={handleMouseMoveInspect}
+              onMouseLeave={() => setHoveredClick(null)}
             >
-              <div
-                ref={containerRef}
-                className={`heatmap-preview-container device-${previewDevice}`}
+              {/* Actual Live Webpage Preview (Iframe) */}
+              <iframe
+                ref={iframeRef}
+                src={iframeSrc}
+                title="Live Tracked Webpage Preview"
+                className="live-store-iframe"
                 style={{
-                  width: `${targetDeviceWidth}px`,
-                  minWidth: `${targetDeviceWidth}px`,
-                  maxWidth: `${targetDeviceWidth}px`,
-                  height: `${targetDeviceHeight}px`,
-                  transform: viewportScale !== 1 ? `scale(${viewportScale})` : undefined,
-                  transformOrigin: 'top center',
-                  boxShadow:
-                    previewDevice === 'mobile'
-                      ? '0 0 0 12px #1e293b, 0 20px 45px rgba(0,0,0,0.8)'
-                      : previewDevice === 'tablet'
-                      ? '0 0 0 10px #1e293b, 0 20px 45px rgba(0,0,0,0.8)'
-                      : '0 0 0 1px rgba(255,255,255,0.1), 0 20px 50px rgba(0,0,0,0.7)',
+                  width: `${baseWidth}px`,
+                  height: `${baseHeight}px`,
+                  transform: `scale(${scaleFactor})`,
+                  transformOrigin: 'top left',
+                  border: 'none',
                   borderRadius:
-                    previewDevice === 'mobile' ? '36px' : previewDevice === 'tablet' ? '22px' : '12px',
+                    previewDevice === 'mobile' ? '32px' : previewDevice === 'tablet' ? '20px' : '12px',
                 }}
-                onMouseMove={handleMouseMoveInspect}
-                onMouseLeave={() => setHoveredClick(null)}
-              >
-                {/* Actual Live Webpage Preview (Iframe) */}
-                <iframe
-                  ref={iframeRef}
-                  src={iframeSrc}
-                  title="Live Tracked Webpage Preview"
-                  className="live-store-iframe"
+                onError={() => setIframeError(true)}
+              />
+
+              {/* 1. Real HTML5 Canvas Thermal Heatmap Engine */}
+              {showOverlay && renderMode === 'thermal' && (
+                <canvas
+                  ref={canvasRef}
+                  width={baseWidth}
+                  height={baseHeight}
+                  className="thermal-heatmap-canvas"
                   style={{
-                    width: `${targetDeviceWidth}px`,
-                    height: '100%',
-                    borderRadius:
-                      previewDevice === 'mobile' ? '36px' : previewDevice === 'tablet' ? '22px' : '12px',
+                    position: 'absolute',
+                    top: 0,
+                    left: 0,
+                    width: `${baseWidth}px`,
+                    height: `${baseHeight}px`,
+                    transform: `scale(${scaleFactor})`,
+                    transformOrigin: 'top left',
+                    pointerEvents: 'none',
+                    zIndex: 10,
                   }}
-                  onError={() => setIframeError(true)}
                 />
+              )}
 
-                {/* 1. Real HTML5 Canvas Thermal Heatmap Engine */}
-                {showOverlay && renderMode === 'thermal' && (
-                  <canvas
-                    ref={canvasRef}
-                    width={targetDeviceWidth}
-                    height={targetDeviceHeight}
-                    className="thermal-heatmap-canvas"
-                  />
-                )}
-
-                {/* 2. DOM-Based Modes: Glow Dots, Precision Pins, 10x10 Grid */}
-                {showOverlay && renderMode !== 'thermal' && (
-                  <div
-                    className={`heatmap-overlay-layer mode-${interactionMode}`}
-                    style={{
-                      width: `${targetDeviceWidth}px`,
-                      height: '100%',
-                      transform: `translateY(-${iframeScrollY}px)`,
-                    }}
-                  >
-                    {/* Density Grid Mode */}
-                    {renderMode === 'grid' && (
-                      <div className="density-grid-matrix" style={{ width: `${targetDeviceWidth}px`, height: `${targetDeviceHeight}px` }}>
+              {/* 2. DOM-Based Modes: Glow Dots, Precision Pins, 10x10 Grid */}
+              {showOverlay && renderMode !== 'thermal' && (
+                <div
+                  className={`heatmap-overlay-layer mode-${interactionMode}`}
+                  style={{
+                    position: 'absolute',
+                    top: 0,
+                    left: 0,
+                    width: `${baseWidth}px`,
+                    height: `${baseHeight}px`,
+                    transform: `scale(${scaleFactor}) translateY(-${iframeScrollY}px)`,
+                    transformOrigin: 'top left',
+                    pointerEvents: interactionMode === 'inspect' ? 'auto' : 'none',
+                    zIndex: 20,
+                  }}
+                >
+                  {/* Density Grid Mode */}
+                  {renderMode === 'grid' && (
+                    <div className="density-grid-matrix" style={{ width: `${baseWidth}px`, height: `${baseHeight}px` }}>
                         {gridCells.map((cell, idx) => (
                           <div
                             key={idx}
@@ -1034,7 +1053,6 @@ export default function HeatmapView({ userMode, timeRange, includeSimulated }) {
               </div>
             </div>
           </div>
-        </div>
 
         {/* Right Column: Top Elements & Plain-English Insights Panel */}
         <div className="heatmap-sidebar-column">

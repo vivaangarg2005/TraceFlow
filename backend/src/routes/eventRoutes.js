@@ -7,6 +7,7 @@ const {
   getPageClicks,
   getTrackedPages,
   getOverview,
+  resetClicks,
 } = require('../controllers/eventController');
 
 // 1. Ingestion endpoint: track page_view and click events
@@ -26,5 +27,8 @@ router.get('/analytics/pages', getTrackedPages);
 
 // 6. High-level summary metrics (Total sessions, events, pageviews, clicks)
 router.get('/analytics/overview', getOverview);
+
+// 7. Reset / Delete clicks or all events
+router.delete('/analytics/clicks', resetClicks);
 
 module.exports = router;

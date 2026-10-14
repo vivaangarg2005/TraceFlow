@@ -13,6 +13,8 @@ export default function Header({
   loading,
   onGenerateDemo,
   isGenerating,
+  onResetClicks,
+  isResetting,
 }) {
   return (
     <header className="header-glass">
@@ -124,6 +126,21 @@ export default function Header({
             >
               <span className={loading ? 'spin-icon' : ''}>🔄</span>
               <span className="btn-label-text">{loading ? 'Refreshing...' : 'Refresh'}</span>
+            </button>
+
+            <button
+              className="btn btn-secondary btn-sm"
+              onClick={onResetClicks}
+              disabled={isResetting || loading}
+              title="Reset and clear click data from database"
+              id="btn-reset-data"
+              style={{
+                color: '#f87171',
+                borderColor: 'rgba(239, 68, 68, 0.35)',
+                background: 'rgba(239, 68, 68, 0.08)',
+              }}
+            >
+              <span>{isResetting ? '⏳ Resetting...' : '🗑️ Reset Data'}</span>
             </button>
 
             <button

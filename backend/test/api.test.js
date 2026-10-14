@@ -3,10 +3,17 @@ const assert = require('node:assert');
 const http = require('http');
 const mongoose = require('mongoose');
 
+const path = require('path');
+require('dotenv').config({ path: path.resolve(__dirname, '../.env') });
+
 // Set test environment variables
 process.env.NODE_ENV = 'test';
 process.env.PORT = '5001';
-process.env.MONGODB_URI = process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/traceflow_test';
+if (process.env.MONGODB_URI && process.env.MONGODB_URI.includes('/traceflow?')) {
+  process.env.MONGODB_URI = process.env.MONGODB_URI.replace('/traceflow?', '/traceflow_test?');
+} else {
+  process.env.MONGODB_URI = process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/traceflow_test';
+}
 
 const app = require('../src/server');
 const Event = require('../src/models/Event');
@@ -241,4 +248,15 @@ test('12. Query filtering supports timeRange and simulation isolation', async ()
   assert.ok(data.data[0].visitorLabel !== undefined);
   assert.ok(data.data[0].entryPage !== undefined);
 });
+
+test('13. Reset click events (DELETE /api/analytics/clicks)', async () => {
+  const res = await fetch(`${BASE_URL}/api/analytics/clicks?allEvents=false`, {
+    method: 'DELETE',
+  });
+  assert.strictEqual(res.status, 200);
+  const data = await res.json();
+  assert.strictEqual(data.success, true);
+  assert.ok(data.deletedCount !== undefined);
+});
+
 

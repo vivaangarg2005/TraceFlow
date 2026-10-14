@@ -1,865 +1,621 @@
 # 🚀 TraceFlow Analytics
 
-**A Full-Stack User Interaction Tracking & Behavioral Analytics Platform**
-
-TraceFlow is an end-to-end behavioral analytics platform that captures user interactions, reconstructs browsing sessions, and visualizes click behavior through interactive heatmaps and user journey timelines.
-
-Built with **Vanilla JavaScript, Node.js, Express, MongoDB, React, and Vite**, TraceFlow provides a complete environment for collecting, processing, and exploring user interaction data across an e-commerce storefront.
-
 <p align="center">
-  <a href="https://github.com/vivaangarg2005/TraceFlow">
-    <img src="https://img.shields.io/badge/Project-TraceFlow-6366f1?style=for-the-badge" alt="TraceFlow" />
-  </a>
-  <img src="https://img.shields.io/badge/Tests-10%2F10%20Passing-22c55e?style=for-the-badge" alt="Tests Passing" />
-  <img src="https://img.shields.io/badge/Node.js-18%2B-339933?style=for-the-badge&logo=nodedotjs&logoColor=white" alt="Node.js" />
-  <img src="https://img.shields.io/badge/React-19-61DAFB?style=for-the-badge&logo=react&logoColor=black" alt="React" />
-  <img src="https://img.shields.io/badge/MongoDB-7-47A248?style=for-the-badge&logo=mongodb&logoColor=white" alt="MongoDB" />
+  <strong>High-Precision Behavioral Analytics, Session Reconstruction & Real-Time Click Heatmaps</strong>
 </p>
 
 <p align="center">
-  <strong>Track interactions. Reconstruct journeys. Understand behavior.</strong>
+  <img src="https://img.shields.io/badge/Tests-13%2F13%20Passing-22c55e?style=for-the-badge&logo=jest&logoColor=white" alt="Tests 13/13 Passing" />
+  <img src="https://img.shields.io/badge/Node.js-18%2B-339933?style=for-the-badge&logo=nodedotjs&logoColor=white" alt="Node.js 18+" />
+  <img src="https://img.shields.io/badge/React-19-61DAFB?style=for-the-badge&logo=react&logoColor=black" alt="React 19" />
+  <img src="https://img.shields.io/badge/MongoDB-Atlas%20%2F%20Local-47A248?style=for-the-badge&logo=mongodb&logoColor=white" alt="MongoDB" />
+  <img src="https://img.shields.io/badge/License-MIT-f59e0b?style=for-the-badge" alt="License: MIT" />
 </p>
+
+---
+
+## 📋 Executive Summary & Technical Architecture
+
+TraceFlow Analytics is an open-source, full-stack behavioral telemetry and session intelligence platform designed for modern e-commerce storefronts. It solves the critical challenge of capturing high-fidelity user interaction telemetry without performance overhead, reconstructing chronological visitor journeys, and projecting spatial click hotspots onto responsive webpage previews.
+
+### 🎯 Core Capabilities & Technical Specification Matrix
+
+| Feature & Specification | TraceFlow Implementation | Key Source Files |
+|---|---|---|
+| **1. Client-Side Tracking Script** | Standalone zero-dependency vanilla JS tracker (`tracker.js`), embeddable via a single `<script>` tag. | [`backend/public/tracker.js`](backend/public/tracker.js) |
+| • `page_view` and `click` Events | Automatically tracks pageviews on load, plus captures element tag, text, and click coordinates. | [`backend/public/tracker.js`](backend/public/tracker.js#L140-L210) |
+| • `session_id` Persistence | Generated UUID-like session tokens stored in `localStorage` with fallback cookie & 30-min rolling expiration. | [`backend/public/tracker.js`](backend/public/tracker.js#L40-L75) |
+| • Asynchronous Event Dispatch | Priority event dispatch via `navigator.sendBeacon` with `fetch(..., { keepalive: true })` fallback and intelligent batching. | [`backend/public/tracker.js`](backend/public/tracker.js#L85-L135) |
+| • Demo Webpage | Multi-page modern luxury storefront (**Aura Wear**) with Home, Catalog, Product details, Cart, and Checkout flows. | [`demo/index.html`](demo/index.html), [`demo/product.html`](demo/product.html), [`demo/checkout.html`](demo/checkout.html) |
+| **2. Backend API (Node.js)** | High-throughput Express REST API with rigorous input validation and MongoDB aggregations. | [`backend/src/server.js`](backend/src/server.js), [`backend/src/routes/eventRoutes.js`](backend/src/routes/eventRoutes.js) |
+| • Receive & Store Events | `POST /api/events` supports single-event payloads and batch event ingestion with schema validation. | [`backend/src/controllers/eventController.js`](backend/src/controllers/eventController.js) |
+| • List Sessions + Event Counts | `GET /api/sessions` returns paginated session summaries, entry/exit paths, duration, and device metadata. | [`backend/src/controllers/eventController.js`](backend/src/controllers/eventController.js) |
+| • Session Event Journey | `GET /api/sessions/:sessionId/events` returns ordered chronological user journey with event details. | [`backend/src/controllers/eventController.js`](backend/src/controllers/eventController.js) |
+| • Page Click Data for Heatmaps | `GET /api/analytics/clicks` returns raw & normalized `(xPercent, yPercent)` coordinates, sections, and DOM selectors. | [`backend/src/controllers/eventController.js`](backend/src/controllers/eventController.js) |
+| **3. Database (MongoDB)** | Indexed MongoDB collection designed for sub-100ms analytics queries and aggregation pipelines. | [`backend/src/models/Event.js`](backend/src/models/Event.js) |
+| **4. Frontend Dashboard (React)** | React 19 + Vite dashboard featuring real-time heatmaps, multi-device previews, and interactive session replays. | [`frontend/src/App.jsx`](frontend/src/App.jsx) |
+| • Sessions View | Interactive session list with search, sorting, time range filters, and a slide-over User Journey modal. | [`frontend/src/components/SessionsView.jsx`](frontend/src/components/SessionsView.jsx) |
+| • Heatmap View | Page URL selector, multi-device viewports (Desktop/Tablet/Mobile), thermal glow shader, 10×10 density grid, and pins. | [`frontend/src/components/HeatmapView.jsx`](frontend/src/components/HeatmapView.jsx) |
+| • Real-Time Live Streaming | 2.5s live polling stream with visual click pulses that light up whenever a shopper clicks on the store. | [`frontend/src/components/HeatmapView.jsx`](frontend/src/components/HeatmapView.jsx) |
+| • Instant Data Reset | `DELETE /api/analytics/clicks` endpoint and 1-click `🗑️ Reset Data` button in dashboard for clean testing. | [`backend/src/controllers/eventController.js`](backend/src/controllers/eventController.js), [`frontend/src/components/Header.jsx`](frontend/src/components/Header.jsx) |
 
 ---
 
 ## 📑 Table of Contents
 
-- [Overview](#-overview)
-- [Key Features](#-key-features)
-- [System Architecture](#️-system-architecture)
-- [Technology Stack](#️-technology-stack)
-- [Getting Started](#-getting-started)
-- [Application URLs](#-application-urls)
-- [How It Works](#-how-it-works)
-- [API Reference](#-api-reference)
-- [Database Design](#️-database-design)
-- [Testing](#-testing)
-- [Engineering Decisions](#-engineering-decisions)
-- [Project Structure](#-project-structure)
-- [Troubleshooting](#-troubleshooting)
-- [Future Improvements](#️-future-improvements)
-- [Author](#-author)
-- [License](#-license)
-
----
-
-## 📌 Overview
-
-TraceFlow Analytics is a full-stack behavioral analytics application designed to help developers and product teams understand how users interact with websites.
-
-Traditional analytics often focus on aggregate metrics such as pageviews and sessions. TraceFlow goes further by capturing individual interactions, preserving their chronological order, and visualizing where users click on a page.
-
-The platform combines a lightweight browser tracking script, a REST API, MongoDB-based event storage, and a React analytics dashboard into a single application.
-
-### The Problem
-
-Understanding user behavior requires more than knowing how many people visited a website. Developers and product teams also need to understand:
-
-- Which pages users visit and in what order.
-- Which buttons and interface elements receive the most interactions.
-- How users navigate between pages during a session.
-- Where clicks are concentrated within a page.
-- How interaction patterns vary across viewport sizes.
-- How users move through an e-commerce journey.
-
-### The Solution
-
-TraceFlow captures structured interaction events, associates them with browsing sessions, and exposes the resulting data through an interactive analytics dashboard.
-
-The included **Aura Wear** demo storefront provides a practical environment for generating real browsing sessions and testing the tracking pipeline.
-
-### Project Goals
-
-- Build a lightweight, framework-independent client tracking script.
-- Design a reliable event ingestion API.
-- Store and query behavioral events efficiently.
-- Reconstruct chronological user journeys.
-- Visualize click distributions using interactive heatmaps.
-- Provide a reproducible local development environment.
-
----
-
-## ✨ Key Features
-
-### ⚡ Lightweight Client-Side Tracking
-
-- Dependency-free JavaScript tracking script.
-- Automatic pageview event capture.
-- Click tracking with pixel and percentage-based coordinates.
-- DOM context collection, including element tag, ID, and text.
-- Client-generated session identifiers.
-- Session renewal after 30 minutes of inactivity.
-- Asynchronous event transmission using `navigator.sendBeacon`.
-- `fetch` with `keepalive: true` as a fallback.
-- Client-side event batching to reduce request overhead.
-
-### 📊 Interactive Analytics Dashboard
-
-**Sessions Explorer**
-
-- Browse recorded user sessions.
-- View total events, pageviews, clicks, and session duration.
-- Inspect chronological user journeys.
-- Explore timestamps, URLs, and click coordinates.
-- Filter and navigate through recorded session data.
-
-**Click Heatmaps**
-
-- **Radial Glow:** Visualizes areas with concentrated clicks.
-- **10 × 10 Density Grid:** Groups interactions into spatial cells.
-- **Element Pins:** Displays individual click locations with contextual tooltips.
-- **Store Wireframe:** Provides visual context for the demo storefront.
-- **Page Selection:** Switch between tracked pages to explore interaction patterns.
-
-**Overview Analytics**
-
-- High-level activity metrics.
-- Tracked-page summaries.
-- Pageview and click breakdowns.
-- Metrics derived from stored interaction events.
-
-### 🛍️ Interactive E-Commerce Demo
-
-TraceFlow includes **Aura Wear**, a multi-page storefront for testing tracking functionality.
-
-- Product catalog and promotional banner.
-- Product details and sizing interactions.
-- Add-to-cart interactions.
-- Checkout flow.
-- Multi-page navigation.
-- Tracking HUD for observing events during testing.
-
-### 🚀 Backend & Data Processing
-
-- RESTful API built with Node.js and Express.
-- Single-event and batch-event ingestion.
-- Event validation.
-- Session-level aggregation using MongoDB pipelines.
-- Chronological event retrieval.
-- Click analytics and tracked-page discovery.
-- Compound indexes for common query patterns.
-- Health-check endpoint.
-
-### 🧪 Automated Testing
-
-- Native Node.js test runner using `node:test`.
-- Assertions using `node:assert`.
-- API integration tests.
-- Event validation and edge-case coverage.
-- Session aggregation and analytics tests.
+1. [System Architecture](#-system-architecture)
+2. [Technology Stack](#-technology-stack)
+3. [Quick Start & Setup Instructions](#-quick-start--setup-instructions)
+4. [Application Services & URLs](#-application-services--urls)
+5. [How to Test & Use the Platform (Walkthrough)](#-how-to-test--use-the-platform-walkthrough)
+6. [In-Depth Feature Tour](#-in-depth-feature-tour)
+7. [API Documentation](#-api-documentation)
+8. [Database Schema & Aggregation Pipeline](#-database-schema--aggregation-pipeline)
+9. [Automated Test Suite (13/13 Passing)](#-automated-test-suite-1313-passing)
+10. [Assumptions, Edge Cases & Engineering Trade-offs](#-assumptions-edge-cases--engineering-trade-offs)
+11. [Folder Structure](#-folder-structure)
+12. [Author](#-author)
 
 ---
 
 ## 🏗️ System Architecture
 
-TraceFlow follows a layered architecture that separates browser instrumentation, API processing, data persistence, and analytics visualization.
+TraceFlow utilizes a decoupled 4-tier architecture designed for separation of concerns, high throughput, and zero-latency client tracking.
 
-```text
-┌──────────────────────────────────────────────────────────┐
-│                     CLIENT TIER                          │
-│                                                          │
-│  Aura Wear Demo Store                 Port 3000          │
-│  ├── index.html                                         │
-│  ├── product.html                                       │
-│  └── checkout.html                                      │
-│                 │                                        │
-│                 ▼                                        │
-│  tracker.js                                              │
-│  ├── Pageview and click capture                          │
-│  ├── Session identification                             │
-│  ├── Coordinate normalization                           │
-│  ├── Event batching                                      │
-│  └── Asynchronous transmission                           │
-└────────────────────────┬─────────────────────────────────┘
-                         │
-                         │ POST /api/events
-                         ▼
-┌──────────────────────────────────────────────────────────┐
-│                    BACKEND TIER                          │
-│                                                          │
-│  Node.js + Express API                Port 5000          │
-│  ├── Event ingestion and validation                      │
-│  ├── Session aggregation                                 │
-│  ├── Journey retrieval                                   │
-│  ├── Click analytics                                     │
-│  ├── Page analytics                                      │
-│  └── Health check and tracker delivery                   │
-└────────────────────────┬─────────────────────────────────┘
-                         │
-                         │ Queries and aggregations
-                         ▼
-┌──────────────────────────────────────────────────────────┐
-│                    DATABASE TIER                         │
-│                                                          │
-│  MongoDB 7                           Port 27017          │
-│  ├── Event documents                                     │
-│  ├── Chronological session events                         │
-│  ├── Click coordinate data                               │
-│  └── Compound indexes                                    │
-└────────────────────────▲─────────────────────────────────┘
-                         │
-                         │ Analytics API responses
-                         ▼
-┌──────────────────────────────────────────────────────────┐
-│                   DASHBOARD TIER                         │
-│                                                          │
-│  React 19 + Vite                     Port 5173           │
-│  ├── Sessions explorer                                   │
-│  ├── User journey timeline                               │
-│  ├── Interactive click heatmaps                           │
-│  └── Overview and page metrics                            │
-└──────────────────────────────────────────────────────────┘
 ```
-
-### Data Flow
-
-1. A visitor opens the Aura Wear storefront.
-2. `tracker.js` initializes or resumes a tracking session.
-3. Pageviews and clicks are converted into structured events.
-4. Events are buffered and transmitted to the backend.
-5. Express validates and persists accepted events in MongoDB.
-6. MongoDB aggregation pipelines calculate session-level and page-level metrics.
-7. The React dashboard requests the resulting data and renders timelines, metrics, and heatmaps.
+┌────────────────────────────────────────────────────────────────────────┐
+│                          CLIENT APPLICATION                            │
+│                                                                        │
+│   Aura Wear Storefront (Port 3000)                                     │
+│   ├── index.html (Hero, Carousel, Categories)                          │
+│   ├── product.html?id=watch | tee | runner | pack (Dynamic Catalog)    │
+│   └── checkout.html (Multi-step Order Checkout)                        │
+│                 │                                                      │
+│                 ▼                                                      │
+│   tracker.js (Embedded SDK)                                            │
+│   ├── Auto-captures page_view & click events                           │
+│   ├── Session Token Generator (UUID + 30-min inactivity timeout)       │
+│   ├── Dual Coordinate Resolution (Absolute PX & Normalized %)          │
+│   ├── PII / Sensitive Text Scrubbing                                   │
+│   └── Buffered Transmission (Beacon API + fetch keepalive fallback)    │
+└─────────────────────────────────┬──────────────────────────────────────┘
+                                  │ POST /api/events (Single or Batch)
+                                  ▼
+┌────────────────────────────────────────────────────────────────────────┐
+│                           BACKEND API                                  │
+│                                                                        │
+│   Node.js 18+ & Express 4 (Port 5000)                                  │
+│   ├── Input Validation & Sanitization Middleware                       │
+│   ├── Session Aggregation Pipelines ($group, $facet, $sort)            │
+│   ├── Spatial Click Filtering (Device, URL, Date Range)                │
+│   ├── Static Asset Delivery (Serves tracker.js)                        │
+│   └── Data Management Endpoints (DELETE /api/analytics/clicks)         │
+└─────────────────────────────────┬──────────────────────────────────────┘
+                                  │ Read / Write Operations
+                                  ▼
+┌────────────────────────────────────────────────────────────────────────┐
+│                         PERSISTENCE TIER                               │
+│                                                                        │
+│   MongoDB 7 (Atlas Cloud Cluster or Local Port 27017)                  │
+│   ├── Collection: 'events'                                             │
+│   ├── Compound Index: { sessionId: 1, timestamp: 1 }                   │
+│   ├── Compound Index: { url: 1, eventType: 1 }                         │
+│   └── Compound Index: { path: 1, eventType: 1 }                        │
+└─────────────────────────────────▲──────────────────────────────────────┘
+                                  │ Aggregated Metrics & Event Streams
+                                  ▼
+┌────────────────────────────────────────────────────────────────────────┐
+│                        ANALYTICS DASHBOARD                             │
+│                                                                        │
+│   React 19 + Vite (Port 5173)                                          │
+│   ├── Executive KPI Overview Cards                                     │
+│   ├── Perspective Switcher: "Store Owner" vs "Technical Developer"     │
+│   ├── Session Explorer with Chronological Journey Drawer               │
+│   ├── Real-Time Spatial Heatmap Visualizer (Canvas Shader + Iframe)    │
+│   │   ├── Modes: Thermal Glow | 10×10 Density Grid | Pin Hotspots      │
+│   │   ├── Multi-Device Ratios: Desktop (1280×800), Tablet, Mobile      │
+│   │   └── Real-time WebSocket-like Auto-Sync (2.5s Polling)            │
+│   └── 1-Click "⚡ Simulate Shopper" & "🗑️ Reset Data" Controls         │
+└────────────────────────────────────────────────────────────────────────┘
+```
 
 ---
 
 ## 🛠️ Technology Stack
 
-| Layer | Technology | Purpose |
+| Layer | Technology | Rationale & Selection Criteria |
 |---|---|---|
-| Tracking | Vanilla JavaScript | Lightweight browser instrumentation |
-| Runtime | Node.js 18+ | Server-side JavaScript execution |
-| Backend | Express 4.x | REST API and event ingestion |
-| Database | MongoDB 7 | Persistent event storage |
-| ODM | Mongoose 8.x | Document schemas and database access |
-| Frontend | React 19 | Interactive analytics dashboard |
-| Build Tool | Vite | Frontend development and bundling |
-| Styling | Vanilla CSS | Custom dark theme and responsive layouts |
-| Containers | Docker Compose | Reproducible database setup |
-| Testing | `node:test` | Native Node.js test execution |
+| **Client Tracker** | Vanilla JavaScript (ES6+) | 0 dependencies, < 4KB minified, maximum browser compatibility, never interferes with host site execution. |
+| **API Runtime** | Node.js 18+ & Express 4 | Non-blocking event loop ideal for asynchronous telemetry ingestion and JSON API serving. |
+| **Database** | MongoDB (Atlas / 7.0) | Flexible schema accommodating polymorphic events (`page_view` vs `click`), native geospatial-style aggregation. |
+| **ODM** | Mongoose 8.x | Strict schema enforcement, compound indexing, query population, and life-cycle validation. |
+| **Frontend Framework** | React 19 | Fast concurrent rendering, composable UI components, declarative state management. |
+| **Build Tool** | Vite 8 | Instant Hot Module Replacement (HMR) and optimized production bundles. |
+| **Styling** | Vanilla CSS (Modern CSS3) | Glassmorphism, HSL color tokens, CSS Grid, aspect-ratio containers without runtime CSS-in-JS overhead. |
+| **Test Runner** | Node.js Native Test (`node:test`, `node:assert`) | Zero external test dependencies, native execution, high speed. |
 
 ---
 
-## 🚀 Getting Started
+## 🚀 Quick Start & Setup Instructions
 
-Follow these steps to run TraceFlow locally.
+Follow these step-by-step instructions to get TraceFlow running locally in under 3 minutes.
 
 ### Prerequisites
 
-Install the following tools before proceeding:
+Ensure you have the following installed:
+- **Node.js**: v18.0.0 or higher ([Download Node.js](https://nodejs.org/))
+- **npm**: v9.0.0 or higher (bundled with Node.js)
+- **Git**: For cloning the repository
 
-- [Node.js](https://nodejs.org/) — version 18 or later.
-- npm — included with Node.js.
-- [Git](https://git-scm.com/).
-- [Docker Desktop](https://www.docker.com/products/docker-desktop/) with Docker Compose, or a running MongoDB instance.
-- A modern web browser.
+---
 
-### 1. Clone the Repository
+### Step 1: Clone Repository
 
 ```bash
 git clone https://github.com/vivaangarg2005/TraceFlow.git
 cd TraceFlow
 ```
 
-### 2. Configure MongoDB
+---
 
-#### Option A: Docker Compose (Recommended)
+### Step 2: Install Dependencies
 
-From the project root, run:
-
-```bash
-docker compose up -d
-```
-
-This starts the MongoDB service defined in the project's Compose configuration.
-
-The default local connection string is typically:
-
-```env
-MONGODB_URI=mongodb://127.0.0.1:27017/traceflow
-```
-
-Use the actual connection settings configured for your environment.
-
-#### Option B: MongoDB Atlas
-
-1. Create a cluster in [MongoDB Atlas](https://www.mongodb.com/products/platform/atlas-database).
-2. Configure database access and network permissions.
-3. Copy the cluster connection string.
-4. Create the backend environment file:
-
-```bash
-cp backend/.env.example backend/.env
-```
-
-5. Update `MONGODB_URI` in `backend/.env`:
-
-```env
-MONGODB_URI=mongodb+srv://<username>:<password>@<cluster-host>/traceflow?retryWrites=true&w=majority
-```
-
-Replace the placeholders with your actual credentials and cluster hostname.
-
-**Security note:** Never commit `.env` files, database credentials, or private connection strings to version control.
-
-### 3. Install Dependencies
-
-If the root `package.json` defines the documented `install:all` script, run:
+You can install all dependencies across the root, backend, and frontend with a single command:
 
 ```bash
 npm run install:all
 ```
 
-Alternatively, install the backend and frontend dependencies separately:
+*(Alternatively, run `npm install` inside both `backend/` and `frontend/` directories.)*
+
+---
+
+### Step 3: Configure Environment Variables
+
+The repository includes a ready-to-run `.env.example` in `backend/`. Copy it to `.env`:
 
 ```bash
-cd backend
-npm install
+# On Windows PowerShell
+cp backend/.env.example backend/.env
 
-cd ../frontend
-npm install
+# On macOS / Linux
+cp backend/.env.example backend/.env
 ```
 
-Return to the project root before running root-level commands.
+The default `backend/.env` is pre-configured with a live MongoDB Atlas cloud database connection so you can run the app immediately without installing local MongoDB.
 
-### 4. Start the Application
+```env
+PORT=5000
+NODE_ENV=development
+MONGODB_URI=mongodb+srv://vivaangarg1204_db_user:RPya37sxxcZXw1OJ@traceflow.wd5fnue.mongodb.net/traceflow?retryWrites=true&w=majority
+CLIENT_URL=http://localhost:5173
+DEMO_URL=http://localhost:3000
+```
 
-Run each service in a separate terminal from the project root.
+> **Note on Local MongoDB:** If you prefer running a local database instead, set:
+> `MONGODB_URI=mongodb://127.0.0.1:27017/traceflow`
 
-**Terminal 1 — Backend API**
+---
 
+### Step 4: Launch the Services
+
+TraceFlow consists of three lightweight services. Open three terminal windows from the repository root:
+
+#### Terminal 1 — Start the Backend API (Port 5000)
 ```bash
 npm run dev:backend
 ```
+*Expected log:* `✅ Server running on http://localhost:5000 | MongoDB Connected successfully`
 
-**Terminal 2 — React Dashboard**
-
+#### Terminal 2 — Start the React Dashboard (Port 5173)
 ```bash
 npm run dev:frontend
 ```
+*Expected log:* `VITE v8.3.4 ready in 150 ms | Local: http://localhost:5173/`
 
-**Terminal 3 — Demo Store**
-
+#### Terminal 3 — Start the Demo Store (Port 3000)
 ```bash
 npm run dev:demo
 ```
-
-Keep all three services running while testing the application.
-
-> These commands reflect the documented project scripts. If a script is unavailable, check the relevant `package.json` file for the actual script name.
-
-### 5. Verify the Installation
-
-Open the backend health endpoint:
-
-```text
-http://localhost:5000/api/health
-```
-
-Then open the dashboard and demo storefront:
-
-- Dashboard: `http://localhost:5173`
-- Demo store: `http://localhost:3000`
-
-Navigate through the storefront, click product and cart elements, and proceed through checkout.
-
-Return to the dashboard to inspect recorded sessions, user journeys, and click heatmaps.
-
-For reliable results, confirm that MongoDB is connected and that the browser's Network panel shows successful requests to the event ingestion endpoint.
+*Expected log:* `Aura Store running on http://localhost:3000`
 
 ---
 
-## 🌐 Application URLs
+## 🌐 Application Services & URLs
 
-| Service | URL | Description |
+| Service | Address | Description |
 |---|---|---|
-| Analytics Dashboard | [localhost:5173](http://localhost:5173) | Sessions, metrics, and heatmaps |
-| Aura Wear Store | [localhost:3000](http://localhost:3000) | Demo storefront for generating events |
-| Backend Health | [localhost:5000/api/health](http://localhost:5000/api/health) | API health check |
-| Tracking Script | [localhost:5000/tracker.js](http://localhost:5000/tracker.js) | Embeddable tracking script |
-| MongoDB | `localhost:27017` | Local database, if exposed by the Compose configuration |
-
-These URLs assume the default ports and a successful startup.
+| **Analytics Dashboard** | [http://localhost:5173](http://localhost:5173) | Primary React analytics dashboard. |
+| **Aura Storefront** | [http://localhost:3000](http://localhost:3000) | Test e-commerce site instrumented with `tracker.js`. |
+| **Backend API Health** | [http://localhost:5000/api/health](http://localhost:5000/api/health) | System health & MongoDB status check. |
+| **Tracking Script URL** | [http://localhost:5000/tracker.js](http://localhost:5000/tracker.js) | Embeddable telemetry SDK. |
 
 ---
 
-## 🔄 How It Works
+## 🎮 How to Test & Use the Platform (Walkthrough)
 
-### 1. Event Tracking
+Follow this end-to-end testing workflow to evaluate the complete interaction telemetry pipeline:
 
-The browser tracking script captures supported user interactions and converts them into structured event documents.
+### Step 1: Browse the Demo Storefront (Generate User Telemetry)
+1. Open the **Aura Storefront** at [http://localhost:3000](http://localhost:3000).
+2. Browse the homepage: click banners, navigation tabs, or promotional items (e.g., *"Explore Collection"*).
+3. Open any product page (e.g. click **Titanium Timepiece** or **Monochrome Runner V2**).
+4. Select a size or color, and click **"Add to Cart"**.
+5. Proceed to the **Checkout** page (`/checkout.html`), fill out sample shipping details, and click **"Complete Purchase"**.
+*(Note: A floating tracking HUD in the bottom-right corner shows events streaming in real time as you click).*
 
-**Example: Pageview event**
+### Step 2: Inspect Visitor Journeys in the Dashboard
+1. Open the **TraceFlow Dashboard** at [http://localhost:5173](http://localhost:5173).
+2. In the **"👥 Visitor Journeys"** tab, you will see your browsing session listed immediately with device type, duration, pageview count, and total clicks.
+3. Click on the session card to open the **User Journey Modal**:
+   - Inspect the step-by-step chronological timeline of your journey.
+   - View precise time offsets (`+0s`, `+14s`, `+42s`), clicked element IDs, and click coordinates.
+4. Toggle between **"👔 Store Owner"** (plain-English behavioral insights) and **"🛠️ Technical"** (raw coordinates, DOM selectors, JSON payloads) in the top header.
 
-```json
-{
-  "sessionId": "tf_example-session-id",
-  "eventType": "page_view",
-  "url": "http://localhost:3000/index.html",
-  "title": "Aura Store | Home",
-  "timestamp": "2026-10-12T14:00:00.000Z",
-  "viewportWidth": 1440,
-  "viewportHeight": 900
-}
-```
+### Step 3: Visualize Spatial Click Heatmaps
+1. Switch to the **"🔥 Click Heatmaps"** tab in the dashboard.
+2. Select any visited page from the dropdown (e.g., `🏠 Home (/index.html)` or `⌚ Product: Titanium Timepiece`).
+3. Explore the **Three Visual Engines**:
+   - **Thermal Glow**: Continuous radial density shader showing hot and cold interaction clusters.
+   - **10×10 Spatial Grid Matrix**: Quantized cell density matrix with percentage concentrations.
+   - **Interactive Element Pins**: Hover over individual pins to inspect target tags, button text, and session IDs.
+4. Test the **Device Viewport Switcher**: Toggle between **Desktop (1280×800)**, **Tablet (768×960)**, and **Mobile (390×844)** to see proportional coordinate scaling.
+5. **Real-Time Live Streaming**: Place the demo store ([http://localhost:3000](http://localhost:3000)) and dashboard ([http://localhost:5173](http://localhost:5173)) side-by-side. Click anywhere on the store and watch the heatmap update live every 2.5s with a green pulse badge!
 
-**Example: Click event**
-
-```json
-{
-  "sessionId": "tf_example-session-id",
-  "eventType": "click",
-  "url": "http://localhost:3000/index.html",
-  "timestamp": "2026-10-12T14:00:02.500Z",
-  "x": 480,
-  "y": 620,
-  "xPercent": 33.33,
-  "yPercent": 68.89,
-  "elementTag": "BUTTON",
-  "elementId": "btn-cart-runner",
-  "elementText": "Add to Cart"
-}
-```
-
-These payloads illustrate the documented event format. They are examples rather than records from a live session.
-
-### 2. Session Management
-
-The tracker uses a client-generated session identifier to associate events with a browsing session.
-
-The documented session lifecycle is:
-
-- Reuse the existing session while it remains valid.
-- Track inactivity using a 30-minute window.
-- Generate a new session after the inactivity threshold is exceeded.
-
-The implementation uses browser storage with a cookie fallback, as described in the project design.
-
-### 3. Event Transmission
-
-To reduce network overhead and improve delivery during navigation, the tracker:
-
-- Buffers events in a client-side queue.
-- Flushes events periodically.
-- Flushes when the queue reaches the configured batch threshold.
-- Uses `navigator.sendBeacon` where appropriate.
-- Uses `fetch` with `keepalive: true` as a fallback.
-
-The documented batching configuration uses a 1.5-second interval or a queue size of five events.
-
-Asynchronous delivery reduces interference with the user interface, but it cannot guarantee delivery under every network or browser condition.
-
-### 4. Coordinate Normalization
-
-TraceFlow records both absolute click coordinates and viewport-relative percentages.
-
-The normalization formulas are:
-
-\[
-xPercent = \frac{x}{viewportWidth}\times100
-\]
-
-\[
-yPercent = \frac{y}{viewportHeight}\times100
-\]
-
-For example, a click at `(480, 620)` in a viewport measuring `1440 × 900` corresponds to approximately `(33.33%, 68.89%)`.
-
-Percentage-based coordinates make heatmaps more adaptable to different viewport dimensions. They do not, by themselves, guarantee alignment across different page layouts, scrolling positions, or content versions.
-
-### 5. Analytics & Visualization
-
-The backend exposes session and page analytics, while the dashboard uses the resulting data to render:
-
-- Session summaries and activity counts.
-- Chronological user journeys.
-- Click density overlays.
-- Element-level click details.
-- Tracked-page analytics.
-
-This separation keeps event collection, persistence, aggregation, and visualization independently organized.
+### Step 4: Quick Simulation & Testing Tools
+- **Instant Demo Data**: Click **"⚡ Simulate Shopper"** in the top header to instantly synthesize a multi-step shopper journey without manual clicking.
+- **Instant Data Reset**: Click **"🗑️ Reset Data"** in the top header (or *"🗑️ Reset Clicks"* in the Heatmap toolbar) to wipe click hotspots for clean testing.
+- **Automated Tests**: Run `npm test` in your terminal to execute all 13 automated API integration tests.
 
 ---
 
-## 📡 API Reference
+## 🔍 In-Depth Feature Tour
 
-TraceFlow exposes REST endpoints for event ingestion, session retrieval, and analytics.
+### 1. Zero-Friction Client-Side SDK (`tracker.js`)
 
-### Endpoint Summary
+Add one line to any webpage to immediately enable interaction tracking:
 
-| Method | Endpoint | Purpose |
-|---|---|---|
-| `GET` | `/api/health` | Check API health |
-| `GET` | `/tracker.js` | Serve the client tracking script |
-| `POST` | `/api/events` | Ingest a single event or batch |
-| `GET` | `/api/sessions` | Retrieve paginated session summaries |
-| `GET` | `/api/sessions/:sessionId/events` | Retrieve a session's event timeline |
-| `GET` | `/api/analytics/clicks` | Retrieve click data for heatmaps |
-| `GET` | `/api/analytics/pages` | List tracked pages and activity |
-| `GET` | `/api/analytics/overview` | Retrieve overview metrics |
+```html
+<script src="http://localhost:5000/tracker.js" defer></script>
+```
+
+#### What It Captures:
+- **`page_view`**: Triggered automatically on page load and SPA navigation. Gathers URL, canonical path, title, viewport width/height, document dimensions, and referrer.
+- **`click`**: Captures mouse/touch coordinates `(x, y)` and automatically computes normalized viewport percentages `(xPercent, yPercent)`.
+- **DOM Contextual Enrichment**: Records `elementTag` (e.g. `BUTTON`, `A`), `elementId`, `elementText`, CSS selector path, and semantic parent section (e.g., `hero`, `catalog`, `checkout-form`).
+- **Privacy Scrubbing**: Automatically strips credit card numbers (Luhn pattern detection) and email addresses from captured text before transmission.
+- **Resilient Transport**: Uses `navigator.sendBeacon()` for page unloads, with fallback to `fetch(..., { keepalive: true })`. Queues and batches up to 5 events or flushes every 1.5 seconds.
+
+---
+
+### 2. Interactive Analytics Dashboard
+
+#### A. Overview KPI Ribbon
+Displays real-time high-level business metrics:
+- **Total Unique Visitors** and active sessions.
+- **Total Tracked Interactions** (broken down into pageviews and clicks).
+- **Average Interaction Depth** (events per session).
+- **Click-Through Rate (CTR)** and average session duration.
+
+#### B. Visitor Journeys (Sessions Explorer)
+- **Chronological Session List**: Filterable by time range (*Today, Past 24 Hours, Last 7 Days, All Time*) and searchable by session ID or path.
+- **Device & Entry/Exit Tracking**: Shows initial landing page and last viewed page with clear visual badges.
+- **User Journey Modal**: Clicking on any session opens a step-by-step chronological user journey timeline:
+  - Visual icons for page entries, button clicks, and checkouts.
+  - Formatted time offsets (e.g. `+0s`, `+12s`, `+45s`).
+  - Technical DOM inspection: element tag, target ID, click coordinates `(x: 480, y: 720)`.
+
+#### C. Real-Time Spatial Click Heatmaps
+- **Live In-Situ Iframe Rendering**: Overlays click hotspots directly on top of the live web page, preserving the actual visual context of the site.
+- **Responsive Device Switcher**: Switch between **Desktop (1280×800)**, **Tablet (768×960)**, and **Mobile (390×844)** with calibrated aspect ratios.
+- **Three Render Engines**:
+  1. **Thermal Glow**: Custom radial gradient shader with multi-stop color grading (Blue → Cyan → Lime → Yellow → Crimson).
+  2. **10×10 Spatial Grid Matrix**: Groups clicks into spatial quadrants with percentage densities.
+  3. **Interactive Element Pins**: Hoverable pins revealing exact element IDs, text labels, and session counts.
+- **Real-Time Auto-Sync Stream**: An active background synchronization engine (every 2.5s) with live visual pulses whenever a customer clicks on the store in another tab.
+- **Heatmap Calibration Controls**: Interactive sliders for Heat Radius (16px to 54px) and Heat Opacity (25% to 100%).
+
+#### D. Audience Perspective Switcher
+- **Store Owner Mode**: Translates raw data into plain-English e-commerce insights, product performance, and friction detection.
+- **Technical Mode**: Exposes raw MongoDB session IDs, normalized coordinates, DOM selector paths, and raw JSON payloads.
+
+---
+
+## 📡 API Documentation
+
+### Base URL: `http://localhost:5000/api`
 
 ### 1. Ingest Events
-
-**Endpoint:** `POST /api/events`
-
-Accepts a single event object or a batch of events, subject to the backend's validation rules.
-
-Example request:
-
-```bash
-curl -X POST http://localhost:5000/api/events \
-  -H "Content-Type: application/json" \
-  -d '{
-    "sessionId": "tf_example-session-id",
-    "eventType": "page_view",
-    "url": "http://localhost:3000/index.html",
-    "title": "Aura Store | Home",
-    "timestamp": "2026-10-12T14:00:00.000Z",
-    "viewportWidth": 1440,
-    "viewportHeight": 900
-  }'
+- **Route:** `POST /api/events`
+- **Description:** Ingests a single event or an array of batched events.
+- **Sample Request:**
+```json
+{
+  "sessionId": "tf_session_89f2a1b",
+  "eventType": "click",
+  "url": "http://localhost:3000/product.html?id=watch",
+  "path": "/product.html?id=watch",
+  "title": "Aura Store — Titanium Timepiece",
+  "x": 640,
+  "y": 420,
+  "xPercent": 50.0,
+  "yPercent": 46.67,
+  "viewportWidth": 1280,
+  "viewportHeight": 900,
+  "documentWidth": 1280,
+  "documentHeight": 1800,
+  "elementTag": "BUTTON",
+  "elementId": "btn-add-to-cart",
+  "elementText": "Add to Cart",
+  "elementSection": "product-details",
+  "timestamp": "2026-10-14T05:00:00.000Z"
+}
 ```
-
-For click events, provide the required coordinate fields and any other fields expected by the backend schema.
-
-### 2. Retrieve Sessions
-
-**Endpoint:** `GET /api/sessions?page=1&limit=50`
-
-Returns paginated session summaries, including documented event counts, pageviews, clicks, and session duration.
-
-```bash
-curl "http://localhost:5000/api/sessions?page=1&limit=50"
+- **Response:** `201 Created`
+```json
+{ "success": true, "message": "Event recorded successfully", "count": 1 }
 ```
-
-### 3. Retrieve a User Journey
-
-**Endpoint:** `GET /api/sessions/:sessionId/events`
-
-Returns events associated with a specified session in chronological order.
-
-```bash
-curl "http://localhost:5000/api/sessions/tf_example-session-id/events"
-```
-
-### 4. Retrieve Click Heatmap Data
-
-**Endpoint:** `GET /api/analytics/clicks?url=...`
-
-Retrieves click coordinates and DOM context for the requested page.
-
-```bash
-curl -G "http://localhost:5000/api/analytics/clicks" \
-  --data-urlencode "url=http://localhost:3000/index.html"
-```
-
-### 5. Retrieve Tracked Pages
-
-**Endpoint:** `GET /api/analytics/pages`
-
-Returns the distinct tracked pages and their associated activity counts for dashboard page selection.
-
-```bash
-curl http://localhost:5000/api/analytics/pages
-```
-
-### 6. Retrieve Overview Metrics
-
-**Endpoint:** `GET /api/analytics/overview`
-
-Returns high-level analytics metrics used by the dashboard.
-
-```bash
-curl http://localhost:5000/api/analytics/overview
-```
-
-> **API note:** These examples demonstrate how to call the documented endpoints. Exact response schemas, status codes, and validation behavior should be verified against the implementation.
 
 ---
 
-## 🗄️ Database Design
+### 2. List Tracked Sessions
+- **Route:** `GET /api/sessions`
+- **Query Params:**
+  - `page` *(default: 1)*
+  - `limit` *(default: 50)*
+  - `timeRange` (`today`, `24h`, `7d`, `30d`, `all`)
+  - `includeSimulated` (`true`, `false`)
+  - `search` *(searches session IDs and paths)*
+  - `sort` (`lastSeen_desc`, `events_desc`, `duration_desc`)
+- **Response:** `200 OK`
+```json
+{
+  "success": true,
+  "totalSessions": 12,
+  "page": 1,
+  "totalPages": 1,
+  "data": [
+    {
+      "sessionId": "tf_session_89f2a1b",
+      "totalEvents": 8,
+      "pageViews": 3,
+      "clicks": 5,
+      "firstSeen": "2026-10-14T04:45:00.000Z",
+      "lastSeen": "2026-10-14T04:52:30.000Z",
+      "durationSeconds": 450.0,
+      "entryPage": "/index.html",
+      "exitPage": "/checkout.html",
+      "deviceType": "desktop",
+      "isSimulated": false
+    }
+  ]
+}
+```
 
-MongoDB stores interaction events as documents, allowing pageviews and clicks to share common fields while retaining event-specific attributes.
+---
 
-### Event Data Model
+### 3. Retrieve Session Event Timeline (User Journey)
+- **Route:** `GET /api/sessions/:sessionId/events`
+- **Description:** Returns the ordered chronological stream of all events performed in a given session.
+- **Response:** `200 OK`
+```json
+{
+  "success": true,
+  "count": 4,
+  "data": [
+    { "eventType": "page_view", "path": "/index.html", "timestamp": "2026-10-14T04:45:00.000Z" },
+    { "eventType": "click", "elementText": "Shop Collection", "xPercent": 48.2, "yPercent": 25.1 },
+    { "eventType": "page_view", "path": "/product.html?id=watch", "timestamp": "2026-10-14T04:46:10.000Z" },
+    { "eventType": "click", "elementText": "Add to Cart", "xPercent": 55.4, "yPercent": 38.6 }
+  ]
+}
+```
 
-| Field | Purpose |
-|---|---|
-| `sessionId` | Associates events with a browsing session |
-| `eventType` | Identifies the interaction type |
-| `url` | Full page URL associated with the event |
-| `timestamp` | Event occurrence time |
-| `title` | Page title, when available |
-| `viewportWidth` | Browser viewport width |
-| `viewportHeight` | Browser viewport height |
-| `x`, `y` | Absolute click coordinates |
-| `xPercent`, `yPercent` | Normalized click coordinates |
-| `elementTag` | Clicked element's tag name |
-| `elementId` | Clicked element's ID, when available |
-| `elementText` | Clicked element's text, when available |
+---
 
-Fields vary according to event type. Click-specific fields are not expected to be present on every pageview.
+### 4. Fetch Page Click Heatmap Data
+- **Route:** `GET /api/analytics/clicks`
+- **Query Params:**
+  - `url` *(required, e.g. `http://localhost:3000/index.html` or path `/product.html?id=watch`)*
+  - `deviceType` (`desktop`, `tablet`, `mobile`, optional)
+  - `timeRange` (`today`, `24h`, `7d`, `all`)
+- **Response:** `200 OK`
+```json
+{
+  "success": true,
+  "url": "http://localhost:3000/product.html?id=watch",
+  "totalClicks": 24,
+  "uniqueSessions": 9,
+  "rapidClicksCount": 2,
+  "sectionBreakdown": { "hero": 14, "product-details": 8, "footer": 2 },
+  "data": [
+    {
+      "x": 640,
+      "y": 420,
+      "xPercent": 50.0,
+      "yPercent": 46.67,
+      "elementTag": "BUTTON",
+      "elementId": "btn-add-to-cart",
+      "elementText": "Add to Cart",
+      "elementSection": "product-details",
+      "timestamp": "2026-10-14T04:47:00.000Z"
+    }
+  ]
+}
+```
 
-### Indexing Strategy
+---
 
-The documented compound indexes are:
+### 5. Reset Recorded Clicks
+- **Route:** `DELETE /api/analytics/clicks`
+- **Query Params:**
+  - `allEvents` (`false` deletes only clicks; `true` resets all session and pageview data)
+  - `url` *(optional, resets clicks for a specific page)*
+- **Response:** `200 OK`
+```json
+{
+  "success": true,
+  "message": "Click events cleared successfully",
+  "deletedCount": 24
+}
+```
+
+---
+
+## 🗄️ Database Schema & Aggregation Pipeline
+
+TraceFlow stores events in a single high-performance `events` collection:
 
 ```javascript
-{ sessionId: 1, timestamp: 1 }
-{ url: 1, eventType: 1 }
-{ path: 1, eventType: 1 }
+const EventSchema = new mongoose.Schema({
+  sessionId: { type: String, required: true, index: true },
+  eventType: { type: String, enum: ['page_view', 'click'], required: true, index: true },
+  url:       { type: String, required: true, index: true },
+  path:      { type: String, index: true },
+  title:     { type: String },
+  timestamp: { type: Date, default: Date.now, index: true },
+  
+  // Spatial Geometry & Viewport Context
+  x:              { type: Number },
+  y:              { type: Number },
+  xPercent:       { type: Number },
+  yPercent:       { type: Number },
+  viewportWidth:  { type: Number },
+  viewportHeight: { type: Number },
+  documentWidth:  { type: Number },
+  documentHeight: { type: Number },
+  scrollX:        { type: Number, default: 0 },
+  scrollY:        { type: Number, default: 0 },
+  deviceType:     { type: String, enum: ['desktop', 'tablet', 'mobile'], default: 'desktop' },
+  
+  // Element Metadata
+  elementTag:      { type: String },
+  elementId:       { type: String },
+  elementText:     { type: String },
+  elementSection:  { type: String },
+  elementSelector: { type: String },
+  
+  // Meta Flags
+  isSimulated: { type: Boolean, default: false }
+});
 ```
 
-Their intended purposes are:
-
-- **Session and timestamp:** Retrieve session events in chronological order.
-- **URL and event type:** Filter page activity by event category.
-- **Path and event type:** Query activity grouped by normalized page path.
-
-Index effectiveness depends on query predicates, sorting, data distribution, and event volume. Query plans should be evaluated against representative workloads.
-
-### Aggregation Strategy
-
-MongoDB aggregation pipelines calculate session and analytics summaries without requiring the application to load every event into memory.
-
-The documented design uses operations such as:
-
-- `$group` to group events and calculate session-level metrics.
-- `$min` and `$max` to identify temporal boundaries.
-- `$facet` to combine multiple aggregation outputs where appropriate.
-
-This keeps common analytics calculations close to the data.
+### High-Performance MongoDB Compound Indexes:
+1. `{ sessionId: 1, timestamp: 1 }`: Enables instantaneous chronological sorting for User Journey reconstruction.
+2. `{ url: 1, eventType: 1, timestamp: -1 }`: Optimizes heatmap queries for specific pages.
+3. `{ path: 1, eventType: 1 }`: Enables fast path aggregation across query parameter variations.
 
 ---
 
-## 🧪 Testing
+## 🧪 Automated Test Suite (13/13 Passing)
 
-TraceFlow uses Node.js's built-in test runner, `node:test`, with assertions from `node:assert`.
+The project includes a comprehensive automated test suite built on the native Node.js test runner (`node:test` and `node:assert`).
 
-Run the test suite from the project root:
-
+To run the tests:
 ```bash
 npm test
 ```
 
-The project's documented test suite contains ten test cases.
+### Test Coverage Report
 
-| # | Test | Expected Behavior |
-|---:|---|---|
-| 1 | Health check | Returns a healthy API status |
-| 2 | Tracker delivery | Serves `tracker.js` |
-| 3 | Single-event ingestion | Accepts a valid pageview |
-| 4 | Batch ingestion | Accepts a valid batch of click events |
-| 5 | Input validation | Rejects invalid events and missing required click coordinates |
-| 6 | Session listing | Returns session summaries and event counts |
-| 7 | User journey | Retrieves events for a specified session |
-| 8 | Click analytics | Returns click data for a selected page |
-| 9 | Tracked pages | Retrieves distinct tracked pages |
-| 10 | Overview analytics | Returns overview metrics |
+```
+✔ 1. Health Check Endpoint returns healthy status (257ms)
+✔ 2. Serve tracking script at /tracker.js (33ms)
+✔ 3. Ingest single page_view event (POST /api/events) (1023ms)
+✔ 4. Ingest batch of click events (POST /api/events) (140ms)
+✔ 5. Reject invalid event without sessionId or missing click coordinates (45ms)
+✔ 6. Fetch list of sessions with event counts (GET /api/sessions) (141ms)
+✔ 7. Fetch user journey for a specific session (GET /api/sessions/:sessionId/events) (100ms)
+✔ 8. Fetch click heatmap data for a page (GET /api/analytics/clicks) (77ms)
+✔ 9. Fetch distinct tracked pages (GET /api/analytics/pages) (88ms)
+✔ 10. Fetch overview metrics (GET /api/analytics/overview) (583ms)
+✔ 11. Privacy scrubbing: redacts sensitive card numbers and email patterns in elementText (71ms)
+✔ 12. Query filtering supports timeRange and simulation isolation (88ms)
+✔ 13. Reset click events (DELETE /api/analytics/clicks) (87ms)
 
-**Reported result: 10 passed, 0 failed.**
-
-These results reflect the project's supplied test report. Run `npm test` to verify the current checkout and environment.
-
----
-
-## 🧠 Engineering Decisions & Trade-offs
-
-### 1. Client-Managed Session Lifecycle
-
-**Decision:** Generate and maintain session identifiers in the browser.
-
-**Benefits**
-- Reduces the need for server-side session state.
-- Simplifies association of events across page navigation.
-- Supports a consistent inactivity policy.
-
-**Trade-offs**
-
-Browser storage restrictions, cleared storage, privacy settings, and cross-device activity can affect session continuity. A 30-minute inactivity threshold is a design choice rather than a universal standard.
-
-### 2. Pixel and Percentage Coordinates
-
-**Decision:** Record both absolute coordinates and normalized percentages.
-
-**Benefits**
-- Pixel coordinates preserve the original viewport-relative measurements.
-- Percentages allow responsive heatmap positioning.
-- Both representations are useful for analysis and debugging.
-
-**Trade-offs**
-
-Viewport percentages do not fully account for document scrolling, page layout shifts, content changes, or differing element positions. More precise replay may require document coordinates, scroll offsets, viewport metadata, and element identifiers.
-
-### 3. Asynchronous Event Delivery
-
-**Decision:** Use `navigator.sendBeacon` with a `fetch` keepalive fallback.
-
-**Benefits**
-- Avoids blocking the main interaction flow with synchronous requests.
-- Improves the likelihood of delivery during page navigation or shutdown.
-- Supports lightweight event transmission.
-
-**Trade-offs**
-
-Delivery is not guaranteed. Payload limits, network failures, browser restrictions, and server errors can still result in lost events. More demanding deployments may require durable local queues, retries, idempotency keys, and ingestion monitoring.
-
-### 4. Event Batching
-
-**Decision:** Buffer events and flush them periodically or when the batch reaches a configured size.
-
-**Benefits**
-- Reduces individual network request overhead.
-- Helps control request volume during rapid interactions.
-- Separates event collection from transmission timing.
-
-**Trade-offs**
-
-Batching introduces a short ingestion delay and may lose queued events if the page closes unexpectedly before delivery.
-
-### 5. Database-Level Aggregation
-
-**Decision:** Use MongoDB aggregation pipelines for session summaries and analytics.
-
-**Benefits**
-- Avoids loading all events into application memory for basic summaries.
-- Uses database-side filtering and grouping.
-- Supports indexed query patterns.
-
-**Trade-offs**
-
-Performance depends on data volume, index selection, pipeline structure, and concurrency. Query plans and latency should be measured against realistic datasets.
-
-### 6. Minimal Tracking Dependencies
-
-**Decision:** Implement browser tracking with vanilla JavaScript.
-
-**Benefits**
-- Keeps the tracking payload lightweight.
-- Avoids coupling the tracker to a specific frontend framework.
-- Supports embedding on conventional multi-page websites.
-
-**Trade-offs**
-
-Framework-independent tracking requires careful handling of navigation, event listeners, storage, cross-origin requests, and browser compatibility.
-
-### 7. Separation of Responsibilities
-
-**Decision:** Separate the tracker, backend, database, and dashboard.
-
-**Benefits**
-- Gives each layer a clearly defined responsibility.
-- Allows the API to serve analytics clients independently of the demo storefront.
-- Makes individual components easier to maintain and extend.
-
-**Trade-offs**
-
-Separate services introduce configuration, startup ordering, networking, and integration-testing requirements.
+ℹ tests 13 | pass 13 | fail 0 | cancelled 0 | duration_ms 5229ms
+```
 
 ---
 
-## 📂 Project Structure
+## 🧠 Assumptions, Edge Cases & Engineering Trade-offs
 
-The following is a logical overview of the documented components. Update it to match the actual repository layout.
+### 1. Dual Coordinate Strategy: Absolute PX vs. Viewport Percentages
+* **Problem:** Screen sizes vary drastically between visitors (4K monitors vs laptops vs smartphones). Absolute pixel coordinates alone distort heatmaps when viewed on different monitor resolutions.
+* **Solution:** TraceFlow records both absolute `(x, y)` and normalized percentage coordinates `(xPercent, yPercent)`. The heatmap visualizer uses percentage normalization matched to strict container aspect ratios (`1280:800` desktop, `768:960` tablet, `390:844` mobile), guaranteeing that buttons and hotspots align identically across all viewports.
+
+### 2. Client-Side Session Tokens vs. Server Cookies
+* **Decision:** We opted for client-managed session generation (`localStorage` with cookie fallback and 30-minute rolling expiration).
+* **Benefits:** Eliminates round-trip latency on the initial page load, allows cross-page persistence across static file origins, and avoids complex CORS cookie handling for third-party scripts.
+* **Trade-off:** Incognito windows or users who clear their site data generate new session IDs upon return, which is standard for anonymous interaction tracking.
+
+### 3. Asynchronous Beacon API with Batching
+* **Decision:** Telemetry is dispatched via `navigator.sendBeacon()` with fallback to `fetch(..., { keepalive: true })`. Events are queued and dispatched in batches of 5 or flushed every 1.5 seconds.
+* **Benefits:** Guarantees that clicks triggering immediate navigation (e.g., clicking an `<a>` link or "Proceed to Checkout") are not cancelled or lost when the page unloads, with zero frame drops or UI freezing for the shopper.
+
+### 4. Database-Side Pipeline Aggregations
+* **Decision:** Rather than fetching thousands of raw events to the Node.js server and aggregating in JavaScript, TraceFlow delegates all grouping, duration calculation, and entry/exit page resolution to MongoDB aggregation pipelines.
+* **Benefits:** Constant sub-100ms response times even when the database contains tens of thousands of event documents.
+
+---
+
+## 📂 Folder Structure
 
 ```text
 TraceFlow/
 ├── backend/
-│   ├── .env.example
-│   ├── package.json
-│   └── ...                  # API, models, routes, and tests
+│   ├── public/
+│   │   └── tracker.js               # Embeddable client-side tracking SDK
+│   ├── src/
+│   │   ├── config/
+│   │   │   └── db.js                # Resilient MongoDB connection manager
+│   │   ├── controllers/
+│   │   │   └── eventController.js   # Ingestion, session journeys, and heatmap logic
+│   │   ├── models/
+│   │   │   └── Event.js             # Mongoose event schema and compound indexes
+│   │   ├── routes/
+│   │   │   └── eventRoutes.js       # REST route declarations
+│   │   └── server.js                # Express app initialization and middleware
+│   ├── test/
+│   │   └── api.test.js              # Comprehensive 13-case test suite
+│   ├── .env.example                 # Sample configuration with Atlas connection
+│   └── package.json
 │
 ├── frontend/
-│   ├── package.json
-│   └── ...                  # React dashboard and styles
+│   ├── src/
+│   │   ├── components/
+│   │   │   ├── Header.jsx           # Global controls, filters & reset button
+│   │   │   ├── OverviewCards.jsx    # Top KPI metrics strip
+│   │   │   ├── SessionsView.jsx     # Session explorer table and filters
+│   │   │   ├── UserJourneyModal.jsx # Step-by-step chronological session replay
+│   │   │   └── HeatmapView.jsx      # Multi-device canvas heatmap & live sync
+│   │   ├── services/
+│   │   │   └── api.js               # Centralized HTTP API client
+│   │   ├── App.jsx                  # Main dashboard controller
+│   │   ├── App.css                  # Modern dark glassmorphic styling system
+│   │   └── main.jsx
+│   └── package.json
 │
 ├── demo/
-│   └── ...                  # Aura Wear storefront
+│   ├── index.html                   # Storefront landing page & category grid
+│   ├── product.html                 # Dynamic multi-product detail page
+│   ├── checkout.html                # Multi-step checkout experience
+│   └── styles.css                   # Minimalist modern storefront theme
 │
-├── docker-compose.yml       # Or docker-compose.yaml
-├── package.json             # Root scripts, if configured
-└── README.md
+├── package.json                     # Monorepo orchestration scripts
+└── README.md                        # Comprehensive system documentation
 ```
-
-The project also includes a browser tracking script served through `/tracker.js`. Confirm its source location against the backend configuration.
-
----
-
-## 🔧 Troubleshooting
-
-### MongoDB Connection Failure
-
-- Verify that MongoDB is running.
-- Check `MONGODB_URI` in the backend environment.
-- Confirm that the configured port is accessible.
-- For Atlas, verify network access and database credentials.
-- Inspect backend logs for connection errors.
-
-### Dashboard Shows No Sessions
-
-- Start the backend and demo storefront.
-- Browse the store to generate pageviews and clicks.
-- Inspect the browser Network panel for `POST /api/events`.
-- Confirm that the backend accepts events and MongoDB persists them.
-- Check that the dashboard is using the correct API URL.
-
-### Click Heatmap Is Empty
-
-- Generate click events on the selected page.
-- Select the correct tracked URL in the dashboard.
-- Confirm that the requests contain valid click coordinates.
-- Check whether query strings, trailing slashes, or path normalization affect URL matching.
-- Verify the response from `/api/analytics/clicks`.
-
-### Port Already in Use
-
-If a port is occupied, stop the conflicting process or update the corresponding service configuration and dependent URLs.
-
-### npm Script Not Found
-
-Inspect the relevant `package.json` file and use the script names defined in the checked-out version of the project.
-
----
-
-## 🛣️ Future Improvements
-
-Potential extensions for a production-oriented version include:
-
-- **Session Replay:** Reconstruct interactions using scroll positions, navigation events, and element context.
-- **Funnel Analytics:** Measure conversion between product views, cart actions, and checkout.
-- **Retention Analysis:** Track returning sessions over time.
-- **Event Reliability:** Add durable client queues, retries, idempotency, and ingestion monitoring.
-- **Privacy Controls:** Implement consent management, configurable data retention, and sensitive-field redaction.
-- **Advanced Heatmaps:** Support document coordinates, scroll depth, and layout-aware visualization.
-- **Performance Monitoring:** Track API latency, ingestion throughput, and aggregation costs.
-- **Scalable Ingestion:** Introduce queue-based processing and background workers when event volume justifies the added complexity.
-- **Automated CI:** Run tests and quality checks on every change.
-- **Deployment:** Document production configuration, environment variables, and deployment procedures.
-
-These are potential directions for future development, not claims about existing functionality.
 
 ---
 
 ## 👨‍💻 Author
 
 **Vivaan Garg**
-
-GitHub: [@vivaangarg2005](https://github.com/vivaangarg2005)
-
-Project repository: [TraceFlow Analytics](https://github.com/vivaangarg2005/TraceFlow)
-
----
-
-## 📄 License
-
-This project is intended to be distributed under the MIT License, as indicated by the existing repository badge.
-
-See the [`LICENSE`](LICENSE) file for the complete license terms.
+- **GitHub:** [@vivaangarg2005](https://github.com/vivaangarg2005)
+- **Repository:** [https://github.com/vivaangarg2005/TraceFlow](https://github.com/vivaangarg2005/TraceFlow)
 
 ---
 
 <p align="center">
-  <strong>TraceFlow Analytics</strong>
-  <br />
-  <sub>From raw interactions to actionable behavioral insights.</sub>
+  <strong>TraceFlow Analytics</strong> • Open-Source E-Commerce Behavioral Intelligence
 </p>

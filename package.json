@@ -14,7 +14,7 @@
     "session-tracking",
     "heatmap",
     "user-behavior",
-    "causalfunnel",
+    "telemetry",
     "full-stack"
   ],
   "author": "Vivaan Garg",
