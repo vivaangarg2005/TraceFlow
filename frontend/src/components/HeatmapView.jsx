@@ -70,8 +70,21 @@ export default function HeatmapView({ userMode, timeRange, includeSimulated }) {
           }));
         }
         // Auto-synchronize page dropdown if iframe navigated
-        if (e.data.path && pages.length > 0) {
-          const matchingPage = pages.find((p) => p.path === e.data.path);
+        if ((e.data.path || e.data.url) && pages.length > 0) {
+          const incomingPath = e.data.path;
+          const incomingUrl = e.data.url;
+          const matchingPage = pages.find((p) => {
+            if (p.url === incomingUrl) return true;
+            if (p.path === incomingPath) return true;
+            try {
+              if (incomingUrl && p.url) {
+                const u1 = new URL(incomingUrl);
+                const u2 = new URL(p.url);
+                return (u1.pathname + u1.search) === (u2.pathname + u2.search);
+              }
+            } catch {}
+            return false;
+          });
           if (matchingPage && matchingPage.url !== selectedUrl) {
             setSelectedUrl(matchingPage.url);
           }
@@ -145,12 +158,12 @@ export default function HeatmapView({ userMode, timeRange, includeSimulated }) {
     fetchClicks();
   }, [fetchClicks]);
 
-  // Extract normalized page path for iframe URL
+  // Extract normalized page path for iframe URL (preserving query params like ?id=watch)
   const selectedPath = useMemo(() => {
     if (!selectedUrl) return '/index.html';
     try {
       const parsed = new URL(selectedUrl);
-      return parsed.pathname || '/index.html';
+      return (parsed.pathname || '/index.html') + (parsed.search || '');
     } catch {
       return selectedUrl.startsWith('/') ? selectedUrl : '/index.html';
     }
@@ -412,11 +425,31 @@ export default function HeatmapView({ userMode, timeRange, includeSimulated }) {
               disabled={loadingPages}
             >
               {pages.length === 0 && <option value="">No pages tracked yet</option>}
-              {pages.map((p) => (
-                <option key={p.path || p.url} value={p.url}>
-                  {p.path === '/index.html' ? '🏠 Home (/index.html)' : p.path === '/product.html' ? '🛍️ Product Details (/product.html)' : p.path === '/checkout.html' ? '💳 Checkout (/checkout.html)' : p.path} ({p.totalClicks || 0} clicks • {p.totalViews || 0} views)
-                </option>
-              ))}
+              {pages.map((p) => {
+                let label = p.path;
+                if (p.path === '/index.html' || p.path === '/') {
+                  label = '🏠 Home (/index.html)';
+                } else if (p.path === '/product.html') {
+                  label = '🛍️ Catalog / All Products (/product.html)';
+                } else if (p.path === '/checkout.html') {
+                  label = '💳 Checkout (/checkout.html)';
+                } else if (p.path?.includes('id=watch')) {
+                  label = '⌚ Product: Titanium Timepiece (/product.html?id=watch)';
+                } else if (p.path?.includes('id=tee')) {
+                  label = '👕 Product: Heavyweight Combed Tee (/product.html?id=tee)';
+                } else if (p.path?.includes('id=runner') || p.path?.includes('id=sneaker')) {
+                  label = '👟 Product: Monochrome Runner V2 (/product.html?id=runner)';
+                } else if (p.path?.includes('id=pack')) {
+                  label = '🎒 Product: Commuter Waterproof Pack (/product.html?id=pack)';
+                } else if (p.title) {
+                  label = `📦 ${p.title} (${p.path})`;
+                }
+                return (
+                  <option key={p.path || p.url} value={p.url}>
+                    {label} ({p.totalClicks || 0} clicks • {p.totalViews || 0} views)
+                  </option>
+                );
+              })}
             </select>
           </div>
         </div>

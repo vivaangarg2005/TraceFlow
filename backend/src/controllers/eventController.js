@@ -418,35 +418,73 @@ exports.getPageClicks = async (req, res, next) => {
       filter.deviceType = deviceType;
     }
 
-    // Extract clean pathname for robust cross-origin and query-string matching
-    let targetPath = path || '';
-    if (!targetPath && url) {
-      try {
-        targetPath = new URL(url).pathname;
-      } catch {
-        targetPath = url.startsWith('/') ? url : '/' + url;
-      }
-    }
-
-    // Normalize home page variations ('/' and '/index.html')
-    const matchPaths = [targetPath];
-    if (targetPath === '/' || targetPath === '/index.html' || targetPath.endsWith('/index.html')) {
-      matchPaths.push('/', '/index.html');
-    }
-
-    const pathOrConditions = [
-      { path: { $in: matchPaths } },
-      { url: { $in: matchPaths } },
-    ];
+    // Determine target relative path & clean full URL
+    let targetRelative = path || '';
+    let targetFullUrl = url || '';
 
     if (url) {
-      pathOrConditions.push({ url: url });
-      pathOrConditions.push({ url: { $regex: targetPath.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), $options: 'i' } });
-    } else {
-      pathOrConditions.push({ url: { $regex: targetPath.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), $options: 'i' } });
+      try {
+        const parsed = new URL(url.startsWith('http') ? url : `http://localhost:3000${url.startsWith('/') ? url : '/' + url}`);
+        targetRelative = (parsed.pathname || '/index.html') + (parsed.search || '');
+        targetFullUrl = `http://localhost:3000${targetRelative}`;
+      } catch {
+        targetRelative = url.startsWith('/') ? url : '/' + url;
+        targetFullUrl = `http://localhost:3000${targetRelative}`;
+      }
+    } else if (path) {
+      if (path === '/' || path === '') targetRelative = '/index.html';
+      targetFullUrl = `http://localhost:3000${targetRelative}`;
     }
 
-    filter.$or = pathOrConditions;
+    if (targetRelative === '/' || targetRelative === '') targetRelative = '/index.html';
+
+    const orConditions = [];
+
+    if (targetRelative.includes('?')) {
+      // For URLs with query strings (e.g. /product.html?id=watch), match strictly against this query
+      const queryPart = targetRelative.split('?')[1];
+      const escapedQuery = queryPart.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      orConditions.push(
+        { url: targetFullUrl },
+        { path: targetRelative },
+        { url: { $regex: escapedQuery, $options: 'i' } },
+        { path: { $regex: escapedQuery, $options: 'i' } }
+      );
+    } else if (targetRelative === '/index.html') {
+      // Home page: '/' vs '/index.html' (and exclude query strings if any)
+      orConditions.push({
+        $and: [
+          {
+            $or: [
+              { url: 'http://localhost:3000/' },
+              { url: 'http://localhost:3000/index.html' },
+              { path: '/' },
+              { path: '/index.html' },
+            ],
+          },
+          { url: { $not: { $regex: '\\?id=', $options: 'i' } } },
+        ],
+      });
+    } else {
+      // For pages WITHOUT query parameters (e.g. /product.html catalog view or /checkout.html):
+      // Must NOT pull in events that belong to a product query (?id=...)!
+      const escapedPath = targetRelative.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      orConditions.push({
+        $and: [
+          {
+            $or: [
+              { url: targetFullUrl },
+              { path: targetRelative },
+              { url: { $regex: escapedPath, $options: 'i' } },
+            ],
+          },
+          { url: { $not: { $regex: '\\?id=', $options: 'i' } } },
+          { path: { $not: { $regex: '\\?id=', $options: 'i' } } },
+        ],
+      });
+    }
+
+    filter.$or = orConditions;
 
     const clicks = await Event.find(filter)
       .select(
@@ -482,7 +520,7 @@ exports.getPageClicks = async (req, res, next) => {
 
     return res.status(200).json({
       success: true,
-      query: { url: url || null, path: path || targetPath, deviceType: deviceType || 'all' },
+      query: { url: targetFullUrl, path: targetRelative, deviceType: deviceType || 'all' },
       totalClicks: clicks.length,
       uniqueSessions: uniqueSessionIds.size,
       sectionBreakdown: sectionCounts,
@@ -506,55 +544,63 @@ exports.getTrackedPages = async (req, res, next) => {
       matchFilter.isSimulated = false;
     }
 
-    const pipeline = [
-      { $match: matchFilter },
-      {
-        $addFields: {
-          normalizedPath: {
-            $cond: [
-              { $in: ['$path', ['/', '/index.html', '']] },
-              '/index.html',
-              { $ifNull: ['$path', '/index.html'] }
-            ]
-          }
-        }
-      },
-      {
-        $group: {
-          _id: '$normalizedPath',
-          sampleUrl: { $first: '$url' },
-          totalViews: {
-            $sum: { $cond: [{ $eq: ['$eventType', 'page_view'] }, 1, 0] },
-          },
-          totalClicks: {
-            $sum: { $cond: [{ $eq: ['$eventType', 'click'] }, 1, 0] },
-          },
-          uniqueSessions: { $addToSet: '$sessionId' },
-          lastInteraction: { $max: '$timestamp' },
-        },
-      },
-      {
-        $project: {
-          path: '$_id',
-          url: {
-            $cond: [
-              { $eq: ['$_id', '/index.html'] },
-              'http://localhost:3000/index.html',
-              { $concat: ['http://localhost:3000', '$_id'] }
-            ]
-          },
-          _id: 0,
-          totalViews: 1,
-          totalClicks: 1,
-          totalInteractions: { $add: ['$totalViews', '$totalClicks'] },
-          uniqueSessionsCount: { $size: '$uniqueSessions' },
-          lastInteraction: 1,
-        },
-      },
-      { $sort: { totalClicks: -1, totalViews: -1 } },
-    ];
+    const events = await Event.find(matchFilter).select('url path title eventType sessionId timestamp');
 
-    const pages = await Event.aggregate(pipeline);
+    // Group in memory by clean relative page identifier preserving distinct query params (?id=watch, etc.)
+    const pageMap = new Map();
+
+    events.forEach((evt) => {
+      let pageKey = '/index.html';
+      let title = evt.title || '';
+      try {
+        if (evt.url) {
+          const parsed = new URL(evt.url.startsWith('http') ? evt.url : `http://localhost:3000${evt.url.startsWith('/') ? evt.url : '/' + evt.url}`);
+          let pName = parsed.pathname || '/index.html';
+          if (pName === '/' || pName === '') pName = '/index.html';
+          pageKey = pName + (parsed.search || '');
+        } else if (evt.path) {
+          let p = evt.path;
+          if (p === '/' || p === '') p = '/index.html';
+          pageKey = p;
+        }
+      } catch {
+        pageKey = evt.path || '/index.html';
+      }
+
+      if (!pageMap.has(pageKey)) {
+        pageMap.set(pageKey, {
+          path: pageKey,
+          url: `http://localhost:3000${pageKey}`,
+          title: title,
+          totalViews: 0,
+          totalClicks: 0,
+          uniqueSessions: new Set(),
+          lastInteraction: evt.timestamp,
+        });
+      }
+
+      const pEntry = pageMap.get(pageKey);
+      if (title && (!pEntry.title || pEntry.title === pEntry.path)) pEntry.title = title;
+      if (evt.eventType === 'page_view') pEntry.totalViews++;
+      if (evt.eventType === 'click') pEntry.totalClicks++;
+      pEntry.uniqueSessions.add(evt.sessionId);
+      if (new Date(evt.timestamp) > new Date(pEntry.lastInteraction)) {
+        pEntry.lastInteraction = evt.timestamp;
+      }
+    });
+
+    const pages = Array.from(pageMap.values())
+      .map((p) => ({
+        path: p.path,
+        url: p.url,
+        title: p.title || p.path,
+        totalViews: p.totalViews,
+        totalClicks: p.totalClicks,
+        totalInteractions: p.totalViews + p.totalClicks,
+        uniqueSessionsCount: p.uniqueSessions.size,
+        lastInteraction: p.lastInteraction,
+      }))
+      .sort((a, b) => b.totalClicks - a.totalClicks || b.totalViews - a.totalViews);
 
     return res.status(200).json({
       success: true,

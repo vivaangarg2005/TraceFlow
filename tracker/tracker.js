@@ -360,7 +360,7 @@
       sessionId: sessionId,
       eventType: 'page_view',
       url: currentUrl,
-      path: window.location.pathname,
+      path: (window.location.pathname || '/') + (window.location.search || ''),
       title: document.title || '',
       timestamp: new Date().toISOString(),
       viewportWidth: window.innerWidth || document.documentElement.clientWidth || 0,
@@ -430,7 +430,7 @@
       sessionId: sessionId,
       eventType: 'click',
       url: window.location.href,
-      path: window.location.pathname,
+      path: (window.location.pathname || '/') + (window.location.search || ''),
       title: document.title || '',
       timestamp: new Date().toISOString(),
       x: Math.round(pageX),
@@ -535,7 +535,7 @@
         window.parent.postMessage({
           type: 'TRACEFLOW_IFRAME_LOADED',
           url: window.location.href,
-          path: window.location.pathname,
+          path: (window.location.pathname || '/') + (window.location.search || ''),
           docHeight: Math.max(
             document.documentElement ? document.documentElement.scrollHeight : 0,
             document.body ? document.body.scrollHeight : 0,
