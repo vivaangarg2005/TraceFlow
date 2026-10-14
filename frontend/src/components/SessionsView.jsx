@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from 'react';
+import { getDemoStoreHomeUrl } from '../utils/urlHelper';
 
 export default function SessionsView({
   sessions,
@@ -159,12 +160,7 @@ export default function SessionsView({
             </p>
             <div style={{ marginTop: '1.5rem', display: 'flex', gap: '1rem', justifyContent: 'center' }}>
               <a
-                href={
-                  import.meta.env.VITE_DEMO_URL ||
-                  (typeof window !== 'undefined' && window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1'
-                    ? '/demo/index.html'
-                    : 'http://localhost:3000')
-                }
+                href={getDemoStoreHomeUrl()}
                 target="_blank"
                 rel="noreferrer"
                 className="btn btn-primary btn-sm"

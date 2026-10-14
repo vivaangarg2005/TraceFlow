@@ -420,61 +420,68 @@ exports.getPageClicks = async (req, res, next) => {
 
     // Determine target relative path & clean full URL
     let targetRelative = path || '';
-    let targetFullUrl = url || '';
 
     if (url) {
       try {
-        const parsed = new URL(url.startsWith('http') ? url : `http://localhost:3000${url.startsWith('/') ? url : '/' + url}`);
+        const parsed = new URL(url.startsWith('http') ? url : `http://example.local${url.startsWith('/') ? url : '/' + url}`);
         targetRelative = (parsed.pathname || '/index.html') + (parsed.search || '');
-        targetFullUrl = `http://localhost:3000${targetRelative}`;
       } catch {
         targetRelative = url.startsWith('/') ? url : '/' + url;
-        targetFullUrl = `http://localhost:3000${targetRelative}`;
       }
     } else if (path) {
       if (path === '/' || path === '') targetRelative = '/index.html';
-      targetFullUrl = `http://localhost:3000${targetRelative}`;
     }
 
-    if (targetRelative === '/' || targetRelative === '') targetRelative = '/index.html';
+    if (!targetRelative || targetRelative === '/' || targetRelative === '') {
+      targetRelative = '/index.html';
+    }
+
+    // Support both /index.html and /demo/index.html transparently
+    let cleanPath = targetRelative;
+    if (cleanPath.startsWith('/demo/')) {
+      cleanPath = cleanPath.replace(/^\/demo/, '');
+    }
+    const demoPath = `/demo${cleanPath}`;
 
     const orConditions = [];
 
-    if (targetRelative.includes('?')) {
+    if (cleanPath.includes('?')) {
       // For URLs with query strings (e.g. /product.html?id=watch), match strictly against this query
-      const queryPart = targetRelative.split('?')[1];
+      const queryPart = cleanPath.split('?')[1];
       const escapedQuery = queryPart.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
       orConditions.push(
-        { url: targetFullUrl },
-        { path: targetRelative },
+        { path: cleanPath },
+        { path: demoPath },
         { url: { $regex: escapedQuery, $options: 'i' } },
         { path: { $regex: escapedQuery, $options: 'i' } }
       );
-    } else if (targetRelative === '/index.html') {
-      // Home page: '/' vs '/index.html' (and exclude query strings if any)
+    } else if (cleanPath === '/index.html') {
+      // Home page: '/' vs '/index.html' vs '/demo/' vs '/demo/index.html' (and exclude query strings if any)
       orConditions.push({
         $and: [
           {
             $or: [
-              { url: 'http://localhost:3000/' },
-              { url: 'http://localhost:3000/index.html' },
               { path: '/' },
               { path: '/index.html' },
+              { path: '/demo/' },
+              { path: '/demo/index.html' },
+              { url: { $regex: '(/index\\.html|/demo/?|/demo/index\\.html|/)$', $options: 'i' } },
             ],
           },
           { url: { $not: { $regex: '\\?id=', $options: 'i' } } },
+          { path: { $not: { $regex: '\\?id=', $options: 'i' } } },
         ],
       });
     } else {
       // For pages WITHOUT query parameters (e.g. /product.html catalog view or /checkout.html):
       // Must NOT pull in events that belong to a product query (?id=...)!
-      const escapedPath = targetRelative.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      const escapedPath = cleanPath.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
       orConditions.push({
         $and: [
           {
             $or: [
-              { url: targetFullUrl },
-              { path: targetRelative },
+              { path: cleanPath },
+              { path: demoPath },
               { url: { $regex: escapedPath, $options: 'i' } },
             ],
           },
@@ -520,7 +527,7 @@ exports.getPageClicks = async (req, res, next) => {
 
     return res.status(200).json({
       success: true,
-      query: { url: targetFullUrl, path: targetRelative, deviceType: deviceType || 'all' },
+      query: { url: url || cleanPath, path: cleanPath, deviceType: deviceType || 'all' },
       totalClicks: clicks.length,
       uniqueSessions: uniqueSessionIds.size,
       sectionBreakdown: sectionCounts,
@@ -554,12 +561,14 @@ exports.getTrackedPages = async (req, res, next) => {
       let title = evt.title || '';
       try {
         if (evt.url) {
-          const parsed = new URL(evt.url.startsWith('http') ? evt.url : `http://localhost:3000${evt.url.startsWith('/') ? evt.url : '/' + evt.url}`);
+          const parsed = new URL(evt.url.startsWith('http') ? evt.url : `http://example.local${evt.url.startsWith('/') ? evt.url : '/' + evt.url}`);
           let pName = parsed.pathname || '/index.html';
+          if (pName.startsWith('/demo/')) pName = pName.replace(/^\/demo/, '');
           if (pName === '/' || pName === '') pName = '/index.html';
           pageKey = pName + (parsed.search || '');
         } else if (evt.path) {
           let p = evt.path;
+          if (p.startsWith('/demo/')) p = p.replace(/^\/demo/, '');
           if (p === '/' || p === '') p = '/index.html';
           pageKey = p;
         }
@@ -570,7 +579,7 @@ exports.getTrackedPages = async (req, res, next) => {
       if (!pageMap.has(pageKey)) {
         pageMap.set(pageKey, {
           path: pageKey,
-          url: `http://localhost:3000${pageKey}`,
+          url: pageKey,
           title: title,
           totalViews: 0,
           totalClicks: 0,

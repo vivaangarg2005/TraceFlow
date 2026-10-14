@@ -1,4 +1,5 @@
 import React from 'react';
+import { getDemoStoreHomeUrl } from '../utils/urlHelper';
 
 export default function Header({
   activeTab,
@@ -154,12 +155,7 @@ export default function Header({
             </button>
 
             <a
-              href={
-                import.meta.env.VITE_DEMO_URL ||
-                (typeof window !== 'undefined' && window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1'
-                  ? '/demo/index.html'
-                  : 'http://localhost:3000')
-              }
+              href={getDemoStoreHomeUrl()}
               target="_blank"
               rel="noopener noreferrer"
               className="btn btn-primary btn-sm"

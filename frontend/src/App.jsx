@@ -5,6 +5,7 @@ import SessionsView from './components/SessionsView';
 import HeatmapView from './components/HeatmapView';
 import UserJourneyModal from './components/UserJourneyModal';
 import { getOverview, getSessions, getSessionEvents, trackEvents, resetClicks } from './services/api';
+import { getDemoStoreBaseUrl } from './utils/urlHelper';
 import './App.css';
 
 export default function App() {
@@ -106,7 +107,7 @@ export default function App() {
       setIsGenerating(true);
       const newSessionId = 'tf_sim_' + Math.random().toString(36).substring(2, 9);
       const now = new Date();
-      const demoBase = (import.meta.env.VITE_DEMO_URL || 'http://localhost:3000').replace(/\/$/, '');
+      const demoBase = getDemoStoreBaseUrl();
 
       const sampleEvents = [
         {

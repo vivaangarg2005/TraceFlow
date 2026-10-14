@@ -3,8 +3,21 @@
  * Centralized HTTP communication with backend analytics endpoints
  */
 
-const rawApi = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
-const cleanApi = rawApi.trim().replace(/\/+$/, '');
+const isHosted = typeof window !== 'undefined' && 
+  window.location.hostname !== 'localhost' && 
+  window.location.hostname !== '127.0.0.1';
+
+let rawApi = (import.meta.env.VITE_API_URL || '').trim();
+if (isHosted) {
+  // On hosted environments (e.g. Vercel), never allow localhost/127.0.0.1 fallback
+  if (!rawApi || rawApi.includes('localhost') || rawApi.includes('127.0.0.1')) {
+    rawApi = 'https://traceflow-backend-gbi3.onrender.com/api';
+  }
+} else {
+  rawApi = rawApi || 'http://localhost:5000/api';
+}
+
+const cleanApi = rawApi.replace(/\/+$/, '');
 const API_BASE = cleanApi.endsWith('/api') ? cleanApi : `${cleanApi}/api`;
 
 /**

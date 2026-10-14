@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { getTrackedPages, getPageClicks, resetClicks } from '../services/api';
+import { getDemoStoreBaseUrl, resolvePageUrl, isHostedEnvironment } from '../utils/urlHelper';
 
 export default function HeatmapView({ userMode, timeRange, includeSimulated }) {
   const [pages, setPages] = useState([]);
@@ -110,9 +111,26 @@ export default function HeatmapView({ userMode, timeRange, includeSimulated }) {
         setError(null);
         const res = await getTrackedPages({ timeRange, includeSimulated });
         if (res.data && res.data.length > 0) {
-          setPages(res.data);
+          const sanitized = res.data.map((p) => {
+            let cleanPath = p.path || p.url || '/index.html';
+            if (cleanPath.startsWith('http://') || cleanPath.startsWith('https://')) {
+              try {
+                const u = new URL(cleanPath);
+                cleanPath = (u.pathname || '/index.html') + (u.search || '');
+              } catch {}
+            }
+            if (cleanPath.startsWith('/demo/')) {
+              cleanPath = cleanPath.replace(/^\/demo/, '');
+            }
+            return {
+              ...p,
+              path: cleanPath,
+              url: resolvePageUrl(cleanPath),
+            };
+          });
+          setPages(sanitized);
           // Default to the first page with clicks or first page
-          const firstWithClicks = res.data.find((p) => p.totalClicks > 0) || res.data[0];
+          const firstWithClicks = sanitized.find((p) => p.totalClicks > 0) || sanitized[0];
           setSelectedUrl(firstWithClicks.url);
         } else {
           setPages([]);
@@ -143,6 +161,7 @@ export default function HeatmapView({ userMode, timeRange, includeSimulated }) {
       }
       const res = await getPageClicks({
         url: selectedUrl,
+        path: selectedPath,
         timeRange,
         includeSimulated,
         deviceType: previewDevice !== 'all' ? previewDevice : undefined,
@@ -213,7 +232,24 @@ export default function HeatmapView({ userMode, timeRange, includeSimulated }) {
       try {
         const res = await getTrackedPages({ timeRange, includeSimulated });
         if (res.data && res.data.length > 0) {
-          setPages(res.data);
+          const sanitized = res.data.map((p) => {
+            let cleanPath = p.path || p.url || '/index.html';
+            if (cleanPath.startsWith('http://') || cleanPath.startsWith('https://')) {
+              try {
+                const u = new URL(cleanPath);
+                cleanPath = (u.pathname || '/index.html') + (u.search || '');
+              } catch {}
+            }
+            if (cleanPath.startsWith('/demo/')) {
+              cleanPath = cleanPath.replace(/^\/demo/, '');
+            }
+            return {
+              ...p,
+              path: cleanPath,
+              url: resolvePageUrl(cleanPath),
+            };
+          });
+          setPages(sanitized);
         }
       } catch {}
     }, 6000);
@@ -225,22 +261,23 @@ export default function HeatmapView({ userMode, timeRange, includeSimulated }) {
     if (!selectedUrl) return '/index.html';
     try {
       const parsed = new URL(selectedUrl);
-      return (parsed.pathname || '/index.html') + (parsed.search || '');
+      let p = (parsed.pathname || '/index.html') + (parsed.search || '');
+      if (p.startsWith('/demo/')) {
+        p = p.replace(/^\/demo/, '');
+      }
+      return p || '/index.html';
     } catch {
-      return selectedUrl.startsWith('/') ? selectedUrl : '/index.html';
+      let p = selectedUrl.startsWith('/') ? selectedUrl : '/index.html';
+      if (p.startsWith('/demo/')) {
+        p = p.replace(/^\/demo/, '');
+      }
+      return p || '/index.html';
     }
   }, [selectedUrl]);
 
-  // Target demo store URL corresponding to selected path (supports VITE_DEMO_URL or same-origin /demo fallback in production)
+  // Target demo store URL corresponding to selected path (always safe and hosted on Vercel)
   const iframeSrc = useMemo(() => {
-    if (import.meta.env.VITE_DEMO_URL) {
-      return `${import.meta.env.VITE_DEMO_URL.replace(/\/$/, '')}${selectedPath}`;
-    }
-    if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
-      return `http://localhost:3000${selectedPath}`;
-    }
-    // In production (Vercel), serve the bundled demo storefront to avoid Private Network Access (PNA) block
-    return `/demo${selectedPath}`;
+    return resolvePageUrl(selectedPath);
   }, [selectedPath]);
 
   // Target native viewports (what the user sees on real devices)
