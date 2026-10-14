@@ -158,7 +158,17 @@ export default function SessionsView({
                 : 'No interactions have been recorded for the selected time range.'}
             </p>
             <div style={{ marginTop: '1.5rem', display: 'flex', gap: '1rem', justifyContent: 'center' }}>
-              <a href={import.meta.env.VITE_DEMO_URL || 'http://localhost:3000'} target="_blank" rel="noreferrer" className="btn btn-primary btn-sm">
+              <a
+                href={
+                  import.meta.env.VITE_DEMO_URL ||
+                  (typeof window !== 'undefined' && window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1'
+                    ? '/demo/index.html'
+                    : 'http://localhost:3000')
+                }
+                target="_blank"
+                rel="noreferrer"
+                className="btn btn-primary btn-sm"
+              >
                 🛍️ Visit Store to Generate Events
               </a>
               <button onClick={onSimulate} className="btn btn-secondary btn-sm">

@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Aura Store — Secure Checkout</title>
+  <meta name="description" content="Complete your purchase with secure encrypted checkout.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #090d16;
+      --card-bg: rgba(22, 29, 47, 0.7);
+      --card-border: rgba(255, 255, 255, 0.08);
+      --text: #f1f5f9;
+      --text-muted: #94a3b8;
+      --accent: #6366f1;
+      --accent-hover: #4f46e5;
+      --emerald: #10b981;
+      --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      --font-heading: 'Outfit', 'Inter', sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html { color-scheme: dark; }
+    body { font-family: var(--font-sans); background: var(--bg); color: var(--text); min-height: 100vh; line-height: 1.6; letter-spacing: 0.01em; }
+    h1, h2, h3, h4, .brand { font-family: var(--font-heading); }
+
+    header {
+      backdrop-filter: blur(16px);
+      background: rgba(9, 13, 22, 0.85);
+      border-bottom: 1px solid var(--card-border);
+      padding: 0.85rem 2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .brand { display: flex; align-items: center; gap: 0.75rem; text-decoration: none; color: #fff; font-weight: 800; }
+    .brand-logo { width: 34px; height: 34px; background: linear-gradient(135deg, #6366f1, #8b5cf6); border-radius: 9px; display: flex; align-items: center; justify-content: center; font-weight: 800; }
+    .nav-links { display: flex; gap: 1.75rem; list-style: none; }
+    .nav-links a { color: var(--text-muted); text-decoration: none; font-size: 0.9rem; font-weight: 500; }
+    .nav-links a:hover, .nav-links a.active { color: #fff; }
+
+    .container { max-width: 980px; margin: 2.75rem auto; padding: 0 1.5rem 5rem; }
+
+    .checkout-grid { display: grid; grid-template-columns: 1.25fr 0.75fr; gap: 2.5rem; }
+
+    .card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 16px;
+      padding: 2rem;
+    }
+    h2 { font-size: 1.4rem; font-weight: 800; margin-bottom: 1.25rem; }
+
+    .form-group { margin-bottom: 1.15rem; }
+    label { display: block; font-size: 0.8rem; font-weight: 600; color: var(--text-muted); margin-bottom: 0.35rem; }
+    input {
+      width: 100%;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--card-border);
+      padding: 0.7rem 1rem;
+      border-radius: 9px;
+      color: white;
+      font-size: 0.9rem;
+      outline: none;
+      transition: border 0.2s;
+    }
+    input:focus { border-color: var(--accent); }
+
+    .order-summary-item {
+      display: flex;
+      justify-content: space-between;
+      padding: 0.75rem 0;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+      font-size: 0.9rem;
+    }
+    .order-total {
+      display: flex;
+      justify-content: space-between;
+      padding-top: 1rem;
+      font-size: 1.25rem;
+      font-weight: 800;
+      color: #38bdf8;
+    }
+
+    .btn {
+      width: 100%;
+      padding: 0.85rem;
+      border-radius: 10px;
+      font-weight: 700;
+      font-size: 0.95rem;
+      cursor: pointer;
+      border: none;
+      margin-top: 1.25rem;
+      transition: all 0.2s;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .btn-primary { background: var(--accent); color: white; }
+    .btn-primary:hover { background: var(--accent-hover); transform: translateY(-1px); }
+
+    #confirmation-card { display: none; text-align: center; padding: 3.5rem 2rem; }
+    .success-badge {
+      width: 64px; height: 64px; background: rgba(16, 185, 129, 0.15);
+      border: 1px solid rgba(16, 185, 129, 0.4); border-radius: 50%;
+      display: inline-flex; align-items: center; justify-content: center;
+      font-size: 1.75rem; color: #34d399; margin-bottom: 1.25rem;
+    }
+
+    /* Floating trigger & HUD */
+    #hud-pill-trigger {
+      position: fixed; bottom: 20px; right: 20px; z-index: 999;
+      background: #111827; border: 1px solid rgba(99, 102, 241, 0.4);
+      border-radius: 9999px; padding: 0.45rem 1rem; display: flex; align-items: center; gap: 0.5rem;
+      cursor: pointer; font-size: 0.78rem; font-family: var(--font-mono); color: #c7d2fe;
+    }
+    .hud-dot { width: 8px; height: 8px; background: var(--emerald); border-radius: 50%; box-shadow: 0 0 6px var(--emerald); }
+
+    #tracking-hud-drawer {
+      position: fixed; bottom: 0; left: 0; right: 0; z-index: 1000;
+      background: rgba(11, 15, 25, 0.96); backdrop-filter: blur(14px);
+      border-top: 1px solid rgba(99, 102, 241, 0.35); padding: 0.85rem 2rem;
+      display: none; align-items: center; justify-content: space-between; font-size: 0.84rem;
+    }
+
+    /* Responsive Media Queries */
+    @media (max-width: 650px) {
+      header { padding: 0.75rem 1.25rem; }
+      .checkout-grid { grid-template-columns: 1fr; gap: 1.75rem; }
+      .container { margin: 1.75rem auto; padding: 0 1rem 4rem; }
+    }
+    @media (max-width: 500px) {
+      header { flex-wrap: wrap; gap: 0.75rem; justify-content: space-between; }
+      .nav-links { gap: 1rem; }
+      .card { padding: 1.25rem; }
+      #tracking-hud-drawer { flex-direction: column; gap: 0.65rem; padding: 0.75rem 1rem; text-align: center; }
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <a href="index.html" class="brand" id="checkout-brand-link">
+      <div class="brand-logo">A</div>
+      <span>Aura Store</span>
+    </a>
+    <ul class="nav-links">
+      <li><a href="index.html" id="link-home">Home</a></li>
+      <li><a href="product.html" id="link-product">Products</a></li>
+      <li><a href="checkout.html" class="active" id="link-checkout">Checkout</a></li>
+    </ul>
+    <div>
+      <a href="http://localhost:5173" target="_blank" style="color:#a5b4fc; font-size:0.85rem; text-decoration:none;" id="nav-dash-link">
+        📊 Analytics Dashboard ↗
+      </a>
+    </div>
+  </header>
+
+  <div class="container">
+    <div id="checkout-container" class="checkout-grid">
+      <!-- Shipping Form -->
+      <div class="card">
+        <h2>Shipping & Payment Details</h2>
+        <form id="checkout-form" onsubmit="handlePlaceOrder(event)">
+          <div class="form-group">
+            <label for="name-input">Full Recipient Name</label>
+            <input type="text" id="name-input" value="Alex Morgan" required>
+          </div>
+          <div class="form-group">
+            <label for="email-input">Receipt Email Address</label>
+            <input type="email" id="email-input" value="alex.morgan@example.com" required>
+          </div>
+          <div class="form-group">
+            <label for="address-input">Street Address</label>
+            <input type="text" id="address-input" value="742 Evergreen Terrace" required>
+          </div>
+          <div class="form-group">
+            <label for="card-input">Payment Card (Demo Sandbox)</label>
+            <input type="text" id="card-input" value="•••• •••• •••• 4242" required>
+          </div>
+          <button type="submit" class="btn btn-primary" id="btn-place-order">Complete Order ($145.00)</button>
+        </form>
+      </div>
+
+      <!-- Order Summary -->
+      <div class="card">
+        <h2>Order Summary</h2>
+        <div class="order-summary-item">
+          <span>Items in Order</span>
+          <span id="summary-item-count">1 item</span>
+        </div>
+        <div class="order-summary-item">
+          <span>Subtotal</span>
+          <span>$145.00</span>
+        </div>
+        <div class="order-summary-item">
+          <span>Standard Express Shipping</span>
+          <span style="color:#10b981; font-weight:600;">FREE</span>
+        </div>
+        <div class="order-summary-item">
+          <span>Sales Tax</span>
+          <span>$0.00</span>
+        </div>
+        <div class="order-total">
+          <span>Total</span>
+          <span>$145.00</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Confirmation Success Card -->
+    <div id="confirmation-card" class="card">
+      <div class="success-badge">✓</div>
+      <h2 style="font-size:1.85rem; margin-bottom: 0.5rem;">Order Successfully Confirmed!</h2>
+      <p style="color:var(--text-muted); margin-bottom: 2rem; max-width: 480px; margin-left: auto; margin-right: auto;">
+        Order #AUR-98241 has been recorded. TraceFlow captured your full conversion funnel from entry page to completion.
+      </p>
+      <div style="display:flex; justify-content:center; gap: 1rem;">
+        <a href="index.html" class="btn" style="background:rgba(255,255,255,0.08); color:white; width:auto; padding:0.75rem 1.4rem;" id="btn-return-store">Return to Store</a>
+        <a href="http://localhost:5173" target="_blank" class="btn btn-primary" style="width:auto; padding:0.75rem 1.4rem;" id="btn-view-journey">Inspect Journey in Dashboard ↗</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Unobtrusive Floating Trigger -->
+  <div id="hud-pill-trigger" onclick="toggleHud(true)">
+    <div class="hud-dot"></div>
+    <span>TraceFlow Active</span>
+  </div>
+
+  <!-- Expandable Developer HUD Drawer -->
+  <div id="tracking-hud-drawer">
+    <div style="display:flex; align-items:center; gap: 1.25rem;">
+      <div class="hud-dot"></div>
+      <div style="color: var(--text-muted);">Session: <strong style="color: #fff; font-family: monospace;" id="hud-session-id">...</strong></div>
+      <div style="color: var(--text-muted);">Page: <strong style="color: #38bdf8; font-family: monospace;">/demo/checkout.html</strong></div>
+    </div>
+    <div style="display:flex; align-items:center; gap: 0.75rem;">
+      <a href="product.html?id=runner" class="btn" style="background:rgba(255,255,255,0.06); color:white; width:auto; padding:0.35rem 0.75rem; font-size:0.8rem;">← Back</a>
+      <a href="index.html" class="btn" style="background:rgba(255,255,255,0.06); color:white; width:auto; padding:0.35rem 0.75rem; font-size:0.8rem;">Store Home</a>
+      <a href="http://localhost:5173" target="_blank" class="btn btn-primary" style="width:auto; padding:0.35rem 0.75rem; font-size:0.8rem;">Dashboard ↗</a>
+      <button onclick="toggleHud(false)" style="background:transparent; border:1px solid rgba(255,255,255,0.2); color:#94a3b8; border-radius:6px; padding:0.2rem 0.5rem; cursor:pointer;">✕ Minimize</button>
+    </div>
+  </div>
+
+  <script>
+    var cartItems = parseInt(sessionStorage.getItem('aura_cart_count') || '1', 10);
+    document.getElementById('summary-item-count').innerText = cartItems + (cartItems === 1 ? ' item' : ' items');
+
+    function handlePlaceOrder(e) {
+      e.preventDefault();
+      sessionStorage.removeItem('aura_cart_count');
+      document.getElementById('checkout-container').style.display = 'none';
+      document.getElementById('confirmation-card').style.display = 'block';
+    }
+
+    function toggleHud(show) {
+      document.getElementById('tracking-hud-drawer').style.display = show ? 'flex' : 'none';
+      document.getElementById('hud-pill-trigger').style.display = show ? 'none' : 'flex';
+    }
+
+    window.addEventListener('DOMContentLoaded', function() {
+      setTimeout(function() {
+        if (window.TraceFlow) {
+          var sid = window.TraceFlow.getSessionId();
+          document.getElementById('hud-session-id').innerText = sid.slice(0, 14) + '...';
+        }
+      }, 100);
+    });
+  </script>
+
+  <!-- Load TraceFlow Tracking Script -->
+  <script 
+    src="./tracker.js" 
+    data-endpoint="http://localhost:5000/api/events"
+    data-debug="true">
+  </script>
+</body>
+</html>

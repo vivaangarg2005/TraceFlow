@@ -231,10 +231,16 @@ export default function HeatmapView({ userMode, timeRange, includeSimulated }) {
     }
   }, [selectedUrl]);
 
-  // Target demo store URL corresponding to selected path (supports VITE_DEMO_URL in production)
+  // Target demo store URL corresponding to selected path (supports VITE_DEMO_URL or same-origin /demo fallback in production)
   const iframeSrc = useMemo(() => {
-    const demoBase = import.meta.env.VITE_DEMO_URL || 'http://localhost:3000';
-    return `${demoBase.replace(/\/$/, '')}${selectedPath}`;
+    if (import.meta.env.VITE_DEMO_URL) {
+      return `${import.meta.env.VITE_DEMO_URL.replace(/\/$/, '')}${selectedPath}`;
+    }
+    if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+      return `http://localhost:3000${selectedPath}`;
+    }
+    // In production (Vercel), serve the bundled demo storefront to avoid Private Network Access (PNA) block
+    return `/demo${selectedPath}`;
   }, [selectedPath]);
 
   // Target native viewports (what the user sees on real devices)

@@ -25,9 +25,14 @@
   }
   window.__TRACEFLOW_LOADED__ = true;
 
+  // Auto-detect localhost vs production cloud API endpoint
+  var defaultApi = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
+    ? 'http://localhost:5000/api/events'
+    : 'https://traceflow-backend-gbi3.onrender.com/api/events';
+
   // Configuration Defaults
   var config = {
-    endpoint: 'http://localhost:5000/api/events',
+    endpoint: window.__TRACEFLOW_ENDPOINT__ || defaultApi,
     sessionKey: 'traceflow_session_id',
     sessionExpiryKey: 'traceflow_session_expiry',
     sessionDurationMs: 30 * 60 * 1000, // 30 minutes inactivity window
@@ -46,7 +51,12 @@
   if (currentScript) {
     var customEndpoint = currentScript.getAttribute('data-endpoint');
     if (customEndpoint) {
-      config.endpoint = customEndpoint;
+      // In cloud / hosted environments, avoid localhost fallback if data-endpoint is local
+      if (customEndpoint.includes('localhost:5000') && window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
+        config.endpoint = defaultApi;
+      } else {
+        config.endpoint = customEndpoint;
+      }
     }
     if (currentScript.getAttribute('data-debug') === 'true') {
       config.debug = true;
