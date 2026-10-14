@@ -6,8 +6,9 @@ const connectDB = require('./config/db');
 const eventRoutes = require('./routes/eventRoutes');
 const errorHandler = require('./middleware/errorHandler');
 
-// Load environment variables
+// Load environment variables (supports root and backend working directories)
 dotenv.config();
+dotenv.config({ path: path.resolve(__dirname, '../.env') });
 
 // Connect to MongoDB
 connectDB();
