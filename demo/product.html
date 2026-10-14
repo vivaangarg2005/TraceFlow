@@ -449,7 +449,7 @@
       <a href="index.html" class="btn btn-secondary" style="padding: 0.35rem 0.75rem; font-size: 0.8rem;">← Home</a>
       <a href="product.html" class="btn btn-secondary" style="padding: 0.35rem 0.75rem; font-size: 0.8rem;">Products Catalog</a>
       <a href="checkout.html" class="btn btn-secondary" style="padding: 0.35rem 0.75rem; font-size: 0.8rem;">Checkout →</a>
-      <a href="http://localhost:5173" target="_blank" class="btn btn-primary" style="padding: 0.35rem 0.75rem; font-size: 0.8rem;">Dashboard ↗</a>
+      <a href="/" target="_blank" class="btn btn-primary" data-dash-link="true" style="padding: 0.35rem 0.75rem; font-size: 0.8rem;">Dashboard ↗</a>
       <button onclick="toggleHud(false)" style="background:transparent; border:1px solid rgba(255,255,255,0.2); color:#94a3b8; border-radius:6px; padding:0.2rem 0.5rem; cursor:pointer;">✕ Minimize</button>
     </div>
   </div>
@@ -868,6 +868,16 @@
     src="../tracker/tracker.js" 
     data-endpoint="http://localhost:5000/api/events"
     data-debug="true">
+  </script>
+  <script>
+    // Auto-resolve dashboard link based on environment (localhost vs production cloud)
+    (function () {
+      var isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+      var dashUrl = isLocal ? 'http://localhost:5173' : (window.location.origin + '/');
+      document.querySelectorAll('a[data-dash-link="true"]').forEach(function(el) {
+        el.href = dashUrl;
+      });
+    })();
   </script>
 </body>
 </html>

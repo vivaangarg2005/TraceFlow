@@ -425,7 +425,7 @@
         <span>🛒 Cart</span>
         <span class="cart-count" id="cart-counter">0</span>
       </button>
-      <a href="http://localhost:5173" target="_blank" class="btn btn-outline btn-sm" id="nav-open-dashboard">
+      <a href="/" target="_blank" class="btn btn-outline btn-sm" id="nav-open-dashboard" data-dash-link="true">
         📊 Open Analytics ↗
       </a>
     </div>
@@ -645,7 +645,7 @@
       <button class="btn btn-outline btn-sm" onclick="resetSession()">🔄 New Session</button>
       <a href="product.html" class="btn btn-outline btn-sm">Products Catalog →</a>
       <a href="checkout.html" class="btn btn-outline btn-sm">Checkout →</a>
-      <a href="http://localhost:5173" target="_blank" class="btn btn-primary btn-sm">Dashboard ↗</a>
+      <a href="/" target="_blank" class="btn btn-primary btn-sm" data-dash-link="true">Dashboard ↗</a>
       <button class="hud-close-btn" onclick="toggleHud(false)">✕ Minimize</button>
     </div>
   </div>
@@ -733,9 +733,19 @@
 
   <!-- Load TraceFlow Client Tracker -->
   <script 
-    src="./tracker.js" 
+    src="../tracker/tracker.js" 
     data-endpoint="http://localhost:5000/api/events"
     data-debug="true">
+  </script>
+  <script>
+    // Auto-resolve dashboard link based on environment (localhost vs production cloud)
+    (function () {
+      var isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+      var dashUrl = isLocal ? 'http://localhost:5173' : (window.location.origin + '/');
+      document.querySelectorAll('a[data-dash-link="true"], a#nav-open-dashboard').forEach(function(el) {
+        el.href = dashUrl;
+      });
+    })();
   </script>
 </body>
 </html>
