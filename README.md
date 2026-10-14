@@ -138,7 +138,7 @@ TraceFlow utilizes a decoupled 4-tier architecture designed for separation of co
 │   │   ├── Modes: Thermal Glow | 10×10 Density Grid | Pin Hotspots      │
 │   │   ├── Multi-Device Ratios: Desktop (1280×800), Tablet, Mobile      │
 │   │   └── Real-time WebSocket-like Auto-Sync (2.5s Polling)            │
-│   └── 1-Click "⚡ Simulate Shopper" & "🗑️ Reset Data" Controls         │
+│   └── 1-Click "⚡ Simulate Shopper" & "🗑️ Reset Data" Controls        │
 └────────────────────────────────────────────────────────────────────────┘
 ```
 
