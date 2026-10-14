@@ -325,9 +325,13 @@
       } catch (e) {}
     }
 
-    if (eventQueue.length >= 5) {
+    if (eventQueue.length >= 5 || (eventData && eventData.eventType === 'click')) {
       if (dispatchTimer) clearTimeout(dispatchTimer);
-      flushQueue();
+      // For click interactions, flush rapidly (150ms) so real-time dashboards update without delay!
+      dispatchTimer = setTimeout(function () {
+        dispatchTimer = null;
+        flushQueue();
+      }, 150);
     } else {
       if (!dispatchTimer) {
         dispatchTimer = setTimeout(function () {

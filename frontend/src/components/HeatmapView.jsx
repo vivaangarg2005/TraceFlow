@@ -26,6 +26,9 @@ export default function HeatmapView({ userMode, timeRange, includeSimulated }) {
   const [selectedElementHighlight, setSelectedElementHighlight] = useState(null);
   const [hoveredClick, setHoveredClick] = useState(null);
   const [iframeError, setIframeError] = useState(false);
+  const [liveSync, setLiveSync] = useState(true);
+  const [newClickPulse, setNewClickPulse] = useState(false);
+  const prevClicksCountRef = useRef(0);
 
   const iframeRef = useRef(null);
   const canvasRef = useRef(null);
@@ -122,8 +125,8 @@ export default function HeatmapView({ userMode, timeRange, includeSimulated }) {
     loadPages();
   }, [timeRange, includeSimulated]);
 
-  // 4. Load clicks for the selected page URL & device mode
-  const fetchClicks = useCallback(async () => {
+  // 4. Load clicks for the selected page URL & device mode (supports silent background sync)
+  const fetchClicks = useCallback(async (isBackground = false) => {
     if (!selectedUrl) {
       setClicks([]);
       setClickSummary(null);
@@ -131,15 +134,25 @@ export default function HeatmapView({ userMode, timeRange, includeSimulated }) {
     }
 
     try {
-      setLoadingClicks(true);
-      setError(null);
-      setIframeError(false);
+      if (!isBackground) {
+        setLoadingClicks(true);
+        setError(null);
+        setIframeError(false);
+      }
       const res = await getPageClicks({
         url: selectedUrl,
         timeRange,
         includeSimulated,
         deviceType: previewDevice !== 'all' ? previewDevice : undefined,
       });
+
+      const count = res.totalClicks || 0;
+      if (isBackground && prevClicksCountRef.current > 0 && count > prevClicksCountRef.current) {
+        setNewClickPulse(true);
+        setTimeout(() => setNewClickPulse(false), 2600);
+      }
+      prevClicksCountRef.current = count;
+
       setClicks(res.data || []);
       setClickSummary({
         totalClicks: res.totalClicks || 0,
@@ -148,15 +161,42 @@ export default function HeatmapView({ userMode, timeRange, includeSimulated }) {
         rapidClicksCount: res.rapidClicksCount || 0,
       });
     } catch (err) {
-      setError('Failed to fetch click coordinates: ' + err.message);
+      if (!isBackground) {
+        setError('Failed to fetch click coordinates: ' + err.message);
+      }
     } finally {
-      setLoadingClicks(false);
+      if (!isBackground) {
+        setLoadingClicks(false);
+      }
     }
   }, [selectedUrl, timeRange, includeSimulated, previewDevice]);
 
   useEffect(() => {
-    fetchClicks();
+    fetchClicks(false);
   }, [fetchClicks]);
+
+  // Live real-time background polling (every 2.5s) when liveSync is active
+  useEffect(() => {
+    if (!liveSync || !selectedUrl) return;
+    const timer = setInterval(() => {
+      fetchClicks(true);
+    }, 2500);
+    return () => clearInterval(timer);
+  }, [liveSync, selectedUrl, fetchClicks]);
+
+  // Periodically refresh page metrics & dropdown list in background (every 6s)
+  useEffect(() => {
+    if (!liveSync) return;
+    const timer = setInterval(async () => {
+      try {
+        const res = await getTrackedPages({ timeRange, includeSimulated });
+        if (res.data && res.data.length > 0) {
+          setPages(res.data);
+        }
+      } catch {}
+    }, 6000);
+    return () => clearInterval(timer);
+  }, [liveSync, timeRange, includeSimulated]);
 
   // Extract normalized page path for iframe URL (preserving query params like ?id=watch)
   const selectedPath = useMemo(() => {
@@ -586,11 +626,46 @@ export default function HeatmapView({ userMode, timeRange, includeSimulated }) {
           {showOverlay ? '👁️ Heatmap Visible' : '👁️‍🗨️ Heatmap Hidden'}
         </button>
 
+        {/* Live Auto-Sync Stream Toggle */}
+        <button
+          className={`btn btn-sm ${liveSync ? 'btn-live-stream active' : 'btn-secondary'}`}
+          onClick={() => setLiveSync(!liveSync)}
+          title={liveSync ? 'Live Auto-Sync is ON (updating every 2.5s). Click to pause.' : 'Live Auto-Sync is PAUSED. Click to resume real-time updates.'}
+          style={{
+            fontSize: '0.76rem',
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '6px',
+            borderColor: liveSync ? 'rgba(16, 185, 129, 0.45)' : undefined,
+            background: liveSync ? 'rgba(16, 185, 129, 0.12)' : undefined,
+            color: liveSync ? '#34d399' : undefined,
+          }}
+        >
+          <span
+            style={{
+              width: '7px',
+              height: '7px',
+              borderRadius: '50%',
+              background: liveSync ? '#10b981' : '#6b7280',
+              boxShadow: liveSync ? '0 0 8px #10b981' : 'none',
+              display: 'inline-block',
+              animation: liveSync ? 'pulseGlow 1.6s infinite' : 'none',
+            }}
+          />
+          {liveSync ? '🟢 Live Stream (2.5s)' : '⏸️ Live Paused'}
+        </button>
+
+        {newClickPulse && (
+          <span className="badge badge-emerald animate-pulse" style={{ fontSize: '0.72rem', padding: '0.2rem 0.55rem' }}>
+            ⚡ Live Click Received!
+          </span>
+        )}
+
         {/* Refresh Clicks */}
         <button
           className="btn btn-secondary btn-sm"
-          onClick={fetchClicks}
-          title="Reload latest clicks from backend"
+          onClick={() => fetchClicks(false)}
+          title="Reload latest clicks immediately from backend"
           style={{ fontSize: '0.76rem' }}
         >
           🔄 Refresh
