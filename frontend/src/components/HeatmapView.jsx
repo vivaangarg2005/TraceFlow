@@ -30,6 +30,12 @@ export default function HeatmapView({ userMode, timeRange, includeSimulated }) {
   const [newClickPulse, setNewClickPulse] = useState(false);
   const prevClicksCountRef = useRef(0);
 
+  // Scaled Device Viewport & Multi-Device Precision System (Hotjar/Clarity standard)
+  const stageOuterRef = useRef(null);
+  const [availableStageWidth, setAvailableStageWidth] = useState(1280);
+  const [scaleMode, setScaleMode] = useState('fit'); // 'fit' | '100%'
+  const [stageExpanded, setStageExpanded] = useState(false);
+
   const iframeRef = useRef(null);
   const canvasRef = useRef(null);
   const containerRef = useRef(null);
@@ -214,12 +220,39 @@ export default function HeatmapView({ userMode, timeRange, includeSimulated }) {
     return `http://localhost:3000${selectedPath}`;
   }, [selectedPath]);
 
-  // Viewport container width based on device mode
-  const deviceContainerWidth = useMemo(() => {
-    if (previewDevice === 'mobile') return '390px';
-    if (previewDevice === 'tablet') return '768px';
-    return '100%';
-  }, [previewDevice]);
+  // Standard device viewports (Hotjar / Microsoft Clarity standard)
+  const DEVICE_VIEWPORTS = {
+    desktop: { width: 1280, height: 760, label: 'Desktop', icon: '💻', res: '1280px' },
+    tablet: { width: 768, height: 860, label: 'Tablet', icon: '📟', res: '768px' },
+    mobile: { width: 390, height: 844, label: 'Mobile', icon: '📱', res: '390px' },
+    all: { width: 1280, height: 760, label: 'All Devices', icon: '🌐', res: '1280px' },
+  };
+
+  const currentViewport = DEVICE_VIEWPORTS[previewDevice] || DEVICE_VIEWPORTS.desktop;
+  const targetDeviceWidth = currentViewport.width;
+  const targetDeviceHeight = currentViewport.height;
+
+  // Track outer container available width dynamically to compute proportional scale-to-fit
+  useEffect(() => {
+    if (!stageOuterRef.current) return;
+    const measure = () => {
+      if (stageOuterRef.current) {
+        setAvailableStageWidth(stageOuterRef.current.clientWidth);
+      }
+    };
+    measure();
+    const ro = new ResizeObserver(measure);
+    ro.observe(stageOuterRef.current);
+    return () => ro.disconnect();
+  }, [stageExpanded]);
+
+  // Viewport scale factor (Hotjar scale-to-fit engine)
+  const viewportScale = useMemo(() => {
+    if (scaleMode === '100%') return 1;
+    const avail = Math.max(320, availableStageWidth - 28);
+    if (avail >= targetDeviceWidth) return 1;
+    return Number((avail / targetDeviceWidth).toFixed(4));
+  }, [scaleMode, availableStageWidth, targetDeviceWidth]);
 
   // Filtered click dataset (respects element highlight isolation)
   const activeClicks = useMemo(() => {
@@ -229,52 +262,69 @@ export default function HeatmapView({ userMode, timeRange, includeSimulated }) {
     );
   }, [clicks, selectedElementHighlight]);
 
+  // Precise coordinate normalizer across responsive screens
+  const getNormalizedCoords = useCallback((c) => {
+    const recDocW = c.documentWidth || c.viewportWidth || (c.deviceType === 'mobile' ? 390 : c.deviceType === 'tablet' ? 768 : 1280);
+    const docH = iframeDimensions.docHeight || 1800;
+
+    let x = c.x;
+    // For desktop screens (target >= 1100 and recorded >= 1100):
+    // Centered container layouts (e.g. max-width: 1200px; margin: 0 auto) center their content.
+    // Preserving the offset relative to page center guarantees elements inside the centered container
+    // stay locked at 0px drift between 1280px, 1440px, or 1920px viewports!
+    if (targetDeviceWidth >= 1100 && recDocW >= 1100) {
+      const recordedCenter = recDocW / 2;
+      const targetCenter = targetDeviceWidth / 2;
+      const offsetFromCenter = c.x - recordedCenter;
+      x = targetCenter + offsetFromCenter;
+    } else if (c.xPercent !== null && c.xPercent !== undefined) {
+      x = (c.xPercent / 100) * targetDeviceWidth;
+    } else if (c.x !== undefined && c.x !== null) {
+      x = (c.x / recDocW) * targetDeviceWidth;
+    }
+
+    x = Math.max(0, Math.min(targetDeviceWidth, x));
+
+    let docY = c.y !== undefined && c.y !== null
+      ? c.y
+      : (c.yPercent !== null && c.yPercent !== undefined ? (c.yPercent / 100) * docH : 200);
+
+    return { x, docY };
+  }, [targetDeviceWidth, iframeDimensions.docHeight]);
+
   // 5. High-Performance Canvas Thermal Heatmap Renderer
   useEffect(() => {
     if (renderMode !== 'thermal' || !canvasRef.current || !showOverlay) return;
 
     const canvas = canvasRef.current;
-    const container = containerRef.current;
-    if (!container) return;
+    if (!canvas) return;
 
-    const width = container.clientWidth || 800;
-    const height = container.clientHeight || 680;
-
-    if (canvas.width !== width || canvas.height !== height) {
-      canvas.width = width;
-      canvas.height = height;
+    // Canvas internal buffer matches target device resolution (1280px / 768px / 390px)
+    if (canvas.width !== targetDeviceWidth || canvas.height !== targetDeviceHeight) {
+      canvas.width = targetDeviceWidth;
+      canvas.height = targetDeviceHeight;
     }
 
     const ctx = canvas.getContext('2d');
-    ctx.clearRect(0, 0, width, height);
+    ctx.clearRect(0, 0, targetDeviceWidth, targetDeviceHeight);
 
     if (activeClicks.length === 0) return;
 
     // Create offscreen alpha accumulator canvas
     const offscreen = document.createElement('canvas');
-    offscreen.width = width;
-    offscreen.height = height;
+    offscreen.width = targetDeviceWidth;
+    offscreen.height = targetDeviceHeight;
     const offCtx = offscreen.getContext('2d');
 
     const radius = Math.max(12, heatmapRadius);
-    const docHeight = iframeDimensions.docHeight || 1800;
 
     // Render radial alpha splats
     activeClicks.forEach((c) => {
-      // Calculate responsive X coordinate
-      const x = c.xPercent !== null && c.xPercent !== undefined
-        ? (c.xPercent / 100) * width
-        : c.x;
-
-      // Calculate document Y coordinate minus current iframe scroll position
-      const docY = c.y !== undefined && c.y !== null
-        ? c.y
-        : (c.yPercent !== null && c.yPercent !== undefined ? (c.yPercent / 100) * docHeight : 300);
-
+      const { x, docY } = getNormalizedCoords(c);
       const y = docY - iframeScrollY;
 
       // Skip offscreen points
-      if (y < -radius || y > height + radius || x < -radius || x > width + radius) {
+      if (y < -radius || y > targetDeviceHeight + radius || x < -radius || x > targetDeviceWidth + radius) {
         return;
       }
 
@@ -291,7 +341,7 @@ export default function HeatmapView({ userMode, timeRange, includeSimulated }) {
 
     // Colorize alpha channel via 256-color thermal spectrum palette
     try {
-      const imgData = offCtx.getImageData(0, 0, width, height);
+      const imgData = offCtx.getImageData(0, 0, targetDeviceWidth, targetDeviceHeight);
       const data = imgData.data;
       const alphaMultiplier = heatmapOpacity / 100;
 
@@ -299,10 +349,10 @@ export default function HeatmapView({ userMode, timeRange, includeSimulated }) {
         const alpha = data[i + 3];
         if (alpha > 0) {
           const paletteIdx = alpha * 4;
-          data[i] = thermalPalette[paletteIdx];         // R
-          data[i + 1] = thermalPalette[paletteIdx + 1]; // G
-          data[i + 2] = thermalPalette[paletteIdx + 2]; // B
-          data[i + 3] = Math.min(255, Math.floor(thermalPalette[paletteIdx + 3] * alphaMultiplier)); // A
+          data[i] = thermalPalette[paletteIdx];
+          data[i + 1] = thermalPalette[paletteIdx + 1];
+          data[i + 2] = thermalPalette[paletteIdx + 2];
+          data[i + 3] = Math.min(255, Math.floor(thermalPalette[paletteIdx + 3] * alphaMultiplier));
         }
       }
 
@@ -317,9 +367,10 @@ export default function HeatmapView({ userMode, timeRange, includeSimulated }) {
     iframeScrollY,
     heatmapRadius,
     heatmapOpacity,
-    iframeDimensions,
+    targetDeviceWidth,
+    targetDeviceHeight,
     thermalPalette,
-    deviceContainerWidth,
+    getNormalizedCoords,
   ]);
 
   // Aggregate and Rank Top Clicked Elements
@@ -372,24 +423,22 @@ export default function HeatmapView({ userMode, timeRange, includeSimulated }) {
     return cells;
   }, [activeClicks, renderMode]);
 
-  // Inspect Hover Proximity Tracker for Canvas Mode
+  // Inspect Hover Proximity Tracker for Canvas Mode (respects viewport scale factor)
   const handleMouseMoveInspect = (e) => {
     if (interactionMode !== 'inspect' || activeClicks.length === 0) return;
     const container = containerRef.current;
     if (!container) return;
 
     const rect = container.getBoundingClientRect();
-    const mouseX = e.clientX - rect.left;
-    const mouseY = e.clientY - rect.top;
-    const width = container.clientWidth || 800;
-    const docHeight = iframeDimensions.docHeight || 1800;
+    const scale = viewportScale || 1;
+    const mouseX = (e.clientX - rect.left) / scale;
+    const mouseY = (e.clientY - rect.top) / scale;
 
     let closest = null;
-    let minDistance = 40; // 40px proximity threshold
+    let minDistance = 45; // 45px proximity threshold
 
     activeClicks.forEach((c) => {
-      const x = c.xPercent !== null && c.xPercent !== undefined ? (c.xPercent / 100) * width : c.x;
-      const docY = c.y !== undefined && c.y !== null ? c.y : (c.yPercent / 100) * docHeight;
+      const { x, docY } = getNormalizedCoords(c);
       const y = docY - iframeScrollY;
       const dist = Math.hypot(mouseX - x, mouseY - y);
 
@@ -531,29 +580,33 @@ export default function HeatmapView({ userMode, timeRange, includeSimulated }) {
 
         {/* Device Viewport Simulation */}
         <div className="device-viewport-group">
-          <label className="selector-label">Device Filter:</label>
+          <label className="selector-label">Device Mode & Viewport:</label>
           <div className="mode-btn-group">
             <button
               className={`mode-btn ${previewDevice === 'desktop' ? 'active' : ''}`}
               onClick={() => setPreviewDevice('desktop')}
+              title="Standard Desktop Viewport (1280 × 760px) — Pixel-locked desktop layout"
             >
-              💻 Desktop
+              💻 Desktop (1280px)
             </button>
             <button
               className={`mode-btn ${previewDevice === 'tablet' ? 'active' : ''}`}
               onClick={() => setPreviewDevice('tablet')}
+              title="Tablet Portrait Viewport (768 × 860px) — Pixel-locked iPad/Tablet layout"
             >
-              📟 Tablet
+              📟 Tablet (768px)
             </button>
             <button
               className={`mode-btn ${previewDevice === 'mobile' ? 'active' : ''}`}
               onClick={() => setPreviewDevice('mobile')}
+              title="Mobile Device Viewport (390 × 844px) — Pixel-locked iPhone layout"
             >
-              📱 Mobile
+              📱 Mobile (390px)
             </button>
             <button
               className={`mode-btn ${previewDevice === 'all' ? 'active' : ''}`}
               onClick={() => setPreviewDevice('all')}
+              title="View all combined clicks across devices"
             >
               🌐 All
             </button>
@@ -586,6 +639,37 @@ export default function HeatmapView({ userMode, timeRange, includeSimulated }) {
             </button>
           </div>
         </div>
+
+        {/* Display Scale Mode Toggle */}
+        <div className="tuning-item">
+          <span className="tuning-label">Viewport Zoom:</span>
+          <div className="mode-toggle-pill">
+            <button
+              className={`mode-pill-btn ${scaleMode === 'fit' ? 'active' : ''}`}
+              onClick={() => setScaleMode('fit')}
+              title="Auto-scale viewport proportionally to fit available dashboard space"
+            >
+              📐 Fit ({Math.round(viewportScale * 100)}%)
+            </button>
+            <button
+              className={`mode-pill-btn ${scaleMode === '100%' ? 'active' : ''}`}
+              onClick={() => setScaleMode('100%')}
+              title="Render at 100% true native hardware resolution"
+            >
+              🖥️ 100% (1:1)
+            </button>
+          </div>
+        </div>
+
+        {/* Studio Expand Toggle */}
+        <button
+          className={`btn btn-sm ${stageExpanded ? 'btn-primary' : 'btn-secondary'}`}
+          onClick={() => setStageExpanded(!stageExpanded)}
+          title={stageExpanded ? 'Switch back to split view with insights panel' : 'Expand preview stage to full width for maximum precision'}
+          style={{ fontSize: '0.76rem' }}
+        >
+          {stageExpanded ? '⮌ Split View' : '⛶ Expand Studio'}
+        </button>
 
         {/* Radius Slider (For Thermal & Glow) */}
         {(renderMode === 'thermal' || renderMode === 'dots') && (
@@ -722,7 +806,7 @@ export default function HeatmapView({ userMode, timeRange, includeSimulated }) {
       </div>
 
       {/* Main Heatmap Stage & Sidebar Grid */}
-      <div className="heatmap-stage-grid">
+      <div className={`heatmap-stage-grid ${stageExpanded ? 'expanded' : ''}`}>
         {/* Left Column: Live Webpage Preview with Heatmap Overlay */}
         <div className="glass-card heatmap-canvas-card">
           <div className="canvas-header">
@@ -733,6 +817,9 @@ export default function HeatmapView({ userMode, timeRange, includeSimulated }) {
               </span>
             </div>
             <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+              <span className="badge badge-indigo mono" style={{ fontSize: '0.7rem' }}>
+                {targetDeviceWidth}×{targetDeviceHeight}px • Zoom: {Math.round(viewportScale * 100)}%
+              </span>
               {selectedElementHighlight && (
                 <button
                   className="btn btn-secondary btn-sm"
@@ -746,107 +833,140 @@ export default function HeatmapView({ userMode, timeRange, includeSimulated }) {
             </div>
           </div>
 
-          {/* Device Centered Wrapper */}
-          <div className="device-center-wrapper">
+          {/* Scaled Device Viewport Outer Stage */}
+          <div ref={stageOuterRef} className="device-center-wrapper">
             <div
-              ref={containerRef}
-              className="heatmap-preview-container"
-              style={{ width: deviceContainerWidth }}
-              onMouseMove={handleMouseMoveInspect}
-              onMouseLeave={() => setHoveredClick(null)}
+              className="device-stage-scaler"
+              style={{
+                width: scaleMode === '100%' ? `${targetDeviceWidth}px` : '100%',
+                height: `${Math.round(targetDeviceHeight * viewportScale)}px`,
+                overflow: scaleMode === '100%' ? 'auto' : 'hidden',
+                display: 'flex',
+                justifyContent: 'center',
+              }}
             >
-              {/* Actual Live Webpage Preview (Iframe) */}
-              <iframe
-                ref={iframeRef}
-                src={iframeSrc}
-                title="Live Tracked Webpage Preview"
-                className="live-store-iframe"
-                onError={() => setIframeError(true)}
-              />
-
-              {/* 1. Real HTML5 Canvas Thermal Heatmap Engine */}
-              {showOverlay && renderMode === 'thermal' && (
-                <canvas
-                  ref={canvasRef}
-                  className="thermal-heatmap-canvas"
+              <div
+                ref={containerRef}
+                className={`heatmap-preview-container device-${previewDevice}`}
+                style={{
+                  width: `${targetDeviceWidth}px`,
+                  minWidth: `${targetDeviceWidth}px`,
+                  maxWidth: `${targetDeviceWidth}px`,
+                  height: `${targetDeviceHeight}px`,
+                  transform: viewportScale !== 1 ? `scale(${viewportScale})` : undefined,
+                  transformOrigin: 'top center',
+                  boxShadow:
+                    previewDevice === 'mobile'
+                      ? '0 0 0 12px #1e293b, 0 20px 45px rgba(0,0,0,0.8)'
+                      : previewDevice === 'tablet'
+                      ? '0 0 0 10px #1e293b, 0 20px 45px rgba(0,0,0,0.8)'
+                      : '0 0 0 1px rgba(255,255,255,0.1), 0 20px 50px rgba(0,0,0,0.7)',
+                  borderRadius:
+                    previewDevice === 'mobile' ? '36px' : previewDevice === 'tablet' ? '22px' : '12px',
+                }}
+                onMouseMove={handleMouseMoveInspect}
+                onMouseLeave={() => setHoveredClick(null)}
+              >
+                {/* Actual Live Webpage Preview (Iframe) */}
+                <iframe
+                  ref={iframeRef}
+                  src={iframeSrc}
+                  title="Live Tracked Webpage Preview"
+                  className="live-store-iframe"
+                  style={{
+                    width: `${targetDeviceWidth}px`,
+                    height: '100%',
+                    borderRadius:
+                      previewDevice === 'mobile' ? '36px' : previewDevice === 'tablet' ? '22px' : '12px',
+                  }}
+                  onError={() => setIframeError(true)}
                 />
-              )}
 
-              {/* 2. DOM-Based Modes: Glow Dots, Precision Pins, 10x10 Grid */}
-              {showOverlay && renderMode !== 'thermal' && (
-                <div
-                  className={`heatmap-overlay-layer mode-${interactionMode}`}
-                  style={{ transform: `translateY(-${iframeScrollY}px)` }}
-                >
-                  {/* Density Grid Mode */}
-                  {renderMode === 'grid' && (
-                    <div className="density-grid-matrix">
-                      {gridCells.map((cell, idx) => (
-                        <div
-                          key={idx}
-                          className="matrix-cell"
-                          style={{
-                            backgroundColor:
-                              cell.count > 0
-                                ? `rgba(239, 68, 68, ${Math.min(0.85, cell.intensity * 0.75 + 0.15)})`
-                                : 'transparent',
-                          }}
-                          title={`Grid Sector (${cell.col + 1}, ${cell.row + 1}): ${cell.count} clicks (${cell.percentOfTotal}% of total)`}
-                        >
-                          {cell.count > 0 && (
-                            <span className="matrix-count-badge">
-                              {cell.count} <span style={{ fontSize: '0.65rem', opacity: 0.8 }}>({cell.percentOfTotal}%)</span>
-                            </span>
-                          )}
-                        </div>
-                      ))}
-                    </div>
-                  )}
+                {/* 1. Real HTML5 Canvas Thermal Heatmap Engine */}
+                {showOverlay && renderMode === 'thermal' && (
+                  <canvas
+                    ref={canvasRef}
+                    width={targetDeviceWidth}
+                    height={targetDeviceHeight}
+                    className="thermal-heatmap-canvas"
+                  />
+                )}
 
-                  {/* Radial Glow Dots Mode */}
-                  {renderMode === 'dots' &&
-                    activeClicks.map((c, i) => {
-                      const left = c.xPercent !== null && c.xPercent !== undefined ? `${c.xPercent}%` : `${c.x}px`;
-                      const top = c.y !== undefined && c.y !== null ? `${c.y}px` : (c.yPercent !== null && c.yPercent !== undefined ? `${c.yPercent}%` : '50%');
+                {/* 2. DOM-Based Modes: Glow Dots, Precision Pins, 10x10 Grid */}
+                {showOverlay && renderMode !== 'thermal' && (
+                  <div
+                    className={`heatmap-overlay-layer mode-${interactionMode}`}
+                    style={{
+                      width: `${targetDeviceWidth}px`,
+                      height: '100%',
+                      transform: `translateY(-${iframeScrollY}px)`,
+                    }}
+                  >
+                    {/* Density Grid Mode */}
+                    {renderMode === 'grid' && (
+                      <div className="density-grid-matrix" style={{ width: `${targetDeviceWidth}px`, height: `${targetDeviceHeight}px` }}>
+                        {gridCells.map((cell, idx) => (
+                          <div
+                            key={idx}
+                            className="matrix-cell"
+                            style={{
+                              backgroundColor:
+                                cell.count > 0
+                                  ? `rgba(239, 68, 68, ${Math.min(0.85, cell.intensity * 0.75 + 0.15)})`
+                                  : 'transparent',
+                            }}
+                            title={`Grid Sector (${cell.col + 1}, ${cell.row + 1}): ${cell.count} clicks (${cell.percentOfTotal}% of total)`}
+                          >
+                            {cell.count > 0 && (
+                              <span className="matrix-count-badge">
+                                {cell.count} <span style={{ fontSize: '0.65rem', opacity: 0.8 }}>({cell.percentOfTotal}%)</span>
+                              </span>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    )}
 
-                      return (
-                        <div
-                          key={c._id || i}
-                          className="heatmap-glow-dot"
-                          style={{
-                            left,
-                            top,
-                            width: `${heatmapRadius * 1.2}px`,
-                            height: `${heatmapRadius * 1.2}px`,
-                            opacity: heatmapOpacity / 100,
-                          }}
-                          onMouseEnter={() => setHoveredClick(c)}
-                          onMouseLeave={() => setHoveredClick(null)}
-                        />
-                      );
-                    })}
+                    {/* Radial Glow Dots Mode */}
+                    {renderMode === 'dots' &&
+                      activeClicks.map((c, i) => {
+                        const { x, docY } = getNormalizedCoords(c);
+                        return (
+                          <div
+                            key={c._id || i}
+                            className="heatmap-glow-dot"
+                            style={{
+                              left: `${x}px`,
+                              top: `${docY}px`,
+                              width: `${heatmapRadius * 1.2}px`,
+                              height: `${heatmapRadius * 1.2}px`,
+                              opacity: heatmapOpacity / 100,
+                            }}
+                            onMouseEnter={() => setHoveredClick(c)}
+                            onMouseLeave={() => setHoveredClick(null)}
+                          />
+                        );
+                      })}
 
-                  {/* Precision Pins Mode */}
-                  {renderMode === 'pins' &&
-                    activeClicks.map((c, i) => {
-                      const left = c.xPercent !== null && c.xPercent !== undefined ? `${c.xPercent}%` : `${c.x}px`;
-                      const top = c.y !== undefined && c.y !== null ? `${c.y}px` : (c.yPercent !== null && c.yPercent !== undefined ? `${c.yPercent}%` : '50%');
-
-                      return (
-                        <div
-                          key={c._id || i}
-                          className="heatmap-pin"
-                          style={{ left, top }}
-                          onMouseEnter={() => setHoveredClick(c)}
-                          onMouseLeave={() => setHoveredClick(null)}
-                        >
-                          <div className="pin-marker"></div>
-                          <span className="pin-tag">&lt;{c.elementTag}&gt;</span>
-                        </div>
-                      );
-                    })}
-                </div>
-              )}
+                    {/* Precision Landmark Pins Mode */}
+                    {renderMode === 'pins' &&
+                      activeClicks.map((c, i) => {
+                        const { x, docY } = getNormalizedCoords(c);
+                        return (
+                          <div
+                            key={c._id || i}
+                            className="heatmap-pin"
+                            style={{ left: `${x}px`, top: `${docY}px` }}
+                            onMouseEnter={() => setHoveredClick(c)}
+                            onMouseLeave={() => setHoveredClick(null)}
+                          >
+                            <div className="pin-marker"></div>
+                            <span className="pin-tag">&lt;{c.elementTag}&gt;</span>
+                          </div>
+                        );
+                      })}
+                  </div>
+                )}
 
               {/* Hover Tooltip (Active across all modes when Inspect Mode is selected) */}
               {hoveredClick && interactionMode === 'inspect' && (
@@ -911,6 +1031,7 @@ export default function HeatmapView({ userMode, timeRange, includeSimulated }) {
                   </a>
                 </div>
               )}
+              </div>
             </div>
           </div>
         </div>

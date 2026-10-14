@@ -1119,25 +1119,41 @@
   grid-template-columns: 1fr 380px;
   gap: 1.5rem;
   align-items: start;
+  transition: all 0.3s ease;
+}
+
+.heatmap-stage-grid.expanded {
+  grid-template-columns: 1fr;
 }
 
 .device-center-wrapper {
-  background: #050811;
-  padding: 1.5rem;
+  background: #040711;
+  padding: 1.5rem 1rem;
   display: flex;
   justify-content: center;
-  overflow-x: auto;
+  align-items: flex-start;
+  overflow: hidden;
+  border-radius: var(--radius-md);
+  min-height: 480px;
+}
+
+.device-stage-scaler {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  transition: height 0.25s ease;
 }
 
 .heatmap-preview-container {
   position: relative;
-  height: 680px;
   background: #090e18;
   border: 1px solid rgba(255, 255, 255, 0.15);
   border-radius: var(--radius-md);
   overflow: hidden;
   box-shadow: 0 15px 35px rgba(0, 0, 0, 0.6);
-  transition: width 0.3s ease;
+  transition: transform 0.2s ease, width 0.2s ease;
+  flex-shrink: 0;
 }
 
 .live-store-iframe {
